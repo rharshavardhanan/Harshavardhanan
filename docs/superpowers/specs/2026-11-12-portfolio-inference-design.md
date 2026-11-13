@@ -1,0 +1,186 @@
+# Portfolio — design (brief v2)
+
+Date: 2026-11-12 · Status: v2 approved 2026-11-12
+(v1 "Inference" design was approved earlier the same day and is superseded by this.)
+
+## 1. What this document is
+
+[`docs/brief.md`](../../brief.md) is the v2 brief, saved verbatim: a neutral editorial
+shell, five projects that each bring their own themed world, and one particle object
+that morphs between them. It settles the concept, copy, palette, type, site map and
+interactions. This document records only what the brief leaves open: how the work is
+split, constraints the brief does not state, which dependencies are installed when, and
+the detailed design of Phase 1.
+
+## 2. How the work is split
+
+Six phases, as the brief lists them. Each gets its own plan in
+`docs/superpowers/plans/`, is built, verified, explained in plain language, committed
+locally, and then work stops for review.
+
+| Phase | Delivers                                                                    | Needs from Harsha first                            |
+| ----- | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1     | Setup, tokens, fonts, layout shell, smooth scroll, theme system             | nothing                                            |
+| 2     | Loader, hero (video fallback first, then particle object and morph targets) | nothing (stand-in media)                           |
+| 3     | Work index, the five chapters with demos, per-theme cursors                 | a check of the five quiz answers                   |
+| 4     | Case-study template and five pages                                          | a check of each "what was hard" paragraph          |
+| 5     | About, contact, footer, menu, transitions, anomaly hunt                     | bio text; a Resend account and key, or mailto only |
+| 6     | Accessibility, performance and SEO pass with a Lighthouse report            | the real media and `resume.pdf`                    |
+
+## 3. Approach
+
+Unchanged from the approved v1 choice: the brief's stack, trimmed, with each dependency
+installed in the phase that first uses it.
+
+- Phase 1 installs one runtime library: `lenis`.
+- `gsap` arrives in Phase 2 (letter stagger, particle morph), `three`,
+  `@react-three/fiber` and `@react-three/drei` with the particle object in Phase 2.
+- No Framer Motion (the v2 brief no longer asks for it).
+
+## 4. Decisions the brief did not make
+
+### 4.1 Versions
+
+Next.js 16.4 (App Router), React 19.3, Tailwind CSS 4.3, Lenis 1.3, Node 24, pnpm 11.
+Tailwind 4 keeps its tokens in CSS, so there is no `tailwind.config` file.
+
+### 4.2 The shell is light
+
+The brief lists Ink as both "dark background" and "text" without saying which the shell
+uses. The loader is on paper, the link-preview image is ink on paper, the portrait and
+the hero fallback video sit on off-white. So the neutral shell is **paper with ink
+text**, and scrolling into a project turns the page dark. An `ink` theme (ink ground,
+paper text) exists for neutral dark moments such as the footer.
+
+### 4.3 Colour contrast
+
+Measured against WCAG AA (4.5:1). Paper text on every project background is 15:1 or
+better.
+
+| Theme           | Accent on background | Grey `#8A877F` on background |
+| --------------- | -------------------- | ---------------------------- |
+| Neutral (paper) | n/a                  | 3.2 **fail**                 |
+| Ink             | n/a                  | 5.4                          |
+| Odovox          | 12.5                 | 4.75 (narrowest pass)        |
+| Road Damage     | 12.2                 | 5.2                          |
+| Kattral         | 7.7                  | 5.1                          |
+| Edge Cache      | 5.8                  | 5.3                          |
+| Hallucination   | 8.1                  | 5.2                          |
+
+Consequences:
+
+- One colour is added: **`#66635C`** (5.4 on paper), used for labels and secondary text
+  on paper only. Grey `#8A877F` stays the secondary colour on every dark theme.
+- No project accent is ever used as text on paper (all are below 3:1 there). In the
+  neutral work index, project names stay ink; the accent appears only once the page has
+  changed to that project's theme.
+- A unit test reads every theme out of `globals.css` and fails if any text pairing
+  drops below 4.5, so "AA contrast in EVERY theme" is enforced by the build.
+
+### 4.4 Theme system
+
+Every colour on the site is read through five roles: `bg`, `fg`, `muted`, `accent`,
+`line`. A theme is one CSS block that assigns those five. Components never name a
+project colour directly.
+
+- **Switching:** each chapter is a `<section data-chapter="odovox">`. A small client
+  component watches which chapter crosses the middle of the window
+  (`IntersectionObserver`) and writes that name to `<html data-theme>`. Leaving all
+  chapters writes `neutral`.
+- **The colour tween** is done by CSS, not JavaScript: the five roles are registered
+  colour properties, so the browser itself fades them over 600ms whenever the theme
+  changes. This replaces the brief's "ScrollTrigger colour tween" in Phase 1; the result
+  is the same and it needs no animation library. Under reduced motion it is a quick 200ms fade (the brief allows
+  simple fades, and an instant light-to-dark flip is harsher than a short one).
+- **Case-study pages** (Phase 4) set the theme on a wrapper element; nothing to watch.
+- **Without JavaScript** each chapter paints its own theme as a block, so the page is
+  still correct, just without the fade.
+- Line colour on dark themes is derived (`fg` mixed 18% into `bg`); on paper it is the
+  brief's `#D9D5CC`.
+
+### 4.5 Cursor
+
+Moved out of Phase 1. The v2 cursor exists only as five per-project variants, and the
+brief's Phase 1 list no longer includes it, so it is built in Phase 3 with the chapters
+that give it something to change into. The neutral shell keeps the system cursor.
+
+### 4.6 Media
+
+`public/media/` is empty and there is no `public/resume.pdf`. Phase 1 uses no media.
+From Phase 2 on, stand-ins are generated in code under the brief's file names, so the
+real files replace them with no code change. Slugs, from the brief's file names:
+`odovox`, `road`, `kattral`, `cache`, `hallucination`.
+
+A 2.8 MB file named `potrait` (no extension) appeared in the repo root during the
+session. It is left untouched and is not committed until Harsha says what it is for.
+
+### 4.7 Places the brief needs care
+
+- **Odovox claims.** "Do not claim live clinics or users." The count-up row uses only
+  the three facts the brief gives. `8 clinic modules` is the brief's number; the brief's
+  own list of modules has seven items, so the eighth is confirmed before Phase 3.
+- **"More work" and the bio** are the only placeholders allowed; both are marked as such
+  on the page.
+- **Spot the Hallucination** needs five question-and-answer pairs, drafted in Phase 3
+  and checked by Harsha.
+- **Contact form.** The brief asks for Resend with a mailto fallback. Resend needs an
+  account and an API key in `.env`; until that exists the form uses mailto.
+
+### 4.8 Working rules
+
+- One local commit per phase, made when the phase passes its checks. Never pushed.
+- No deploy unless asked.
+- The plain-language explanation of each phase is given in chat, not written to a file.
+- The phone number never appears on the site.
+
+## 5. Phase 1 design
+
+### 5.1 Goal
+
+A running Next.js project in which the neutral tokens, the three typefaces, the page
+shell, smooth scrolling and the theme system all work and are tested, so every later
+phase only adds sections.
+
+### 5.2 Structure
+
+| File                          | Purpose                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/globals.css`             | Tailwind import, tokens, the seven themes (neutral, ink, five projects), base styles, focus outline, grain                                                                                                                                                                                                                            |
+| `app/layout.tsx`              | Loads the three fonts, base metadata, skip link, header, `<main id="main">`, smooth scroll, theme watcher                                                                                                                                                                                                                             |
+| `app/page.tsx`                | Temporary "calibration sheet": the name as the one `h1`, the subtitle, real contact links, the type scale, then one short section per project theme. It proves the system and gives the theme watcher something to switch between. Phase 2 replaces the top with the hero; Phase 3 replaces the theme sections with the real chapters |
+| `app/tokens.test.ts`          | Contrast check on every theme                                                                                                                                                                                                                                                                                                         |
+| `components/Header.tsx`       | `H.R.` · `Chennai · [clock]` · Work / About / Contact · Résumé                                                                                                                                                                                                                                                                        |
+| `components/Clock.tsx`        | Live Chennai time; blank on the server, filled in on the client                                                                                                                                                                                                                                                                       |
+| `components/SmoothScroll.tsx` | Starts Lenis; does nothing under reduced motion                                                                                                                                                                                                                                                                                       |
+| `components/ThemeWatcher.tsx` | Writes the active chapter's name to `<html data-theme>`                                                                                                                                                                                                                                                                               |
+| `components/ArrowUpRight.tsx` | The one icon                                                                                                                                                                                                                                                                                                                          |
+| `lib/ist.ts`                  | `Date` in, `"23:41"` in `Asia/Kolkata` out                                                                                                                                                                                                                                                                                            |
+| `e2e/*.e2e.ts`                | Playwright browser checks against the production build                                                                                                                                                                                                                                                                                |
+
+Header links point at `#work`, `#about` and `#contact`. The calibration sheet carries
+those three ids on existing sections so no link is dead; the real sections take the ids
+over as they are built.
+
+### 5.3 Behaviour under each condition
+
+| Condition                | Smooth scroll      | Theme change                         |
+| ------------------------ | ------------------ | ------------------------------------ |
+| Desktop or touch         | on                 | fades over 600ms                     |
+| `prefers-reduced-motion` | off, native scroll | instant                              |
+| JavaScript disabled      | native scroll      | each chapter is a solid themed block |
+
+### 5.4 Testing
+
+- **Unit (Vitest):** `formatIST` across a date boundary; the contrast test.
+- **Static:** `pnpm typecheck`, `pnpm lint`, `pnpm build` clean.
+- **Browser (Playwright, installed Chrome):** the three fonts are the ones rendered; one
+  `h1`; the skip link is first in tab order; nothing overflows sideways at 360px; the
+  clock shows Chennai time; smooth scroll is on by default and off under reduced motion;
+  scrolling a chapter to the middle of the window changes the page background to that
+  theme's colour and scrolling back restores paper; with JavaScript off a chapter still
+  has its own background.
+
+### 5.5 Done when
+
+`pnpm test`, `pnpm e2e`, `pnpm typecheck` and `pnpm lint` all exit 0, and the page has
+been inspected once at desktop and phone width.
