@@ -5,6 +5,7 @@ import {
   JetBrains_Mono,
 } from "next/font/google";
 import { Header } from "@/components/Header";
+import { Loader } from "@/components/Loader";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
@@ -55,11 +56,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
+    // suppressHydrationWarning: the loader's script marks <html> before React
+    // starts, and this tells React that is expected.
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${serif.variable} ${sans.variable} ${mono.variable}`}
     >
       <body className="text-body font-sans antialiased">
+        <Loader />
         <div hidden dangerouslySetInnerHTML={{ __html: CONTRACT }} />
         {/* Hidden above the window until a keyboard user tabs to it. */}
         <a

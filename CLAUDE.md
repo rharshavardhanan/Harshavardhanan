@@ -15,7 +15,8 @@ ink); scrolling into a project turns the whole page into that project's colour w
 ## Stack
 
 Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS 4 (tokens live in
-`app/globals.css`, there is no tailwind.config), Lenis. pnpm only.
+`app/globals.css`, there is no tailwind.config), Lenis, three.js with
+react-three-fiber (the particle object only, loaded after first paint). pnpm only.
 
 ## Commands
 
@@ -23,6 +24,7 @@ Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS 4 (tokens liv
 - `pnpm test` — unit tests (Vitest, files named `*.test.ts`)
 - `pnpm e2e` — browser tests (Playwright, files named `*.e2e.ts`; builds and serves on port 3100, needs Google Chrome)
 - `pnpm typecheck` · `pnpm lint` · `pnpm build`
+- `pnpm record:hero` — re-records the hero's fallback video and still from the live particle object (needs `pnpm build && pnpm start --port 3100` running, ffmpeg and ImageMagick)
 
 ## Rules
 
@@ -33,4 +35,4 @@ Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS 4 (tokens liv
   `data-chapter` value.
 - Animate `transform`, `opacity` and colour only, and honour `prefers-reduced-motion`.
 - Every page works with JavaScript off, with a keyboard, and at 360px wide.
-- One local commit per finished phase. Never push. Do not commit `potrait`.
+- One local commit per finished phase. Never push. `potrait` (the portrait's source PNG) is git-ignored.

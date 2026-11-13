@@ -12,7 +12,7 @@ test.describe("desktop", () => {
         .first()
         .evaluate((el) => getComputedStyle(el).fontFamily);
     expect(await family("h1")).toContain("Instrument Serif");
-    expect(await family("h1 + p")).toContain("Inter Tight");
+    expect(await family("[data-hero] p")).toContain("Inter Tight");
     expect(await family("main dl")).toContain("JetBrains Mono");
     for (const name of ["Instrument Serif", "Inter Tight", "JetBrains Mono"]) {
       expect(

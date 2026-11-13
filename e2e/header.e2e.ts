@@ -28,3 +28,12 @@ test("without JavaScript the header still reads sensibly", async ({
   await expect(page.locator("h1")).toHaveText("Harshavardhanan");
   await context.close();
 });
+
+test("the résumé and the portrait are served", async ({ request }) => {
+  const resume = await request.get("/resume.pdf");
+  expect(resume.status()).toBe(200);
+  expect(resume.headers()["content-type"]).toContain("application/pdf");
+  const portrait = await request.get("/media/portrait.avif");
+  expect(portrait.status()).toBe(200);
+  expect(portrait.headers()["content-type"]).toContain("image/avif");
+});

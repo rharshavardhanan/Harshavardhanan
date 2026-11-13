@@ -55,8 +55,9 @@ GitHub, LinkedIn and the résumé PDF.
 - The phone number never appears on the site.
 - Built in six phases, reviewed after each. Harsha is learning to code and must be able
   to read and change every file.
-- Undecided: the eighth Odovox module (the brief says 8, lists 7); bio text; "More
-  work" rows; whether the contact form uses Resend.
+- Odovox's eight clinic modules: auth and roles, voice consult, live queue,
+  scheduling, lab, inventory, billing, WhatsApp follow-ups.
+- Undecided: bio text; "More work" rows; whether the contact form uses Resend.
 
 ## Brand Commitments
 
@@ -71,8 +72,10 @@ small doses.
 
 - Real project facts and copy in `docs/brief.md`.
 - Live link for Edge Cache RL.
-- Absent as of 2026-11-12, not to be fabricated as real: all images and videos in
-  `public/media/`, and `public/resume.pdf`. Stand-ins must be visibly stand-ins.
+- Supplied 2026-11-13: `public/resume.pdf` (its phone number is accepted there; the
+  rule covers the web pages) and `public/media/portrait.avif`.
+- Absent, not to be fabricated as real: every other image and video in the brief's
+  media list. Stand-ins must be visibly stand-ins.
 
 ## Product Principles
 

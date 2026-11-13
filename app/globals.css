@@ -8,12 +8,6 @@
   --text-*: initial;
 
   /* Fluid type: clamp(smallest, grows with the window, largest). */
-  /* The name is 15 letters, about 5.9 times its font size wide. On a phone
-     14.5vw makes it fill the width; on wider screens the second value takes
-     over so it leaves room beside it. */
-  --text-display: min(14.5vw, 3rem + 5vw, 12rem);
-  --text-display--line-height: 0.9;
-  --text-display--letter-spacing: -0.02em;
   --text-title: clamp(2rem, 1.2rem + 3.5vw, 4.5rem);
   --text-title--line-height: 1.02;
   --text-title--letter-spacing: -0.015em;
@@ -244,4 +238,175 @@ html:not([data-theme]) [data-chapter] {
   75% {
     transform: translate(-83px, -71px);
   }
+}
+
+/* --- Hero name ----------------------------------------------------------
+   The name always fills the width of its container. "HARSHAVARDHANAN" in
+   Instrument Serif capitals is 6.87 times as wide as its font size, so
+   dividing the container's width (100cqi) by a little more than that gives a
+   font size that fits exactly at any window width. */
+.name {
+  font-size: calc(100cqi / 6.97);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: clip; /* hides each letter until it rises into view */
+}
+
+/* Each letter rises from below the line, one after another. --i is the
+   letter's position, set in app/page.tsx. */
+.name > span {
+  display: inline-block;
+  animation: letter-rise 900ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 35ms + 100ms);
+}
+
+@keyframes letter-rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+/* While the loader is up, the letters wait. */
+html[data-loading="in"] .name > span {
+  animation-play-state: paused;
+}
+
+/* The small dot in "currently building Odovox". */
+.status-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--fg);
+  animation: status-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name > span,
+  .status-dot {
+    animation: none;
+  }
+}
+
+/* --- Loader (components/Loader.tsx) --------------------------------------
+   Hidden unless the inline script has marked <html data-loading>. */
+.loader {
+  display: none;
+}
+
+html[data-loading] .loader {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--bg);
+  transition: opacity 500ms ease;
+}
+
+html[data-loading="out"] .loader {
+  opacity: 0;
+}
+
+/* "H.R." is drawn in from the left. */
+.loader-initials {
+  animation: loader-draw 900ms var(--ease-out) backwards;
+}
+
+@keyframes loader-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* The counter is a number the browser animates from 0 to 100 and prints
+   with leading zeros: 000, 001 ... 100. */
+@property --loader-count {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@counter-style loader-digits {
+  system: numeric;
+  symbols: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9";
+  pad: 3 "0";
+}
+
+.loader-count {
+  font-variant-numeric: tabular-nums;
+  counter-reset: loader var(--loader-count);
+  animation: loader-count 1200ms var(--ease-out) forwards;
+}
+
+.loader-count::after {
+  content: counter(loader, loader-digits);
+}
+
+@keyframes loader-count {
+  to {
+    --loader-count: 100;
+  }
+}
+
+/* --- Particle stage (components/ParticleStage.tsx) -----------------------
+   The layer that holds the particle object, its still image and its video.
+   On a phone it is an ordinary block above the name. On a desktop it sticks
+   to the window from the hero to the end of the last chapter, behind the
+   text; the negative margin stops it pushing the hero down. */
+.stage {
+  position: relative;
+  z-index: -1;
+  padding-inline: var(--spacing-gutter);
+  pointer-events: none;
+}
+
+.stage-box {
+  position: relative;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 28rem;
+  aspect-ratio: 1;
+}
+
+@media (min-width: 1024px) {
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    margin-bottom: -100svh;
+  }
+
+  .stage-box {
+    position: absolute;
+    top: 44%;
+    right: var(--spacing-gutter);
+    width: min(34vw, 60svh);
+    max-width: none;
+    translate: 0 -50%;
+  }
+}
+
+.stage img,
+.stage video {
+  transition: opacity 600ms ease;
+}
+
+/* During the loader the stage sits above it, so the dot is visible, and the
+   still and video stay out of sight until the loader has gone. */
+html[data-loading] .stage {
+  z-index: 90;
+}
+
+html[data-loading] .stage img,
+html[data-loading] .stage video {
+  opacity: 0;
 }

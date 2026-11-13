@@ -106,19 +106,27 @@ that give it something to change into. The neutral shell keeps the system cursor
 
 ### 4.6 Media
 
-`public/media/` is empty and there is no `public/resume.pdf`. Phase 1 uses no media.
+Supplied so far (2026-11-13): `public/resume.pdf` and `public/media/portrait.avif`.
+Every other file in the brief's media list is still missing. Phase 1 uses no media.
 From Phase 2 on, stand-ins are generated in code under the brief's file names, so the
 real files replace them with no code change. Slugs, from the brief's file names:
 `odovox`, `road`, `kattral`, `cache`, `hallucination`.
 
-A 2.8 MB file named `potrait` (no extension) appeared in the repo root during the
-session. It is left untouched and is not committed until Harsha says what it is for.
+The portrait was converted from the PNG Harsha added at the repo root (`potrait`,
+kept in place and git-ignored). It was generated from the v1 prompt: its ground is a
+warmer cream than paper `#F4F2EE` and it has a yellow outline. Phase 5 decides whether
+it sits as a framed print or is regenerated with the v2 prompt.
+
+The résumé PDF contains a phone number and does not mention Odovox. Harsha confirmed on
+2026-11-13 that the phone number is fine inside the PDF; the rule covers the web pages.
 
 ### 4.7 Places the brief needs care
 
 - **Odovox claims.** "Do not claim live clinics or users." The count-up row uses only
-  the three facts the brief gives. `8 clinic modules` is the brief's number; the brief's
-  own list of modules has seven items, so the eighth is confirmed before Phase 3.
+  the three facts the brief gives. `8 clinic modules` is the brief's number and matches the
+  brief's list once "lab & inventory" is read as two: auth and roles, voice consult,
+  live queue, scheduling, lab, inventory, billing, WhatsApp follow-ups. Odovox's own
+  API has lab and inventory as separate route files, which confirms the reading.
 - **"More work" and the bio** are the only placeholders allowed; both are marked as such
   on the page.
 - **Spot the Hallucination** needs five question-and-answer pairs, drafted in Phase 3
@@ -184,3 +192,66 @@ over as they are built.
 
 `pnpm test`, `pnpm e2e`, `pnpm typecheck` and `pnpm lint` all exit 0, and the page has
 been inspected once at desktop and phone width.
+
+## 6. Phase 2 design (loader, hero, particle object)
+
+Approved to build on 2026-11-13. The brief fixes what appears; this records how.
+
+### 6.1 Composition
+
+- **Desktop (1024px and wider):** subtitle and status pill top-left, the particle object
+  right of centre, the name in capitals across the full width at the bottom of the first
+  screen. The name is sized from its container's width, so it always fills the line
+  exactly.
+- **Phone and tablet:** the visual first, then name, subtitle, pill.
+- The capitals come from CSS (`text-transform`); the text in the page is
+  "Harshavardhanan", which is what search engines and screen readers get.
+- Each letter is its own box so it can rise on its own. That loses the font's built-in
+  spacing between pairs such as A and V, so those pairs are measured and put back.
+
+### 6.2 The particle object
+
+- One fixed set of 5,000 points. A shape is a list of 5,000 positions; the object eases
+  every point toward the current shape's position each frame. Because it eases from
+  wherever the points are now, it can change shape mid-morph without a jump.
+- **No GSAP in this phase.** The brief suggests GSAP for the morph; a per-frame ease
+  does the same job in a few lines and handles interruption better. GSAP arrives in
+  Phase 3 with the scroll-driven reveals and count-ups. **No drei either**; nothing here
+  needs it.
+- Shapes are generated in code (`lib/shapes.ts`): dot, cloud, waveform, tooth, road
+  with pothole, video tiles, block stack, speech bubble. Odovox plays waveform, then
+  tooth.
+- The object follows `<html data-theme>`, which the theme watcher already sets, so it
+  needs no new wiring. Its colour is the theme's `accent`, read from CSS each frame, so
+  it fades in step with the page.
+- It lives in a layer that stays on screen from the hero to the end of the last chapter
+  and then scrolls away, so it never sits behind the About or Contact text. Chapter text
+  moves to the left 8 of 12 columns to leave it room.
+- It is created only at 1024px and wider, with WebGL available and reduced motion off.
+  The library loads after first paint, and drawing pauses when the layer is off screen.
+
+### 6.3 Fallback
+
+- Everyone first gets a still image of the cloud (`hero-poster.avif`), including with
+  JavaScript off. On desktop the live object replaces it once ready.
+- Phones, tablets and browsers without WebGL then get the looping video
+  (`hero-loop.webm` / `.mp4`). Under reduced motion the still image stays; a looping
+  video is motion.
+- **The video and still are recorded from the site's own particle object**
+  (`scripts/record-hero.mjs`), so they match it exactly. The brief planned the video
+  first and the object second; the order is swapped because the one is made from the
+  other. A Veo clip saved under the same file names replaces them with no code change.
+- The video is recorded on white and blended onto the page (`multiply`), so its
+  background always matches the paper exactly.
+
+### 6.4 Loader
+
+- Paper, a mono counter 000 to 100, and "H.R." in the name's size and position. On
+  desktop the particle object shows as a dot and spreads into the cloud as the loader
+  leaves.
+- It is CSS-timed: 1.4s, then a 0.5s fade. A small inline script decides whether to show
+  it (first visit in the session, reduced motion off) before the page first paints. It
+  does not wait on JavaScript loading, so a slow phone is not held on the loader.
+- The subtitle is never hidden or animated, so the largest text is painted at once and
+  the loader does not delay the performance score's main measure.
+- With JavaScript off there is no loader and the name's letters still rise.
