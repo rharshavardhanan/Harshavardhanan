@@ -11,7 +11,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "format": "prettier --write .",
-    "record:hero": "node scripts/record-hero.mjs"
+    "record:hero": "node scripts/record-hero.mjs",
+    "record:covers": "node scripts/record-covers.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",

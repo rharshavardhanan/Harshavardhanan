@@ -7,17 +7,19 @@ const css = readFileSync(new URL("./globals.css", import.meta.url), "utf8");
 
 // Finds every block that starts [data-theme="name"] and collects its roles,
 // for example { name: "road", roles: { bg: "#121212", accent: "#ffc93c" } }.
-const themes = [
-  ...css.matchAll(/\[data-theme="([a-z]+)"\][^{}]*\{([^}]*)\}/g),
-].map(([, name, body]) => ({
-  name,
-  roles: Object.fromEntries(
-    [...body.matchAll(/--([a-z]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [
-      m[1],
-      m[2],
-    ]),
-  ),
-}));
+const themes = [...css.matchAll(/\[data-theme="([a-z]+)"\][^{}]*\{([^}]*)\}/g)]
+  .map(([, name, body]) => ({
+    name,
+    roles: Object.fromEntries(
+      [...body.matchAll(/--([a-z]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [
+        m[1],
+        m[2],
+      ]),
+    ),
+  }))
+  // Other rules also mention data-theme (cursors, for one). A theme is a
+  // block that sets the background role.
+  .filter((theme) => theme.roles.bg);
 
 // WCAG relative luminance of a #rrggbb colour.
 function luminance(hex: string) {

@@ -4,6 +4,7 @@ import {
   Inter_Tight,
   JetBrains_Mono,
 } from "next/font/google";
+import { Cursor } from "@/components/Cursor";
 import { Header } from "@/components/Header";
 import { Loader } from "@/components/Loader";
 import { SmoothScroll } from "@/components/SmoothScroll";
@@ -76,6 +77,7 @@ export default function RootLayout({
         <Header />
         <main id="main">{children}</main>
         <SmoothScroll />
+        <Cursor />
       </body>
     </html>
   );

@@ -410,3 +410,323 @@ html[data-loading] .stage img,
 html[data-loading] .stage video {
   opacity: 0;
 }
+
+/* --- Buttons and small controls ------------------------------------------ */
+@layer components {
+  /* The main button: an outline in the accent colour that fills on hover. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    border: 1px solid var(--accent);
+    padding: 0.65rem 1rem;
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: var(--text-label);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+  @media (hover: hover) {
+    .btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: var(--bg);
+    }
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .btn:disabled,
+  .btn-quiet:disabled {
+    opacity: 0.45;
+  }
+
+  /* A secondary button: just underlined text. */
+  .btn-quiet {
+    padding: 0.65rem 0;
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: var(--text-label);
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  /* One option in a row of choices (the label around a hidden radio button).
+     The chosen one is filled in; the focused one gets the usual outline. */
+  .seg {
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+  .seg + .seg {
+    border-left: 0;
+  }
+  .seg:has(:checked) {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .seg:has(:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* A figure in a chapter: "8", "94%", "AES-256-GCM". */
+  .stat {
+    font-family: var(--font-instrument-serif), serif;
+    font-size: clamp(1.6rem, 1.1rem + 1.4vw, 2.4rem);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+}
+
+/* --- Demo parts ----------------------------------------------------------- */
+
+/* Something that has just appeared in a demo eases in. */
+.demo-in {
+  animation: demo-in 400ms var(--ease-out) backwards;
+}
+@keyframes demo-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+/* The blinking bar at the end of text being typed. */
+.caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 1em;
+  margin-left: 0.08em;
+  vertical-align: -0.12em;
+  background: var(--accent);
+  animation: caret 0.9s steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* One video-call tile in the Kattral demo. It lights up when data-on="true". */
+.tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  padding: 0.4rem 0.5rem;
+  color: var(--muted);
+  transition:
+    border-color 300ms ease,
+    color 300ms ease;
+}
+/* The head and shoulders of whoever is in the tile. */
+.tile::before,
+.tile::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  background: var(--accent);
+  opacity: 0;
+  translate: -50% 0;
+  transition: opacity 300ms ease;
+}
+.tile::before {
+  top: 22%;
+  width: 18%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.tile::after {
+  top: 52%;
+  width: 40%;
+  height: 60%;
+  border-radius: 50% 50% 0 0;
+}
+.tile[data-on="true"] {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.tile[data-on="true"]::before,
+.tile[data-on="true"]::after {
+  opacity: 0.35;
+}
+.tile > span {
+  position: relative; /* keeps the label above the silhouette */
+}
+
+/* The small preview that follows the pointer over the work index. */
+.work-float {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .work-float {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    display: block;
+    width: 15rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .work-float:empty {
+    opacity: 0;
+  }
+}
+
+/* --- Reveal on scroll -------------------------------------------------------
+   Anything marked data-reveal rises into place as it scrolls into view. The
+   browser ties the animation to the scroll position itself (animation-timeline),
+   so there is no JavaScript. Browsers without this simply show the text. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 -30% 0);
+    transform: none;
+  }
+}
+
+/* --- Project cursors (components/Cursor.tsx) -------------------------------
+   Inside a project's theme the arrow is replaced by that project's cursor.
+   .cursor sits exactly at the pointer; its child <i> is drawn differently for
+   each theme. Everywhere else the normal arrow is used. */
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  display: none;
+  pointer-events: none;
+}
+.cursor > i {
+  position: absolute;
+  translate: -50% -50%;
+  background: var(--accent);
+}
+
+html.has-cursor:is(
+    [data-theme="odovox"],
+    [data-theme="road"],
+    [data-theme="kattral"],
+    [data-theme="cache"],
+    [data-theme="hallucination"]
+  ) {
+  &,
+  & * {
+    cursor: none;
+  }
+  .cursor[data-seen] {
+    display: block;
+  }
+}
+
+/* Odovox: a microphone dot with a ring pulsing out of it. */
+[data-theme="odovox"] .cursor > i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+[data-theme="odovox"] .cursor > i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  animation: mic-pulse 1.4s ease-out infinite;
+}
+@keyframes mic-pulse {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+/* Road Damage: a detection box with a label and confidence score. */
+[data-theme="road"] .cursor > i {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--accent);
+  background: none;
+}
+[data-theme="road"] .cursor::after {
+  content: attr(data-label);
+  position: absolute;
+  left: -15px;
+  bottom: 15px;
+  padding: 0 5px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* Kattral: a dot with a raised hand (the small bar above it). */
+[data-theme="kattral"] .cursor > i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+[data-theme="kattral"] .cursor > i::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--accent);
+  rotate: 24deg;
+}
+
+/* Edge Cache: a blinking terminal block. */
+[data-theme="cache"] .cursor > i {
+  width: 9px;
+  height: 18px;
+  animation: caret 1s steps(1) infinite;
+}
+
+/* Hallucination: a scan line with a dot at the pointer. */
+[data-theme="hallucination"] .cursor > i {
+  width: 64px;
+  height: 1px;
+}
+[data-theme="hallucination"] .cursor > i::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  translate: -50% -50%;
+}

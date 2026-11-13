@@ -75,7 +75,10 @@ function Swarm({ onShape }: { onShape: (name: ShapeName) => void }) {
     const sync = () => {
       window.clearTimeout(timer);
       if (html.dataset.loading === "in") return show("dot");
-      const [first, second] = SEQUENCE[html.dataset.theme ?? ""] ?? ["cloud"];
+      // A project being hovered in the work index (data-preview) wins over
+      // the chapter on screen (data-theme).
+      const name = html.dataset.preview ?? html.dataset.theme ?? "";
+      const [first, second] = SEQUENCE[name] ?? ["cloud"];
       show(first);
       if (second) timer = window.setTimeout(() => show(second), 1600);
     };
@@ -93,7 +96,7 @@ function Swarm({ onShape }: { onShape: (name: ShapeName) => void }) {
     const observer = new MutationObserver(sync);
     observer.observe(html, {
       attributes: true,
-      attributeFilter: ["data-theme", "data-loading"],
+      attributeFilter: ["data-theme", "data-loading", "data-preview"],
     });
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => {

@@ -255,3 +255,65 @@ Approved to build on 2026-11-13. The brief fixes what appears; this records how.
 - The subtitle is never hidden or animated, so the largest text is painted at once and
   the loader does not delay the performance score's main measure.
 - With JavaScript off there is no loader and the name's letters still rise.
+
+## 7. Phases 3 to 6 design (built back to back from 2026-11-13)
+
+Harsha chose "build it all, no stops" after seeing Phases 1 and 2. Review happens at
+the end; anything drafted on his behalf is marked on the page and listed for him.
+
+### 7.1 No animation library
+
+GSAP is still not installed. Count-ups are a 25-line component; reveals use the
+browser's scroll-driven animations (`animation-timeline: view()`), which need no
+JavaScript and simply do not run in browsers without them; the page wipe is CSS driven
+by one attribute. If a later effect needs GSAP it is added then.
+
+### 7.2 Media stand-ins
+
+Only the portrait and résumé were supplied. The five covers and five case videos are
+recorded from the site's own particle symbols in each project's colours
+(`scripts/record-covers.mjs`), under the brief's file names, so the whole set is one
+family and nothing is passed off as footage. Generated images or Veo clips saved under
+the same names replace them with no code change. No paid image generation was used.
+
+### 7.3 Demos
+
+All five run in the browser with no network calls, work by keyboard, and state plainly
+that they are scripted or simulated.
+
+- **Road Damage** has no dashcam video to draw boxes on, so the demo is a top-down
+  strip of the scored clip's 17 potholes with the detections of each model drawn on it,
+  beside the three mAP50 figures. Positions are illustrative and labelled so; counts
+  are the résumé's.
+- **Cache Wars** runs a real simulation (`lib/cache-sim.ts`): LRU, LFU and a small
+  learning agent on a seeded request trace. Its numbers are the simulation's own and
+  are labelled as such; the project's "+10–15%" figure is shown separately.
+- **Spot the Hallucination** uses five well-established facts, drafted for Harsha to
+  check.
+
+### 7.4 Facts taken from the résumé
+
+- The pothole count (10 of 17 against 4) is on a scored 60-second dashcam clip, and
+  compares a pothole-specialised model with the general model.
+- At a 10% budget the benefit-maximising schedule repairs 0.5% of the worst-condition
+  roads, against 39% under worst-first. This is a failure of the optimiser and is
+  presented as one.
+- Years are known only for Odovox and Kattral (2026). The other three show no year.
+
+### 7.5 Drafted copy
+
+Case-study "what was hard" text for Odovox, Kattral, Edge Cache and Hallucination
+Detection is reasoned from the brief's facts, not reported by Harsha. Those sections,
+and the bio, carry a visible "draft" tag until he confirms them (`draft: true` in
+`content/projects.ts`).
+
+### 7.6 Contact form
+
+No Resend account exists, so the form opens the visitor's mail app with the message
+filled in, and says so. It does not claim a message was received.
+
+### 7.7 Cursors
+
+Inside a project's theme the system arrow is replaced by that project's cursor, drawn
+exactly at the pointer (no lag). Outside project themes, on touch devices and under
+reduced motion the system cursor is untouched.
