@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Project } from "@/content/projects";
+import { Anomaly } from "./Anomaly";
 import { ArrowUpRight } from "./ArrowUpRight";
 import { CountUp } from "./CountUp";
 import { demos } from "./demos";
@@ -48,6 +49,7 @@ export function Chapter({
         </h2>
         <p className="text-label text-muted mt-3 font-mono">
           {[project.role, project.year].filter(Boolean).join(" · ")}
+          <Anomaly id={project.slug} />
         </p>
         <p data-reveal className="text-lead mt-8 max-w-[44ch]">
           {project.pitch}

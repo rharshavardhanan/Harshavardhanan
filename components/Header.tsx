@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "./ArrowUpRight";
 import { Clock } from "./Clock";
+import { Menu } from "./Menu";
 
 // These jump to sections of the home page. The leading slash makes them work
 // from the case-study pages too.
@@ -20,19 +21,22 @@ export function Header() {
         · Chennai · <Clock />
       </p>
       <nav aria-label="Primary">
-        <ul className="flex gap-x-6">
+        <ul className="flex items-baseline gap-x-6">
           {sections.map((section) => (
-            <li key={section.href}>
+            <li key={section.href} className="max-md:hidden">
               <a href={section.href} className="inline-block py-2">
                 {section.label}
               </a>
             </li>
           ))}
-          <li>
+          <li className="max-md:hidden">
             <a href="/resume.pdf" className="inline-block py-2">
               Résumé
               <ArrowUpRight />
             </a>
+          </li>
+          <li>
+            <Menu />
           </li>
         </ul>
       </nav>

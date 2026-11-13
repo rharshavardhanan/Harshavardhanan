@@ -143,3 +143,18 @@ test("without JavaScript the still image is shown", async ({ browser }) => {
   ).toBeGreaterThan(0);
   await context.close();
 });
+
+test.describe("desktop, past the chapters", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("the particle object does not follow into the About section", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator("[data-shape]")).toHaveCount(1);
+    await page
+      .locator("#about")
+      .evaluate((el) => el.scrollIntoView({ block: "start" }));
+    await expect(page.locator(".stage-box")).not.toBeInViewport();
+  });
+});

@@ -364,7 +364,7 @@ html[data-loading="out"] .loader {
    The layer that holds the particle object, its still image and its video.
    On a phone it is an ordinary block above the name. On a desktop it sticks
    to the window from the hero to the end of the last chapter, behind the
-   text; the negative margin stops it pushing the hero down. */
+   text. */
 .stage {
   position: relative;
   z-index: -1;
@@ -385,7 +385,12 @@ html[data-loading="out"] .loader {
     position: sticky;
     top: 0;
     height: 100svh;
-    margin-bottom: -100svh;
+  }
+  /* The hero is pulled up over the stage so both start at the top. (Pulling
+     the stage's own bottom margin up instead lets it slide out past the last
+     chapter and sit over the About section.) */
+  .stage + [data-hero] {
+    margin-top: -100svh;
   }
 
   .stage-box {
@@ -782,4 +787,219 @@ html.has-cursor:is(
 }
 .flow li:last-child {
   border-left-color: transparent;
+}
+
+/* --- Wins strip (components/About.tsx) -------------------------------------
+   Two identical lists side by side, sliding left by exactly one list's width,
+   so the loop has no seam. It pauses while the pointer is over it. */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.marquee ul {
+  display: flex;
+  flex: none;
+  animation: marquee 32s linear infinite;
+}
+.marquee li {
+  padding-inline: 1.5rem;
+}
+.marquee li::before {
+  content: "";
+  display: inline-block;
+  width: 0.3em;
+  height: 0.3em;
+  margin-right: 3rem;
+  border-radius: 50%;
+  background: var(--fg);
+  vertical-align: 0.2em;
+}
+@media (hover: hover) {
+  .marquee:hover ul {
+    animation-play-state: paused;
+  }
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+  .marquee ul {
+    flex-wrap: wrap;
+    animation: none;
+  }
+  .marquee ul[aria-hidden],
+  .marquee li:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* --- Footer line: sized to fill its container, like the hero name. --------- */
+.lets-build {
+  font-size: calc(100cqi / 4.14);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* --- Anomaly hunt (components/Anomaly.tsx) ---------------------------------
+   A tiny square cut in two halves that keep slipping sideways. Fixed, the
+   halves line up and go quiet. */
+.anomaly {
+  position: relative;
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.6em;
+  vertical-align: -0.08em;
+  cursor: pointer;
+}
+/* A larger invisible area around it, so it is not fiddly to press. */
+.anomaly::before {
+  content: "";
+  position: absolute;
+  inset: -0.6rem;
+}
+.anomaly > i {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: var(--accent);
+}
+.anomaly > i:first-child {
+  top: 0;
+  animation: glitch-a 1.7s steps(1) infinite;
+}
+.anomaly > i:last-child {
+  bottom: 0;
+  animation: glitch-b 1.7s steps(1) infinite;
+}
+@keyframes glitch-a {
+  0%,
+  30%,
+  74% {
+    translate: 0;
+  }
+  20% {
+    translate: 3px;
+  }
+  24%,
+  70% {
+    translate: -2px;
+  }
+}
+@keyframes glitch-b {
+  0%,
+  28%,
+  76% {
+    translate: 0;
+  }
+  22% {
+    translate: -3px;
+  }
+  68% {
+    translate: 2px;
+  }
+}
+.anomaly[data-fixed="true"] > i {
+  animation: none;
+  opacity: 0.35;
+  transition: opacity 400ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anomaly > i {
+    animation: none;
+  }
+  .anomaly:not([data-fixed="true"]) > i:first-child {
+    translate: 2px;
+  }
+}
+
+/* --- Menu (components/Menu.tsx) --------------------------------------------
+   A <dialog> stretched over the whole window. It unrolls from the top and
+   its links rise one after another (--i is each link's place in the list). */
+.menu {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 0.75rem var(--spacing-gutter) 2rem;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--fg);
+}
+.menu[open] {
+  display: flex;
+  flex-direction: column;
+  animation: menu-in 500ms var(--ease-out);
+}
+.menu::backdrop {
+  background: none;
+}
+@keyframes menu-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+.menu[open] li {
+  animation: menu-link 600ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 120ms);
+}
+@keyframes menu-link {
+  from {
+    opacity: 0;
+    transform: translateY(1.2rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu[open],
+  .menu[open] li {
+    animation: none;
+  }
+}
+
+/* --- Page wipe (components/Wipe.tsx) ---------------------------------------
+   A sheet in the next page's colour. "in": it rises from the bottom to cover
+   the window. "out": it carries on up and off. Otherwise it waits below. */
+.wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  background: var(--bg);
+  pointer-events: none;
+  clip-path: inset(100% 0 0 0);
+}
+.wipe[data-state="in"] {
+  clip-path: inset(0);
+  pointer-events: auto;
+  transition: clip-path 450ms cubic-bezier(0.77, 0, 0.175, 1);
+}
+.wipe[data-state="out"] {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 500ms cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Magnetic buttons (components/Magnet.tsx) set `translate`; this eases it. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn {
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      translate 250ms var(--ease-out);
+  }
 }

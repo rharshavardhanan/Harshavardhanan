@@ -5,9 +5,12 @@ import {
   JetBrains_Mono,
 } from "next/font/google";
 import { Cursor } from "@/components/Cursor";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Loader } from "@/components/Loader";
+import { Magnet } from "@/components/Magnet";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { Wipe } from "@/components/Wipe";
 import "./globals.css";
 
 // next/font downloads each typeface at build time and serves it from this
@@ -76,8 +79,11 @@ export default function RootLayout({
         </a>
         <Header />
         <main id="main">{children}</main>
+        <Footer />
         <SmoothScroll />
         <Cursor />
+        <Magnet />
+        <Wipe />
       </body>
     </html>
   );
