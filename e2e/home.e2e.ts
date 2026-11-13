@@ -34,6 +34,10 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
 test("Contact: the form hands a written message to the mail app", async ({
   page,
 }) => {
+  // Do not really open the mail app on the machine running the tests.
+  await page.addInitScript(() => {
+    window.open = () => null;
+  });
   await page.goto("/");
   const form = page.locator("#contact form");
   await form.getByLabel("Name").fill("Asha Recruiter");

@@ -20,7 +20,9 @@ export function Contact() {
       `Portfolio: message from ${name}`,
     )}&body=${encodeURIComponent(body)}`;
     setMailto(url);
-    window.location.href = url;
+    // Opens the mail app. (window.open, so the automated tests can switch
+    // this one line off and not open a real mail window on the machine.)
+    window.open(url, "_self");
   };
 
   const field =
