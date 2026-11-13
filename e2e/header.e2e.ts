@@ -10,7 +10,7 @@ test("every header link leads somewhere that exists", async ({ page }) => {
   const nav = page.getByRole("navigation", { name: "Primary" });
   for (const name of ["Work", "About", "Contact"]) {
     const href = await nav.getByRole("link", { name }).getAttribute("href");
-    await expect(page.locator(href!)).toHaveCount(1);
+    await expect(page.locator(href!.replace("/", ""))).toHaveCount(1);
   }
   await expect(nav.getByRole("link", { name: "Résumé" })).toHaveAttribute(
     "href",

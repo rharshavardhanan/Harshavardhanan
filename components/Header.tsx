@@ -2,12 +2,12 @@ import Link from "next/link";
 import { ArrowUpRight } from "./ArrowUpRight";
 import { Clock } from "./Clock";
 
-// These jump to sections of the home page. When a second page exists
-// (Phase 4) they become "/#work" and so on.
+// These jump to sections of the home page. The leading slash makes them work
+// from the case-study pages too.
 const sections = [
-  { label: "Work", href: "#work" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Work", href: "/#work" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export function Header() {
