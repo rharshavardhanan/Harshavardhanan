@@ -1,6 +1,6 @@
 # Portfolio — design (brief v2)
 
-Date: 2026-11-12 · Status: v2 approved 2026-11-12
+Date: 2026-11-12 · Status: v2 approved 2026-11-12; all six phases built 2026-11-13
 (v1 "Inference" design was approved earlier the same day and is superseded by this.)
 
 ## 1. What this document is

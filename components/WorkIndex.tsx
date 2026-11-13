@@ -121,6 +121,7 @@ export function WorkIndex() {
               <a href={`#${project.slug}`} className="block no-underline">
                 <Image
                   src={`/media/cover-${project.slug}.avif`}
+                  unoptimized
                   alt=""
                   width={1280}
                   height={720}

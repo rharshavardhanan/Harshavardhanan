@@ -403,19 +403,20 @@ html[data-loading="out"] .loader {
   }
 }
 
-.stage img,
 .stage video {
   transition: opacity 600ms ease;
 }
 
-/* During the loader the stage sits above it, so the dot is visible, and the
-   still and video stay out of sight until the loader has gone. */
-html[data-loading] .stage {
+/* During the loader, on desktop, the live object sits above the loader so its
+   dot is visible, and the still stays out of sight until the loader has gone.
+   On phones the stage stays underneath, where the still loads straight away:
+   it is the largest thing on the first screen, so painting it early is what
+   the "largest contentful paint" speed measure rewards. */
+html[data-loading] .stage[data-mode="particles"] {
   z-index: 90;
 }
 
-html[data-loading] .stage img,
-html[data-loading] .stage video {
+html[data-loading] .stage[data-mode="particles"] video {
   opacity: 0;
 }
 
@@ -535,15 +536,15 @@ html[data-loading] .stage video {
     color 300ms ease;
 }
 /* The head and shoulders of whoever is in the tile. */
-.tile::before,
-.tile::after {
+.tile[data-on="true"]::before,
+.tile[data-on="true"]::after {
   content: "";
   position: absolute;
   left: 50%;
   background: var(--accent);
-  opacity: 0;
+  opacity: 0.35;
   translate: -50% 0;
-  transition: opacity 300ms ease;
+  animation: demo-in 400ms var(--ease-out) backwards;
 }
 .tile::before {
   top: 22%;
@@ -561,12 +562,10 @@ html[data-loading] .stage video {
   border-color: var(--accent);
   color: var(--fg);
 }
-.tile[data-on="true"]::before,
-.tile[data-on="true"]::after {
-  opacity: 0.35;
-}
 .tile > span {
-  position: relative; /* keeps the label above the silhouette */
+  position: relative; /* keeps the label above the silhouette... */
+  background: var(--bg); /* ...and readable where it overlaps it */
+  padding-inline: 0.25em;
 }
 
 /* The small preview that follows the pointer over the work index. */
@@ -855,8 +854,8 @@ html.has-cursor:is(
 .anomaly {
   position: relative;
   display: inline-block;
-  width: 0.85em;
-  height: 0.85em;
+  width: 0.625rem;
+  height: 0.625rem;
   margin-left: 0.6em;
   vertical-align: -0.08em;
   cursor: pointer;

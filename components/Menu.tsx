@@ -89,6 +89,7 @@ export function Menu() {
               <Image
                 key={hovered}
                 src={`/media/cover-${hovered}.avif`}
+                unoptimized
                 alt=""
                 width={1280}
                 height={720}

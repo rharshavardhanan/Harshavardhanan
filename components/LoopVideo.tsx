@@ -24,6 +24,8 @@ export function LoopVideo({ slug }: { slug: Slug }) {
     <div aria-hidden className="case-media">
       <Image
         src={`/media/cover-${slug}.avif`}
+        unoptimized
+        fetchPriority="high"
         alt=""
         width={1280}
         height={720}

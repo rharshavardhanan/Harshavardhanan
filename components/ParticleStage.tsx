@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { preload } from "react-dom";
 
 // three.js is large, so it is fetched only when the live object will be
 // shown, and only after the page has first been drawn.
@@ -16,6 +16,7 @@ type Mode = "poster" | "video" | "particles";
 
 const WIDE = "(min-width: 1024px)";
 const REDUCE = "(prefers-reduced-motion: reduce)";
+const STILL = "/media/hero-poster.avif";
 
 let webgl: boolean | undefined;
 function hasWebGL() {
@@ -44,6 +45,22 @@ export function ParticleStage() {
   const mode = useSyncExternalStore(subscribe, getMode, getServerMode);
   const [drawn, setDrawn] = useState(false); // the live object has drawn a frame
   const live = mode === "particles" && drawn;
+  const video = useRef<HTMLVideoElement>(null);
+
+  // Ask the browser to fetch the still first: it is the biggest thing on the
+  // first screen of a phone.
+  preload(STILL, { as: "image", fetchPriority: "high" });
+
+  // The still is the video's "poster", so it shows at once, even with
+  // JavaScript off. The video itself is not fetched until the rest of the
+  // page has finished loading, and then only in "video" mode.
+  useEffect(() => {
+    if (mode !== "video") return;
+    const play = () => video.current?.play().catch(() => {});
+    if (document.readyState === "complete") play();
+    else window.addEventListener("load", play, { once: true });
+    return () => window.removeEventListener("load", play);
+  }, [mode]);
 
   return (
     // The still and the video have a white background. "multiply" blending
@@ -55,22 +72,13 @@ export function ParticleStage() {
     >
       <div className="stage-box">
         {!live && (
-          <Image
-            src="/media/hero-poster.avif"
-            alt=""
-            width={720}
-            height={720}
-            loading="eager"
-            sizes="(min-width: 1024px) 34vw, 100vw"
-            className="absolute inset-0 size-full object-cover"
-          />
-        )}
-        {mode === "video" && (
           <video
-            autoPlay
+            ref={video}
             muted
             loop
             playsInline
+            preload="none"
+            poster={STILL}
             className="absolute inset-0 size-full object-cover"
           >
             {/* MP4 first: for this footage it is the smaller file. */}

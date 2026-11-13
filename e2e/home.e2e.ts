@@ -71,7 +71,7 @@ test("Footer: closing line, credit and anomaly count on every page", async ({
   for (const path of ["/", "/work/kattral"]) {
     await page.goto(path);
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByLabel("Let’s build")).toHaveCount(1);
+    await expect(footer.locator(".lets-build")).toHaveText("Let’s build");
     await expect(footer).toContainText("© 2026 · designed & built by Harsha");
     await expect(footer).toContainText("anomalies resolved 0 / 6");
   }

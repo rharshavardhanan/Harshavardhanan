@@ -7,12 +7,8 @@ export function Footer() {
   return (
     <footer data-theme="ink" className="bg-bg text-fg px-gutter pt-24 pb-8">
       <div className="@container">
-        <p
-          data-reveal
-          aria-label="Let’s build"
-          className="lets-build font-serif"
-        >
-          <span aria-hidden>Let’s build</span>
+        <p data-reveal className="lets-build font-serif">
+          Let’s build
         </p>
       </div>
       <div className="text-label text-muted border-line mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t pt-4 font-mono">

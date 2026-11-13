@@ -94,12 +94,19 @@ test.describe("phone", () => {
 test.describe("desktop with reduced motion", () => {
   test.use({ viewport: { width: 1280, height: 800 }, reducedMotion: "reduce" });
 
-  test("there is no canvas and no video", async ({ page }) => {
+  test("there is no canvas and the video does not play", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(page.locator(".stage")).toHaveAttribute("data-mode", "poster");
     await expect(page.locator("canvas")).toHaveCount(0);
-    await expect(page.locator("video")).toHaveCount(0);
+    // The video element is only there for its still picture; it never plays.
+    await page.waitForLoadState("load");
+    await page.waitForTimeout(500);
+    expect(
+      await page
+        .locator(".stage video")
+        .evaluate((v: HTMLVideoElement) => v.paused && v.currentTime === 0),
+    ).toBe(true);
   });
 });
 
@@ -136,11 +143,11 @@ test("without JavaScript the still image is shown", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto("/");
-  const still = page.locator(".stage img");
-  await expect(still).toBeVisible();
-  expect(
-    await still.evaluate((img: HTMLImageElement) => img.naturalWidth),
-  ).toBeGreaterThan(0);
+  await expect(page.locator(".stage video")).toBeVisible();
+  await expect(page.locator(".stage video")).toHaveAttribute(
+    "poster",
+    "/media/hero-poster.avif",
+  );
   await context.close();
 });
 

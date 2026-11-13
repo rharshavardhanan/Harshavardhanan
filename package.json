@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "format": "prettier --write .",
     "record:hero": "node scripts/record-hero.mjs",
-    "record:covers": "node scripts/record-covers.mjs"
+    "record:covers": "node scripts/record-covers.mjs",
+    "make:og": "node scripts/make-og.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",
@@ -23,6 +24,7 @@
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.65.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",

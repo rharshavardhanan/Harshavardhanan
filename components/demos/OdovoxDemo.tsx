@@ -58,10 +58,9 @@ export function OdovoxDemo() {
           <span className="status-dot bg-accent mr-2 inline-block" />
           Dictation
         </p>
-        <p
-          className="text-lead mt-2 min-h-[4lh] sm:min-h-[3lh]"
-          aria-label={DICTATION}
-        >
+        <p className="text-lead mt-2 min-h-[4lh] sm:min-h-[3lh]">
+          {/* Screen readers get the whole sentence at once, not letter by letter. */}
+          <span className="sr-only">{DICTATION}</span>
           <span aria-hidden>
             “{DICTATION.slice(0, typed)}
             {step === "typing" ? <span className="caret" /> : "”"}

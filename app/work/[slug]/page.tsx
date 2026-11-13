@@ -23,7 +23,14 @@ export function generateStaticParams() {
 // The browser tab title and search-result description for each page.
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const item = project((await params).slug);
-  return item ? { title: item.title, description: item.pitch } : {};
+  if (!item) return {};
+  const address = `/work/${item.slug}`;
+  return {
+    title: item.title,
+    description: item.pitch,
+    alternates: { canonical: address },
+    openGraph: { title: item.title, description: item.pitch, url: address },
+  };
 }
 
 // One titled part of the page: heading on the left, content on the right.

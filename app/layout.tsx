@@ -11,6 +11,7 @@ import { Loader } from "@/components/Loader";
 import { Magnet } from "@/components/Magnet";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { Wipe } from "@/components/Wipe";
+import { PERSON, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // next/font downloads each typeface at build time and serves it from this
@@ -31,13 +32,25 @@ const mono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
+// What search engines and link previews are told about the site. Pages can
+// add to this (each case study sets its own title and description).
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Harshavardhanan — Software engineer & founder",
     template: "%s — Harshavardhanan",
   },
-  description:
-    "Portfolio of Harshavardhanan Rajasimhan, software engineer and founder in Chennai. He builds AI products end to end: Odovox, road-damage detection, live classrooms, RL caching and hallucination detection.",
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: "Harshavardhanan — Software engineer & founder",
+    description: SITE_DESCRIPTION,
+    url: "/",
+    images: [{ url: "/media/og.png", width: 1200, height: 630, alt: "Harsha" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/media/og.png"] },
 };
 
 export const viewport: Viewport = {
@@ -70,6 +83,10 @@ export default function RootLayout({
       <body className="text-body font-sans antialiased">
         <Loader />
         <div hidden dangerouslySetInnerHTML={{ __html: CONTRACT }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON) }}
+        />
         {/* Hidden above the window until a keyboard user tabs to it. */}
         <a
           href="#main"

@@ -10,7 +10,9 @@ ink); scrolling into a project turns the whole page into that project's colour w
 - `docs/brief.md` — the brief (v2), verbatim. Source of truth for copy, palette, type, site map.
 - `docs/superpowers/specs/2026-11-12-portfolio-inference-design.md` — decisions the brief left open.
 - `PRODUCT.md` — who the site is for. Recruiters win over spectacle.
-- `docs/superpowers/plans/` — one plan per phase. Six phases; stop for review after each.
+- `DESIGN.md` — the visual system as built: colour roles, type, layout, components, motion.
+- `docs/superpowers/plans/` — one plan per phase (all six are built).
+- `docs/lighthouse/` — measured scores and how to re-run them.
 
 ## Stack
 
@@ -25,6 +27,14 @@ react-three-fiber (the particle object only, loaded after first paint). pnpm onl
 - `pnpm e2e` — browser tests (Playwright, files named `*.e2e.ts`; builds and serves on port 3100, needs Google Chrome)
 - `pnpm typecheck` · `pnpm lint` · `pnpm build`
 - `pnpm record:hero` — re-records the hero's fallback video and still from the live particle object (needs `pnpm build && pnpm start --port 3100` running, ffmpeg and ImageMagick)
+- `pnpm record:covers` · `pnpm make:og` — re-record the project covers and case videos, and the link-preview image (same requirements)
+
+## Where things are
+
+- `content/` — every word and number on the site (`projects.ts`, `about.ts`). Text marked `draft: true` shows a draft tag.
+- `components/` — one file per part of a page; `components/demos/` holds the five demos.
+- `lib/` — small pure functions with tests (`shapes.ts`, `cache-sim.ts`, `ist.ts`, `site.ts`).
+- `NEXT_PUBLIC_SITE_URL` — set to the real domain when there is one (see `lib/site.ts`).
 
 ## Rules
 
