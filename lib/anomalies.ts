@@ -44,7 +44,3 @@ export function fix(id: AnomalyId) {
   } catch {}
   window.dispatchEvent(new Event(KEY));
 }
-
-export const countFixed = (fixed: string) =>
-  fixed.split(",").filter((id) => (ANOMALIES as readonly string[]).includes(id))
-    .length;

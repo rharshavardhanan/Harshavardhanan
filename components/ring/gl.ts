@@ -13,8 +13,8 @@
 // It knows nothing about scrolling or clicks; components/ring/Ring.tsx works
 // out where the ring is and calls draw() once per frame.
 
-import { type PanelSize, wrap } from "@/lib/ring";
-import { BACKGROUND, FRAGMENT, FULLSCREEN, TRAIL, VERTEX } from "./shaders";
+import { type RingLayout, wrap } from "@/lib/ring";
+import { FRAGMENT, FULLSCREEN, TRAIL, VERTEX } from "./shaders";
 
 export type Film = { src: string; poster: string };
 
@@ -30,13 +30,14 @@ export type RingFrame = {
   mouse: [number, number];
   /** How far the pointer moved since the last frame, in the same units. */
   move: [number, number];
-  /** The page colour behind the ring, 0..1 per channel. */
-  colour: [number, number, number];
+  /** Where the head is turned: right (+) / left, and up (+) / down, in
+   *  radians. */
+  look: [number, number];
   /** 0 to 1: the middle panel growing to fill the window. */
   expand: number;
   /** 0 to 1 for each panel: how far it has flown in from the depth. */
   intro: number[];
-  size: PanelSize;
+  layout: RingLayout;
 };
 
 export type RingGL = {
@@ -54,13 +55,12 @@ export type RingGL = {
 // The settings. Change these to change the look.
 // ---------------------------------------------------------------------------
 const LOOK = {
-  // How much each panel's sides come towards you: at rest, and how much
-  // more at full speed. (Phones' panels are narrow, so they need more.)
-  // Subtle at rest (you notice the curve, it is not a fishbowl), and capped
-  // so a fast flick cannot over-bend them. The lens is a narrow 30° (see
-  // the camera in shaders.ts), which keeps the near edges from ballooning.
-  bend: { rest: 0.18, restPhone: 0.3, speed: 0.35, speedPhone: 0.35, max: 0.45 },
-  // Corner radius, as a share of the panel's width.
+  // At full speed the circle rolls up to 1 / (1 + 0.25) of its radius:
+  // a little more curve while moving, relaxing back when it stops.
+  tighten: 0.25,
+  // How far out the panels start when they fly in, in world units.
+  flyIn: 14,
+  // Corner radius, as a share of the panel's width on screen.
   radius: 0.025,
   // Film grain (shaders.ts, applyGrain).
   grain: { amount: 0.05, size: 1.5, fps: 24, shadows: 0.6 },
@@ -163,6 +163,9 @@ type Panel = {
 };
 
 /** Sets up WebGL on the canvas. Returns null if the browser cannot. */
+/** The compile and shape helpers, shared with the smoke (smoke.ts). */
+export { build, shape };
+
 export function createRing(
   canvas: HTMLCanvasElement,
   films: Film[],
@@ -176,11 +179,9 @@ export function createRing(
   if (!gl) return null;
 
   let panelsProgram: Program;
-  let backgroundProgram: Program;
   let trailProgram: Program;
   try {
     panelsProgram = build(gl, VERTEX, FRAGMENT);
-    backgroundProgram = build(gl, FULLSCREEN, BACKGROUND);
     trailProgram = build(gl, FULLSCREEN, TRAIL);
   } catch {
     return null; // the list of projects stays as the home page
@@ -348,6 +349,7 @@ export function createRing(
   };
 
   const draw = (f: RingFrame) => {
+    if (!canvas.clientWidth) return; // not on screen yet
     resize();
     const screen = [canvas.clientWidth, canvas.clientHeight];
 
@@ -374,20 +376,11 @@ export function createRing(
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     newest = 1 - newest;
 
-    // --- 2. The background ----------------------------------------------
+    // --- 2. The panels (over a clear canvas: the smoke shows through) ---
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(backgroundProgram.program);
-    {
-      const at = backgroundProgram.at;
-      gl.uniform3f(at("uColour"), f.colour[0], f.colour[1], f.colour[2]);
-      gl.uniform2f(at("uScreenPx"), canvas.width, canvas.height);
-      gl.uniform1f(at("uTime"), f.time);
-      grain(at);
-    }
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-    // --- 3. The panels --------------------------------------------------
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(panelsProgram.program);
@@ -397,19 +390,16 @@ export function createRing(
     const at = panelsProgram.at;
     gl.uniform1i(at("uTrail"), 1);
     gl.uniform1i(at("uImage"), 0);
-    gl.uniform2f(at("uScreen"), screen[0], screen[1]);
+    const l = f.layout;
     gl.uniform2f(at("uScreenPx"), canvas.width, canvas.height);
-    gl.uniform1f(at("uVertical"), f.size.vertical ? 1 : 0);
-    const bend = LOOK.bend;
-    gl.uniform1f(
-      at("uBend"),
-      Math.min(
-        bend.max,
-        phone
-          ? bend.restPhone + f.speed * bend.speedPhone
-          : bend.rest + f.speed * bend.speed,
-      ),
-    );
+    gl.uniform1f(at("uVertical"), l.vertical ? 1 : 0);
+    gl.uniform1f(at("uRadius"), l.radius);
+    gl.uniform1f(at("uTighten"), 1 + f.speed * LOOK.tighten);
+    gl.uniform2f(at("uPanel"), l.along, l.across);
+    gl.uniform1f(at("uCamera"), l.camera);
+    gl.uniform2f(at("uTan"), l.tanX, l.tanY);
+    gl.uniform1f(at("uYaw"), f.look[0]);
+    gl.uniform1f(at("uPitch"), f.look[1]);
     gl.uniform1f(at("uSpeed"), phone ? f.speed * 0.5 : f.speed);
     gl.uniform1f(at("uTime"), f.time);
     gl.uniform1f(at("uFluidShift"), LOOK.trail.fluidShift);
@@ -417,7 +407,8 @@ export function createRing(
     grain(at);
 
     const n = films.length;
-    const { w, h, step } = f.size;
+    // The front panel's box on screen, in pixels, and its shape.
+    const { w, h } = l.hit;
     // Furthest first, so the middle panel is drawn last, on top.
     const order = panels
       .map((_, index) => index)
@@ -434,6 +425,8 @@ export function createRing(
       const intro = f.intro[index] ?? 1;
       const opacity = intro * (index === middle ? 1 : 1 - f.expand);
       if (opacity <= 0.001) continue;
+      // Far round the circle, behind you: nothing to draw.
+      if (Math.abs(place * l.step) - l.halfAngle > 1.7) continue;
 
       const video = panel.video;
       if (video && wanted.includes(index) && video.readyState >= 2) {
@@ -446,22 +439,27 @@ export function createRing(
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, panel.texture);
 
-      // Cover: crop the picture to the panel's current shape.
+      // Cover: crop the picture to the panel's own shape (width ÷ height,
+      // as built, before the curve), turning into the window's as it opens.
+      const built = l.vertical ? l.across / l.along : l.along / l.across;
+      const box = built + (screen[0] / screen[1] - built) * expand;
       const width = w + (screen[0] - w) * expand;
-      const height = h + (screen[1] - h) * expand;
-      const box = width / height;
+      const height = width / box;
       gl.uniform2f(
         at("uCover"),
         panel.aspect > box ? box / panel.aspect : 1,
         panel.aspect > box ? 1 : panel.aspect / box,
       );
-      gl.uniform2f(at("uSize"), w, h);
       gl.uniform2f(at("uBox"), width, height);
-      gl.uniform1f(at("uRadius"), LOOK.radius * w * (1 - expand));
-      gl.uniform1f(at("uAlong"), place * step);
+      gl.uniform1f(
+        at("uCorner"),
+        LOOK.radius * (l.vertical ? h : w) * (1 - expand),
+      );
+      // Its angle around the circle: its place (in panels) times the step.
+      gl.uniform1f(at("uAngle"), place * l.step);
       gl.uniform1f(at("uExpand"), expand);
-      gl.uniform1f(at("uDepth"), Math.pow(1 - intro, 3) * 1400);
-      gl.uniform1f(at("uFocus"), Math.max(0, 1 - Math.abs(place)));
+      gl.uniform1f(at("uDepth"), Math.pow(1 - intro, 3) * LOOK.flyIn);
+      gl.uniform1f(at("uSide"), Math.abs(place));
       gl.uniform1f(at("uOpacity"), opacity);
       gl.drawElements(
         gl.TRIANGLES,
@@ -496,7 +494,7 @@ export function createRing(
         gl.deleteVertexArray(vao);
         buffers.forEach((buffer) => gl.deleteBuffer(buffer));
       }
-      for (const p of [panelsProgram, backgroundProgram, trailProgram]) {
+      for (const p of [panelsProgram, trailProgram]) {
         gl.deleteProgram(p.program);
       }
     },

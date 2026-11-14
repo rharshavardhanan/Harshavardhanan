@@ -2,9 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  ANOMALIES,
   type AnomalyId,
-  countFixed,
   fix,
   getFixed,
   getFixedOnServer,
@@ -29,15 +27,5 @@ export function Anomaly({ id }: { id: AnomalyId }) {
       <i />
       <i />
     </button>
-  );
-}
-
-// The footer's running total.
-export function AnomalyCount() {
-  const fixed = useSyncExternalStore(subscribe, getFixed, getFixedOnServer);
-  return (
-    <span>
-      anomalies resolved {countFixed(fixed)} / {ANOMALIES.length}
-    </span>
   );
 }

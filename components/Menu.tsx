@@ -10,7 +10,6 @@ import {
   ViewTransition,
 } from "react";
 import { projects, type Slug } from "@/content/projects";
-import { AnomalyCount } from "./Anomaly";
 import { Sound } from "./Sound";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -233,77 +232,60 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
             </ol>
           </nav>
 
-          {/* The pointed-at project: its poster, its line, its role and year. */}
-          <div aria-hidden className="menu-preview">
-            <div className="menu-frame">
-              {primed &&
-                projects.map((project) => {
-                  const poster = (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={posters[project.slug]}
-                      alt=""
-                      className="menu-poster"
-                      data-on={project.slug === shown}
-                    />
-                  );
-                  // Only the chosen poster carries the film's name, and only
-                  // while leaving, so no two things on the page share it.
-                  return leaving === project.slug ? (
-                    <ViewTransition
-                      key={project.slug}
-                      name={`film-${project.slug}`}
-                      share="film-morph"
-                      default="none"
-                    >
-                      {poster}
-                    </ViewTransition>
-                  ) : (
-                    <Fragment key={project.slug}>{poster}</Fragment>
-                  );
-                })}
+          <div className="menu-side">
+            {/* The other pages, large and close at hand. */}
+            <nav aria-label="Pages" className="menu-pages">
+              <Link href="/">Home</Link>
+              <Link href="/about">About</Link>
+              <a href="/contact" onClick={inquire}>
+                Inquire
+              </a>
+              <a href="/resume.pdf">Résumé ↗</a>
+            </nav>
+
+            {/* The pointed-at project: its poster, its line, its role and year. */}
+            <div aria-hidden className="menu-preview">
+              <div className="menu-frame">
+                {primed &&
+                  projects.map((project) => {
+                    const poster = (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={posters[project.slug]}
+                        alt=""
+                        className="menu-poster"
+                        data-on={project.slug === shown}
+                      />
+                    );
+                    // Only the chosen poster carries the film's name, and only
+                    // while leaving, so no two things on the page share it.
+                    return leaving === project.slug ? (
+                      <ViewTransition
+                        key={project.slug}
+                        name={`film-${project.slug}`}
+                        share="film-morph"
+                        default="none"
+                      >
+                        {poster}
+                      </ViewTransition>
+                    ) : (
+                      <Fragment key={project.slug}>{poster}</Fragment>
+                    );
+                  })}
+              </div>
+              <p className="menu-quote mt-5">{preview.quote}</p>
+              <p className="label text-muted mt-2">
+                {[preview.role, preview.year].filter(Boolean).join(" · ")}
+              </p>
             </div>
-            <p className="menu-quote mt-5">{preview.quote}</p>
-            <p className="label text-muted mt-2">
-              {[preview.role, preview.year].filter(Boolean).join(" · ")}
-            </p>
           </div>
         </div>
 
-        <div className="menu-foot">
-          <ul className="flex flex-wrap gap-x-8 gap-y-1">
-            <li>
-              <Link href="/" className="inline-block py-2">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="inline-block py-2">
-                About
-              </Link>
-            </li>
-            <li>
-              <a
-                href="/contact"
-                className="inline-block py-2"
-                onClick={inquire}
-              >
-                Inquire
-              </a>
-            </li>
-            <li>
-              <a href="/resume.pdf" className="inline-block py-2">
-                Résumé ↗
-              </a>
-            </li>
-          </ul>
-          <p className="text-muted flex flex-wrap items-center gap-x-6">
-            <span className="label sm:hidden">
-              <Sound />
-            </span>
-            <AnomalyCount />
-            <span className="max-sm:hidden">© 2026 Harsha</span>
-          </p>
+        <div className="menu-foot label text-muted">
+          <span className="sm:hidden">
+            <Sound />
+          </span>
+          <span>© 2026 Harsha</span>
         </div>
       </dialog>
     </>

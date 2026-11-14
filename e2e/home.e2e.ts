@@ -32,14 +32,10 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
   );
 });
 
-test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
+test("Anomaly hunt: a fixed glitch stays fixed", async ({ page }) => {
   await page.goto("/about");
   await page.getByRole("button", { name: "Anomaly: fix it" }).click();
-  // The count is in the menu (closed, so found by its label, not its role).
-  const count = page.locator('dialog[aria-label="Site menu"]');
-  await expect(count).toContainText("anomalies resolved 1 / 8");
   await page.reload();
-  await expect(count).toContainText("anomalies resolved 1 / 8");
   await expect(page.getByRole("button", { name: "Anomaly fixed" })).toHaveCount(
     1,
   );
@@ -84,14 +80,24 @@ test("Page wipe: a sheet in the next page's colour covers the change", async ({
   await expect(wipe).not.toHaveAttribute("data-state", /.+/, { timeout: 4000 });
 });
 
-test("The menu carries the credit and the anomaly count", async ({
+test("The menu carries the credit and the other pages, large", async ({
   page,
 }) => {
   await page.goto("/work/kattral");
   await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
   const menu = page.getByRole("dialog", { name: "Site menu" });
   await expect(menu).toContainText("© 2026 Harsha");
-  await expect(menu).toContainText("anomalies resolved 0 / 8");
+  await expect(menu).not.toContainText("anomalies resolved");
+  const pages = menu.getByRole("navigation", { name: "Pages" });
+  for (const name of ["Home", "About", "Inquire", "Résumé ↗"]) {
+    const link = pages.getByRole("link", { name });
+    await expect(link).toBeVisible();
+    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  // Inside the menu the ordinary cursor shows (the custom dot is under it).
+  expect(
+    await menu.evaluate((el) => getComputedStyle(el).cursor),
+  ).not.toBe("none");
 });
 
 test("Sound is off until switched on", async ({ page }) => {

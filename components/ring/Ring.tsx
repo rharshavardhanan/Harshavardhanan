@@ -11,10 +11,11 @@ import {
 } from "react";
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
-import { ease, nearest, type PanelSize, panelSize, wrap } from "@/lib/ring";
+import { ease, nearest, type RingLayout, ringLayout, wrap } from "@/lib/ring";
 import { tick as soundTick } from "@/lib/sound";
 import { FILM_TIME } from "../Film";
 import type { RingGL } from "./gl";
+import type { Smoke } from "./smoke";
 
 export type RingItem = {
   slug: Slug;
@@ -61,10 +62,11 @@ export function Ring({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const backdrop = useRef<HTMLCanvasElement>(null); // the smoke
   const dragged = useRef(false); // so the end of a drag does not also click
   const [on, setOn] = useState(false);
   const [centre, setCentre] = useState(0);
-  const [size, setSize] = useState<PanelSize | null>(null);
+  const [size, setSize] = useState<RingLayout | null>(null);
   // The project being opened: only then does the canvas carry its film's
   // name (two things on a page must never share one).
   const [opening, setOpening] = useState<string | null>(null);
@@ -87,13 +89,20 @@ export function Ring({
     const links = () =>
       Array.from(el.querySelectorAll<HTMLAnchorElement>("[data-ring-link]"));
     let ring: RingGL | null = null;
+    let smoke: Smoke | null = null;
     let frame = 0;
     let cancelled = false;
     let detach = () => {};
 
-    const start = (createRing: typeof import("./gl").createRing) => {
-      let dims = panelSize(window.innerWidth, window.innerHeight);
+    const start = (
+      createRing: typeof import("./gl").createRing,
+      createSmoke: typeof import("./smoke").createSmoke,
+    ) => {
+      let dims = ringLayout(window.innerWidth, window.innerHeight);
       ring = createRing(canvas.current!, items, dims.vertical);
+      // The smoke behind is a nicety: if it cannot start, the ring still runs
+      // over the plain dark background.
+      smoke = createSmoke(backdrop.current!);
       if (!ring) {
         delete html.dataset.ring; // no WebGL2: the list stays as it is
         return;
@@ -109,8 +118,10 @@ export function Ring({
         // far it has moved since the last frame: the cursor's trail.
         mouse: [0.5, 0.5] as [number, number],
         move: [0, 0] as [number, number],
-        // The page colour behind the ring, fading towards the middle project's.
-        colour: [0, 0, 0] as [number, number, number],
+        // The head, turned a little towards the pointer (yaw, pitch), and the
+        // smoke's drift after it: both eased, so they lag gently behind.
+        look: [0, 0] as [number, number],
+        drift: [0, 0] as [number, number],
         quarter: 0, // the last quarter-panel mark passed, for the tick sound
         lastInput: 0,
         dragging: false,
@@ -167,24 +178,15 @@ export function Ring({
         s.lastInput = performance.now();
       };
 
-      // Each project's page colour, read from its link in the list (each
-      // carries its project's theme), as 0..1 numbers for the shader.
-      const colours = links().map((link) => {
-        const [r, g, b] = getComputedStyle(link)
-          .backgroundColor.match(/\d+/g)!
-          .map(Number);
-        return [r / 255, g / 255, b / 255];
-      });
-
       // A new project faces you: name it, colour the page, play its film.
       const show = (index: number) => {
         if (cancelled) return; // the page has moved on
         s.centre = index;
         setCentre(index);
         html.dataset.active = items[index].slug;
-        // On phones the next and previous films slide under the frame's
-        // corners, so the frame there is paper on a dark band ("media").
-        el.dataset.tone = dims.vertical ? "media" : items[index].tone;
+        // The frame is paper over the dark smoke; on phones, where the next
+        // and previous films slide under its corners, on a dark band too.
+        el.dataset.tone = dims.vertical ? "media" : "dark";
         window.dispatchEvent(new Event("tone"));
         // The very first films wait until the panels have landed (posters
         // show until then), so they never slow down the first screen.
@@ -218,12 +220,17 @@ export function Ring({
         if (Math.abs(s.target - s.offset) < 0.0005) s.offset = s.target;
         const velocity = dt ? Math.abs(s.offset - before) / dt : 0;
         s.speed = ease(s.speed, Math.min(1, velocity / 4), dt, 0.2);
-        // The background's colour glides towards the middle project's.
-        const goal = colours[nearest(s.offset, n)];
-        s.colour = s.colour.map((c, i) => ease(c, goal[i], dt, 0.06)) as [
-          number,
-          number,
-          number,
+        // Turning the head: up to 3° left or right and 1.5° up or down,
+        // towards the pointer, easing 5% of the way each sixtieth of a second.
+        const degrees = Math.PI / 180;
+        const toward = [(s.mouse[0] - 0.5) * 2, (s.mouse[1] - 0.5) * 2];
+        s.look = [
+          ease(s.look[0], toward[0] * 3 * degrees, dt, 0.05),
+          ease(s.look[1], toward[1] * 1.5 * degrees, dt, 0.05),
+        ];
+        s.drift = [
+          ease(s.drift[0], s.mouse[0] - 0.5, dt, 0.05),
+          ease(s.drift[1], s.mouse[1] - 0.5, dt, 0.05),
         ];
 
         // A soft tick every quarter of a panel the ring turns (if sound is on).
@@ -266,10 +273,15 @@ export function Ring({
           time: (now - s.born) / 1000,
           mouse: s.mouse,
           move: s.move,
-          colour: s.colour,
+          look: s.look,
           expand: s.expand,
           intro,
-          size: dims,
+          layout: dims,
+        });
+        smoke?.draw({
+          time: (now - s.born) / 1000,
+          speed: s.speed,
+          mouse: s.drift,
         });
         s.move = [0, 0]; // painted into the trail; start counting again
       };
@@ -287,7 +299,7 @@ export function Ring({
             : event.deltaX;
         touched();
         s.target +=
-          ((event.deltaMode === 1 ? delta * 16 : delta) / dims.step) * 1.5;
+          ((event.deltaMode === 1 ? delta * 16 : delta) / dims.pxPerPanel) * 1.5;
       };
 
       const onDown = (event: PointerEvent) => {
@@ -311,7 +323,7 @@ export function Ring({
         const moved = along(event) - s.dragAt;
         if (Math.abs(moved) > 6) dragged.current = true;
         touched();
-        s.target = s.dragFrom - moved / dims.step;
+        s.target = s.dragFrom - moved / dims.pxPerPanel;
       };
 
       const onUp = (event: PointerEvent) => {
@@ -324,7 +336,7 @@ export function Ring({
           const fromMiddle =
             along(event) -
             (dims.vertical ? window.innerHeight : window.innerWidth) / 2;
-          const half = (dims.vertical ? dims.h : dims.w) / 2;
+          const half = (dims.vertical ? dims.hit.h : dims.hit.w) / 2;
           if (Math.abs(fromMiddle) > half) {
             s.anchor = s.target = Math.round(s.target) + Math.sign(fromMiddle);
           }
@@ -380,7 +392,7 @@ export function Ring({
       };
 
       const onResize = () => {
-        dims = panelSize(window.innerWidth, window.innerHeight);
+        dims = ringLayout(window.innerWidth, window.innerHeight);
         setSize(dims);
       };
 
@@ -410,8 +422,7 @@ export function Ring({
         document.removeEventListener("visibilitychange", onVisibility);
       };
 
-      // Start in the first project's colour, with no tick for where we start.
-      s.colour = [...colours[nearest(s.offset, n)]] as [number, number, number];
+      // No tick for where we start.
       s.quarter = Math.round(s.offset * 4);
       setSize(dims);
       setOn(true);
@@ -420,9 +431,9 @@ export function Ring({
     };
 
     const cancelIdle = afterLoad(() => {
-      import("./gl")
-        .then(({ createRing }) => {
-          if (!cancelled) start(createRing);
+      Promise.all([import("./gl"), import("./smoke")])
+        .then(([{ createRing }, { createSmoke }]) => {
+          if (!cancelled) start(createRing, createSmoke);
         })
         .catch(() => delete html.dataset.ring);
     });
@@ -433,6 +444,7 @@ export function Ring({
       cancelAnimationFrame(frame);
       detach();
       ring?.destroy();
+      smoke?.destroy();
       delete html.dataset.active;
       // (Next.js may keep this page alive for the Back button and run this
       // effect again later, so leave the state ready for a fresh start.)
@@ -456,6 +468,7 @@ export function Ring({
       data-lenis-prevent
     >
       {children}
+      <canvas ref={backdrop} aria-hidden className="bg-canvas" />
       <ViewTransition
         name={opening ? `film-${opening}` : undefined}
         share="film-morph"
@@ -475,7 +488,7 @@ export function Ring({
           tabIndex={-1}
           data-cursor="View"
           className="ring-hit"
-          style={{ width: size.w, height: size.h }}
+          style={{ width: size.hit.w, height: size.hit.h }}
         >
           {item.ai && <span className="label ring-ai">AI-generated film</span>}
         </Link>

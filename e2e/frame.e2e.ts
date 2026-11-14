@@ -77,7 +77,9 @@ test("MENU opens the index of all seven projects, with posters", async ({
   await corners(page).getByRole("link", { name: "Menu" }).click();
   const menu = page.getByRole("dialog", { name: "Site menu" });
   await expect(menu).toBeVisible();
-  const projects = menu.getByRole("navigation").getByRole("link");
+  const projects = menu
+    .getByRole("navigation", { name: "Projects" })
+    .getByRole("link");
   await expect(projects).toHaveCount(7);
   // You are on Odovox: it is marked, and the preview starts on it.
   await expect(projects.first()).toHaveAttribute("aria-current", "page");

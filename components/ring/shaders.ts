@@ -1,16 +1,17 @@
-// The small programs the graphics card runs to draw the home ring. They are
+// The small programs the graphics card runs to draw the home page. They are
 // written in GLSL (the language of WebGL). Every "uniform" is a value sent
-// from components/ring/gl.ts: the same for every pixel, changeable any time
-// without touching the shader. Change the numbers there, or the maths here,
-// to change the look.
+// from JavaScript: the same for every pixel, changeable any time without
+// touching the shader. The settings live in components/ring/gl.ts (LOOK) and
+// components/ring/smoke.ts.
 //
-// Each frame is drawn in three passes:
-//   1. TRAIL       the cursor's fading trail, painted into a small picture
-//   2. BACKGROUND  slow moving texture across the whole window
-//   3. VERTEX + FRAGMENT  the seven film panels, warped by the trail
+// Two canvases, one behind the other:
+//   SMOKE (its own canvas, smoke.ts)  oily charcoal smoke over the whole window
+//   the ring (gl.ts), drawn in two passes each frame:
+//     1. TRAIL             the cursor's fading trail, painted into a small picture
+//     2. VERTEX + FRAGMENT the seven film panels, on a circle around you
 
 // ---------------------------------------------------------------------------
-// FILM GRAIN, shared by the background and the panels.
+// FILM GRAIN, shared by the smoke and the panels.
 // ---------------------------------------------------------------------------
 const GRAIN = /* glsl */ `
 uniform float uGrainAmount;   // how strong the grain is
@@ -49,8 +50,8 @@ vec3 applyGrain(vec3 color) {
 `;
 
 // ---------------------------------------------------------------------------
-// FULL-SCREEN VERTEX SHADER, for the trail and the background: one triangle
-// big enough to cover the window, with vUv from 0 (bottom left) to 1.
+// FULL-SCREEN VERTEX SHADER, for the trail and the smoke: one triangle big
+// enough to cover the window, with vUv from 0 (bottom left) to 1.
 // ---------------------------------------------------------------------------
 export const FULLSCREEN = /* glsl */ `#version 300 es
 in vec2 aPosition;
@@ -58,6 +59,77 @@ out vec2 vUv;
 void main() {
   vUv = aPosition * 0.5 + 0.5;
   gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+`;
+
+// ---------------------------------------------------------------------------
+// SMOKE: near-black with soft charcoal shapes that slowly flow and fold into
+// each other, a faint lighter halo behind the middle panel, and grain.
+// ---------------------------------------------------------------------------
+export const SMOKE = /* glsl */ `#version 300 es
+precision highp float;
+
+uniform vec2  uRes;         // the canvas's size in pixels
+uniform float uTime;        // seconds
+uniform float uDistortion;  // how "oily" the folding is (2, plus the ring's speed × 1.5)
+uniform vec2  uMouse;       // the pointer, -0.5..0.5, eased: the smoke leans after it
+${GRAIN}
+
+// Smooth random "value noise": random values on a grid, blended smoothly
+// between the grid's points.
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f); // a smooth curve, so the blending has no hard creases
+  float a = hash(mod(i, 289.0));
+  float b = hash(mod(i + vec2(1.0, 0.0), 289.0));
+  float c = hash(mod(i + vec2(0.0, 1.0), 289.0));
+  float d = hash(mod(i + vec2(1.0, 1.0), 289.0));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// fbm: five layers of noise, each twice as fine and half as strong, which
+// gives natural, cloudy detail.
+float fbm(vec2 p) {
+  float v = 0.0, amp = 0.5;
+  mat2 rot = mat2(0.8, -0.6, 0.6, 0.8); // turn each layer, so no grid lines show
+  for (int i = 0; i < 5; i++) {
+    v += amp * noise(p);
+    p = rot * p * 2.0 + vec2(13.7, 7.1);  // finer, turned and shifted
+    amp *= 0.5;
+  }
+  return v;
+}
+
+out vec4 colour;
+
+void main() {
+  // This pixel's place, from the middle of the window, in square units:
+  // about -0.8..0.8 across and -0.5..0.5 up on a wide window.
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  vec2 p = uv * 1.6 + uMouse * 0.12;  // the smoke leans a little after the pointer
+  float t = uTime * 0.035;            // very slow
+
+  // Domain warping: the noise is read through two layers of itself. Each
+  // layer bends where the next one is read, so the shapes flow and fold into
+  // each other like oil, instead of just sliding.
+  vec2 q = vec2(fbm(p + vec2(0.0, t)),
+                fbm(p + vec2(5.2, 1.3) - t));
+  vec2 r = vec2(fbm(p + uDistortion * q + vec2(1.7, 9.2) + 0.15 * t),
+                fbm(p + uDistortion * q + vec2(8.3, 2.8) - 0.12 * t));
+  float f = fbm(p + uDistortion * r);
+
+  // Near-black, rising to soft charcoal where the smoke is thick.
+  vec3 c = mix(vec3(0.03, 0.03, 0.034), vec3(0.24, 0.24, 0.25),
+               smoothstep(0.25, 0.8, f));
+  // A faint sheen along the folds, where the warping is strongest.
+  c += vec3(0.035) * smoothstep(0.55, 1.1, length(r)) * f;
+
+  // A faint lighter halo behind the middle panel.
+  c += vec3(0.07) * exp(-dot(uv, uv) * 3.5);
+  // And darker towards the window's corners.
+  c *= 1.0 - 0.45 * dot(uv, uv);
+
+  colour = vec4(applyGrain(c), 1.0);
 }
 `;
 
@@ -106,73 +178,31 @@ void main() {
 `;
 
 // ---------------------------------------------------------------------------
-// 2. BACKGROUND: the page colour behind the ring, never quite still. Slow
-// noise, read through more noise so it drifts like smoke instead of sliding,
-// lightens and darkens the colour by up to 8%, with the same grain on top.
-// ---------------------------------------------------------------------------
-export const BACKGROUND = /* glsl */ `#version 300 es
-precision highp float;
-in vec2 vUv;
-
-uniform vec3 uColour;    // the page colour: the middle project's background, 0..1
-uniform vec2 uScreenPx;  // the canvas's size in pixels
-uniform float uTime;     // seconds since the ring started
-${GRAIN}
-
-// Smooth noise: random values at whole-number points, blended in between.
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f); // ease the blend, so no creases
-  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-}
-
-// Four layers of noise, each twice as fine and half as strong: large soft
-// shapes with finer detail inside them.
-float fbm(vec2 p) {
-  float value = 0.0;
-  float weight = 0.5;
-  for (int i = 0; i < 4; i++) {
-    value += weight * noise(p);
-    p *= 2.0;
-    weight *= 0.5;
-  }
-  return value;
-}
-
-out vec4 colour;
-
-void main() {
-  vec2 p = gl_FragCoord.xy / uScreenPx.y * 2.2; // square cells, about two per window height
-  float t = uTime * 0.05;                       // very slow
-  float n = fbm(p + vec2(fbm(p + t), fbm(p - t + 3.7)));
-  vec3 c = uColour * (0.92 + 0.16 * n);         // at most 8% lighter or darker
-  colour = vec4(applyGrain(c), 1.0);
-}
-`;
-
-// ---------------------------------------------------------------------------
-// 3a. PANEL VERTEX SHADER: where each point of a film panel lands on the
-// screen. A panel is a flat grid of 48 × 24 little squares; this runs once for
-// every corner of every square, so the panel can be bent smoothly.
+// 2a. PANEL VERTEX SHADER: where each point of a film panel goes. You stand
+// near the middle of a circle; the panels stand on its rim, facing you. A
+// panel is a flat grid of 48 × 24 little squares; this runs once for every
+// corner of every square and wraps it onto the circle, so the panel curves
+// exactly with the room.
 // ---------------------------------------------------------------------------
 export const VERTEX = /* glsl */ `#version 300 es
 
 // This point's place on the flat panel: -0.5 to 0.5 across and up.
 in vec2 aPosition;
 
-uniform vec2 uScreen;    // the window's width and height, in pixels
-uniform vec2 uSize;      // this panel's width and height, in pixels
-uniform float uAlong;    // how far this panel's centre is from the middle of
-                         // the window along the ring, in pixels
-uniform float uVertical; // 0: the ring runs sideways (desktop); 1: downwards (phone)
-uniform float uBend;     // how strongly each panel curves towards you at its
-                         // sides; it grows with speed, so the panels bow as
-                         // they rush past
-uniform float uExpand;   // 0: in the ring; 1: grown flat to fill the window
+uniform float uAngle;    // this panel's middle, as an angle around the circle
+                         // (0 = straight ahead; positive = to your right, or
+                         // below you on a phone)
+uniform float uRadius;   // the circle's radius, at rest
+uniform float uTighten;  // speed rolls the circle tighter: 1 at rest, up to 1.25
+uniform vec2 uPanel;     // the panel's size: along the ring (its arc) and across
+uniform float uVertical; // 0: the ring runs sideways (desktop); 1: up and down (phone)
+uniform float uCamera;   // how far behind the circle's middle the camera stands
+uniform vec2 uTan;       // tan of half the lens's view, across (x) and up (y)
+uniform float uYaw;      // the head turned right (+) or left, in radians
+uniform float uPitch;    // the head turned up (+) or down
+uniform float uDepth;    // how far out beyond the rim the panel is (the fly-in)
+uniform float uExpand;   // 0: on the ring; 1: flat across the whole window
                          // (when you open a project)
-uniform float uDepth;    // pixels pushed back into the screen (the fly-in)
 
 // Passed on to the fragment shader: where on the picture this point is.
 out vec2 vUv;
@@ -180,32 +210,54 @@ out vec2 vUv;
 void main() {
   vUv = aPosition + 0.5;
 
-  // The panel's size, growing to the window's size as it expands.
-  vec2 size = mix(uSize, uScreen, uExpand);
-  vec2 p = aPosition * size;
+  // How far this point is from the panel's middle along the ring, and across
+  // it. (On a phone the ring runs downwards, so "along" is down the screen.)
+  float along = mix(aPosition.x, -aPosition.y, uVertical) * uPanel.x;
+  float across = mix(aPosition.y, aPosition.x, uVertical) * uPanel.y;
 
-  // Slide the panel to its place on the ring: right, or down on a phone
-  // (screen y points up, so "down" is minus).
-  float slide = uAlong * (1.0 - uExpand);
-  p += mix(vec2(slide, 0.0), vec2(0.0, -slide), uVertical);
+  // This point's own angle around the circle. An arc of length L on a
+  // circle of radius R spans L / R radians, so moving \`along\` from the
+  // panel's middle adds along / R to the panel's angle.
+  // Speed rolls the circle tighter: a smaller radius, with the angles scaled
+  // up to match, so every panel and gap keeps its length but curves more.
+  float radius = uRadius / uTighten + uDepth;
+  float angle = (uAngle + along / uRadius) * uTighten;
 
-  // The curve, like a cinema screen: each panel's sides come towards you
-  // and its middle stays back. x runs from -1 at the panel's left edge to +1
-  // at its right; x * x is 0 in the middle and 1 at both edges, so only the
-  // sides move. (z grows towards the camera.) Flat again when it expands.
-  float x = aPosition.x * 2.0;
-  float z = uBend * (1.0 - uExpand) * x * x * size.x * 0.5 - uDepth;
+  // Onto the circle. Think of a clock seen from above with you at its
+  // middle: sin(angle) says how far to the side the point is, cos(angle)
+  // how far ahead. At angle 0: 0 to the side, the full radius ahead.
+  float side = radius * sin(angle);
+  float ahead = radius * cos(angle);
 
-  // Perspective: a camera with a 30° view, placed so a point at z = 0 shows
-  // at its true size in pixels. Nearer things (z > 0) come out bigger, which
-  // is what makes the curved sides look taller; further ones smaller.
-  float camera = uScreen.y * 1.866;
-  gl_Position = vec4(p / (uScreen * 0.5), 0.0, (camera - z) / camera);
+  // Into the camera's view: x to the right, y up, z towards you, so
+  // "ahead" is minus z. The camera stands uCamera behind the middle.
+  vec3 p = mix(vec3(side, across, -ahead), vec3(across, -side, -ahead), uVertical);
+  p.z -= uCamera;
+
+  // Turning the head: the room turns the other way, a little.
+  float cy = cos(uYaw), sy = sin(uYaw);
+  p = vec3(cy * p.x + sy * p.z, p.y, -sy * p.x + cy * p.z);
+  float cp = cos(uPitch), sp = sin(uPitch);
+  p = vec3(p.x, cp * p.y + sp * p.z, -sp * p.y + cp * p.z);
+
+  // The lens: everything is divided by its distance (w = -z, done by the
+  // graphics card), and scaled so the edges of the view land on the edges
+  // of the screen. Nearer things come out bigger: the sides of each panel,
+  // closer to you on the circle, look taller than its middle.
+  vec4 clip = vec4(p.x / uTan.x, p.y / uTan.y, 0.0, -p.z);
+
+  if (uExpand > 0.0) {
+    // Opening a project: blend from its place in the room to the whole window.
+    vec2 window = aPosition * 2.0;
+    gl_Position = vec4(mix(clip.xy / clip.w, window, uExpand), 0.0, 1.0);
+  } else {
+    gl_Position = clip;
+  }
 }
 `;
 
 // ---------------------------------------------------------------------------
-// 3b. PANEL FRAGMENT SHADER: the colour of each pixel of a film panel.
+// 2b. PANEL FRAGMENT SHADER: the colour of each pixel of a film panel.
 // ---------------------------------------------------------------------------
 export const FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
@@ -217,15 +269,16 @@ uniform vec2 uCover;      // shrinks the picture's coordinates so it covers the
                           // panel without being squashed (like object-fit: cover)
 uniform float uVertical;  // which way the ring moves (the smear follows it)
 uniform float uSpeed;     // how fast the ring is moving: 0 still, 1 fast
-uniform float uFocus;     // 1 for the panel in the middle, 0 for the others
+uniform float uSide;      // how far round this panel is: 0 in front, 1 a
+                          // neighbour (its angle ÷ the step between panels)
 uniform float uTime;      // seconds since the ring started
 uniform float uOpacity;   // 0 to 1: fades the panel in and out
 uniform sampler2D uTrail; // the cursor's trail (pass 1)
 uniform vec2 uScreenPx;   // the canvas's size in pixels, to find this pixel in the trail
 uniform float uFluidShift; // how far the trail pushes the picture
 uniform float uRgbShift;   // how far the trail pulls red and blue apart
-uniform vec2 uBox;         // the panel's size on screen right now, in pixels
-uniform float uRadius;     // how round its corners are, in pixels
+uniform vec2 uBox;         // the panel's size on screen, in pixels (for the corners)
+uniform float uCorner;     // how round its corners are, in pixels
 ${GRAIN}
 
 out vec4 colour;
@@ -238,6 +291,14 @@ float roundedBox(vec2 p, vec2 halfSize, float r) {
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
 }
 
+// One reading of the picture, with red a little ahead and blue a little
+// behind (the RGB split).
+vec3 split(vec2 uv, vec2 by) {
+  return vec3(texture(uImage, uv + by).r,
+              texture(uImage, uv).g,
+              texture(uImage, uv - by).b);
+}
+
 void main() {
   vec2 uv = (vUv - 0.5) * uCover + 0.5;
 
@@ -247,26 +308,34 @@ void main() {
   vec2 flow = (trail.xy * 2.0 - 1.0) * trail.z;
   uv -= flow * uFluidShift;
 
-  // Speed effects, along the direction of travel:
-  //  - split: red is read a little ahead, blue a little behind (RGB split),
-  //    and the trail splits them too;
-  //  - smear: five readings spread out and averaged (motion blur).
+  // Speed: the colours split and the picture smears along the direction of
+  // travel. The trail splits the colours too.
   vec2 dir = mix(vec2(1.0, 0.0), vec2(0.0, 1.0), uVertical);
-  vec2 split = dir * uSpeed * 0.01 + flow * uRgbShift;
+  vec2 by = dir * uSpeed * 0.01 + flow * uRgbShift;
   vec2 smear = dir * uSpeed * 0.004;
   vec3 c = vec3(0.0);
+  float readings = 0.0;
   for (int i = -2; i <= 2; i++) {
-    vec2 o = smear * float(i);
-    c.r += texture(uImage, uv + o + split).r;
-    c.g += texture(uImage, uv + o).g;
-    c.b += texture(uImage, uv + o - split).b;
+    c += split(uv + smear * float(i), by);
+    readings += 1.0;
   }
-  c /= 5.0;
 
-  // Panels away from the middle: less colour and darker.
+  // Depth: the further round the room a panel is, the softer, greyer and
+  // darker it gets, so the one in front is always the sharpest, brightest
+  // thing. (Blur: six extra readings in a small circle around this pixel.)
+  float d = clamp(uSide, 0.0, 1.0);
+  float blur = d * 0.008;
+  if (blur > 0.0) {
+    for (int k = 0; k < 6; k++) {
+      float a = float(k) * 1.0472; // 60° apart
+      c += split(uv + vec2(cos(a), sin(a)) * blur, by);
+      readings += 1.0;
+    }
+  }
+  c /= readings;
   float grey = dot(c, vec3(0.299, 0.587, 0.114));
-  c = mix(vec3(grey), c, 0.35 + 0.65 * uFocus);
-  c *= 0.5 + 0.5 * uFocus;
+  c = mix(c, vec3(grey), d * 0.5);  // less colour
+  c *= mix(1.0, 0.45, d);           // darker
 
   // Darker towards the edges: down to 75% at the corners, so the picture
   // glows from its middle like a lit cinema screen.
@@ -278,8 +347,8 @@ void main() {
   // Rounded corners: fully there inside, fading out over about one pixel at
   // the edge (fwidth: how much d changes from one pixel to the next), so the
   // corners are smooth rather than jagged.
-  float d = roundedBox((vUv - 0.5) * uBox, uBox * 0.5, uRadius);
-  float alpha = 1.0 - smoothstep(0.0, fwidth(d) * 1.5, d);
+  float edge = roundedBox((vUv - 0.5) * uBox, uBox * 0.5, uCorner);
+  float alpha = 1.0 - smoothstep(0.0, fwidth(edge) * 1.5, edge);
 
   // Colour times opacity: the canvas expects "premultiplied" colour.
   float a = uOpacity * alpha;
