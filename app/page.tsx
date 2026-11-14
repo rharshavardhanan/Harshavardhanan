@@ -6,7 +6,6 @@ import { Kattral } from "@/components/chapters/Kattral";
 import { Odovox } from "@/components/chapters/Odovox";
 import { Road } from "@/components/chapters/Road";
 import { Scp } from "@/components/chapters/Scp";
-import { Contact } from "@/components/Contact";
 import { Hero } from "@/components/Hero";
 import { Motion } from "@/components/Motion";
 import { ParticleStage } from "@/components/ParticleStage";
@@ -27,7 +26,7 @@ const CHAPTERS = {
   hallucination: Hallucination,
 };
 
-export default function Home() {
+export default async function Home() {
   return (
     <>
       <ThemeWatcher />
@@ -37,7 +36,7 @@ export default function Home() {
       <div>
         <ParticleStage />
         <Hero />
-        <WorkIndex media={previews()} />
+        <WorkIndex media={await previews()} />
         {projects.map((project, index) => {
           // Each project has its own chapter layout, in components/chapters/.
           const Chapter = CHAPTERS[project.slug];
@@ -64,13 +63,12 @@ export default function Home() {
         >
           More work
         </h2>
-        <p className="label text-muted col-span-12 font-mono lg:col-span-8">
+        <p className="label text-muted col-span-12 lg:col-span-8">
           Other projects will be listed here.
         </p>
       </section>
 
       <About />
-      <Contact />
       <Motion />
     </>
   );

@@ -1,11 +1,63 @@
-import { closeSync, existsSync, openSync, readSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { Slug } from "@/content/projects";
 
-// Real screenshots and recordings live in public/media/real/ (see the
-// README.txt there for the file names). This checks, while the site is being
-// built, which of them exist. A missing one is shown as the project's particle
-// cover with a small "placeholder" label until the file is added.
+// Pictures and recordings, and which of them exist. This runs while the site
+// is being built, so a file added to public/ shows up on the next build.
+//
+//  - public/media/mood/  the AI-generated "mood films" and their posters, one
+//                        per project (see the README.txt there).
+//  - public/media/real/  real screenshots and recordings of the products.
+//  - public/media/       each project's particle recording and cover, which
+//                        stand in for anything missing.
+
+const PUBLIC = path.join(process.cwd(), "public");
+const exists = (src: string) => existsSync(path.join(PUBLIC, src));
+
+// ---------------------------------------------------------------------------
+// Mood films
+// ---------------------------------------------------------------------------
+
+export type Film = {
+  /** The video. */
+  src: string;
+  /** A still of it, shown until the video plays (and instead of it, for
+   *  visitors who asked for reduced motion). */
+  poster: string;
+  /** True for an AI-generated film, which the page then labels as such. */
+  ai: boolean;
+};
+
+// What each project's film file is called: mood-<name>.mp4 and
+// poster-<name>.avif. Mostly the project's own name; the robot project's film
+// is named after what it shows.
+const FILM_NAME: Record<Slug, string> = {
+  odovox: "odovox",
+  aftermeet: "aftermeet",
+  scp: "robot",
+  road: "road",
+  kattral: "kattral",
+  cache: "cache",
+  hallucination: "halluc",
+};
+
+/** A project's mood film, or its particle recording until there is one. */
+export function film(slug: Slug): Film {
+  const name = FILM_NAME[slug];
+  const src = `/media/mood/mood-${name}.mp4`;
+  if (exists(src)) {
+    return { src, poster: `/media/mood/poster-${name}.avif`, ai: true };
+  }
+  return {
+    src: `/media/case-${slug}.mp4`,
+    poster: `/media/cover-${slug}.avif`,
+    ai: false,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Real screens and recordings
+// ---------------------------------------------------------------------------
 
 export type Media = {
   src: string;
@@ -20,19 +72,11 @@ export type Media = {
   file: string;
 };
 
-/** Width and height of a PNG, read from its header (bytes 16 to 23). */
-function pngSize(file: string): [number, number] | null {
-  if (!file.endsWith(".png")) return null;
-  const header = Buffer.alloc(24);
-  const fd = openSync(file, "r");
-  readSync(fd, header, 0, 24, 0);
-  closeSync(fd);
-  return [header.readUInt32BE(16), header.readUInt32BE(20)];
-}
-
+/** A real file from public/media/real/, or the project's cover in its place
+ *  (with a small "placeholder" label) until the file is added. */
 export function media(file: string, slug: Slug): Media {
-  const full = path.join(process.cwd(), "public/media/real", file);
-  if (!existsSync(full)) {
+  const src = `/media/real/${file}`;
+  if (!exists(src)) {
     return {
       src: `/media/cover-${slug}.avif`,
       video: false,
@@ -41,15 +85,26 @@ export function media(file: string, slug: Slug): Media {
       file,
     };
   }
-  const size = pngSize(full);
   return {
-    src: `/media/real/${file}`,
+    src,
     video: file.endsWith(".mp4"),
-    portrait: !!size && size[1] > size[0],
-    ratio: size ? size[0] / size[1] : undefined,
+    portrait: false,
     placeholder: false,
     file,
   };
+}
+
+/** The same, plus its shape: a PNG's width and height are read from its
+ *  header. "use cache" makes Next.js read it once, while building: reading a
+ *  file directly inside a page made the dev server report an error, because a
+ *  library it loads stamps the time whenever a file is closed. */
+export async function shapedMedia(file: string, slug: Slug): Promise<Media> {
+  "use cache";
+  const found = media(file, slug);
+  if (found.placeholder || !file.endsWith(".png")) return found;
+  const header = readFileSync(path.join(PUBLIC, found.src));
+  const [width, height] = [header.readUInt32BE(16), header.readUInt32BE(20)];
+  return { ...found, portrait: height > width, ratio: width / height };
 }
 
 // The one picture or recording that stands for each project in the work index.
@@ -64,12 +119,14 @@ export const PREVIEW: Record<Slug, string> = {
   hallucination: "halluc-roc.png",
 };
 
-export const previews = () =>
+export const previews = async () =>
   Object.fromEntries(
-    (Object.keys(PREVIEW) as Slug[]).map((slug) => [
-      slug,
-      media(PREVIEW[slug], slug),
-    ]),
+    await Promise.all(
+      (Object.keys(PREVIEW) as Slug[]).map(async (slug) => [
+        slug,
+        await shapedMedia(PREVIEW[slug], slug),
+      ]),
+    ),
   ) as Record<Slug, Media>;
 
 // What each case-study page shows: one wide picture or recording across the

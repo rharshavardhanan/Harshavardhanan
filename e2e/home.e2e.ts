@@ -31,56 +31,6 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
   );
 });
 
-test("Contact: the form hands a written message to the mail app", async ({
-  page,
-}) => {
-  // Do not really open the mail app on the machine running the tests.
-  await page.addInitScript(() => {
-    window.open = () => null;
-  });
-  await page.goto("/");
-  const form = page.locator("#contact form");
-  await form.getByLabel("Name").fill("Asha Recruiter");
-  await form.getByLabel("Email").fill("asha@example.com");
-  await form.getByLabel("Message").fill("We have a hard problem.");
-  await form.getByRole("button", { name: "Send" }).click();
-  await expect(form.getByRole("status")).toContainText(
-    "message handed to your mail app",
-  );
-  const mailto = decodeURIComponent((await form.getAttribute("data-mailto"))!);
-  expect(mailto).toContain("mailto:harshavardhananrajasimhan@gmail.com");
-  expect(mailto).toContain("Asha Recruiter");
-  expect(mailto).toContain("We have a hard problem.");
-  expect(mailto).toContain("asha@example.com");
-});
-
-test("Contact: empty fields are refused, and no phone number appears", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const form = page.locator("#contact form");
-  await form.getByRole("button", { name: "Send" }).click();
-  await expect(form.getByRole("status")).toBeEmpty();
-  expect(await page.locator("body").innerText()).not.toMatch(
-    /\+?91[\s-]?\d{5}/,
-  );
-  await expect(
-    page.locator("#contact").getByRole("link", { name: "Résumé" }),
-  ).toHaveAttribute("href", "/resume.pdf");
-});
-
-test("Footer: closing line, credit and anomaly count on every page", async ({
-  page,
-}) => {
-  for (const path of ["/", "/work/kattral"]) {
-    await page.goto(path);
-    const footer = page.getByRole("contentinfo");
-    await expect(footer.locator(".lets-build")).toHaveText("Let’s build");
-    await expect(footer).toContainText("© 2026 · designed & built by Harsha");
-    await expect(footer).toContainText("anomalies resolved 0 / 8");
-  }
-});
-
 test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
   await page.goto("/");
   const anomalies = page.getByRole("button", { name: "Anomaly: fix it" });
@@ -89,13 +39,11 @@ test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
     .locator("section#road")
     .getByRole("button", { name: "Anomaly: fix it" })
     .click();
-  await expect(page.getByRole("contentinfo")).toContainText(
-    "anomalies resolved 1 / 8",
-  );
+  // The count is in the menu (closed, so found by its label, not its role).
+  const count = page.locator('dialog[aria-label="Menu"]');
+  await expect(count).toContainText("anomalies resolved 1 / 8");
   await page.reload();
-  await expect(page.getByRole("contentinfo")).toContainText(
-    "anomalies resolved 1 / 8",
-  );
+  await expect(count).toContainText("anomalies resolved 1 / 8");
   await expect(page.getByRole("button", { name: "Anomaly fixed" })).toHaveCount(
     1,
   );
@@ -105,7 +53,7 @@ test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
   page,
 }) => {
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Menu" });
+  const open = page.locator(".corners").getByRole("link", { name: "Menu" });
   await open.focus();
   await page.keyboard.press("Enter");
   const menu = page.getByRole("dialog", { name: "Menu" });
@@ -118,7 +66,7 @@ test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
   await expect(open).toBeFocused();
 
   await open.click();
-  await menu.getByRole("link", { name: "Edge Cache RL" }).click();
+  await menu.getByRole("link", { name: /Edge Cache RL/ }).click();
   await expect(page).toHaveURL(/\/work\/cache$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Edge Cache RL",
@@ -139,6 +87,16 @@ test("Page wipe: a sheet in the next page's colour covers the change", async ({
   await expect(wipe).toHaveCSS("background-color", "rgb(15, 31, 28)");
   await expect(page).toHaveURL(/\/work\/odovox$/);
   await expect(wipe).not.toHaveAttribute("data-state", /.+/, { timeout: 4000 });
+});
+
+test("The menu carries the credit and the anomaly count", async ({
+  page,
+}) => {
+  await page.goto("/work/kattral");
+  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
+  const menu = page.getByRole("dialog", { name: "Menu" });
+  await expect(menu).toContainText("© 2026 · designed & built by Harsha");
+  await expect(menu).toContainText("anomalies resolved 0 / 8");
 });
 
 test("Sound is off until switched on", async ({ page }) => {
@@ -175,64 +133,5 @@ test.describe("reduced motion", () => {
       .click();
     await expect(page).toHaveURL(/\/work\/road$/);
     await expect(page.locator(".wipe")).not.toHaveAttribute("data-state", /.+/);
-  });
-});
-
-test.describe("phone", () => {
-  test.use({
-    viewport: { width: 360, height: 740 },
-    hasTouch: true,
-    isMobile: true,
-  });
-
-  test("the header is one line with a Menu button, and nothing overflows", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await expect(page.getByRole("button", { name: "Menu" })).toBeVisible();
-    await expect(
-      page
-        .getByRole("navigation", { name: "Primary" })
-        .getByRole("link", { name: "About" }),
-    ).toBeHidden();
-    expect(
-      (await page.locator("header").first().boundingBox())!.height,
-    ).toBeLessThan(64);
-    const overflow = await page.evaluate(
-      () =>
-        document.documentElement.scrollWidth -
-        document.documentElement.clientWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
-  });
-
-  test("without JavaScript the contact form is a plain mailto form", async ({
-    browser,
-  }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    const page = await context.newPage();
-    await page.goto("/");
-    await expect(page.locator("#contact form")).toHaveAttribute(
-      "action",
-      "mailto:harshavardhananrajasimhan@gmail.com",
-    );
-    await expect(page.locator("#about img")).toHaveCount(1);
-    await context.close();
-  });
-});
-
-test.describe("email copy", () => {
-  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
-
-  test("clicking the big email address copies it", async ({ page }) => {
-    await page.goto("/");
-    const contact = page.locator("#contact");
-    await contact
-      .getByRole("link", { name: "harshavardhananrajasimhan@gmail.com" })
-      .click();
-    await expect(contact.getByRole("status").first()).toHaveText("copied ✓");
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-      "harshavardhananrajasimhan@gmail.com",
-    );
   });
 });

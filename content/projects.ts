@@ -97,61 +97,6 @@ export const projects: Project[] = [
     ],
   },
   {
-    slug: "scp",
-    title: "Sequential Conformal Prediction",
-    role: "Final-year project, with Akileshguhan A",
-    year: "2026",
-    tags: ["Robotics", "Conformal prediction", "Diffusion policy"],
-    pitch:
-      "Catching a robot arm that is failing a long task while it is still happening, with a guaranteed cap on false alarms.",
-    stats: [
-      {
-        n: 7.1,
-        decimals: 1,
-        prefix: "+",
-        suffix: " pts",
-        label:
-          "more failures caught than one global threshold, at the same false-alarm rate",
-      },
-      {
-        n: 450,
-        label: "rollouts of a frozen diffusion policy on three LIBERO tasks",
-      },
-      {
-        n: 0.9,
-        decimals: 2,
-        label:
-          "push-expert success on 200 fresh seeds after fine-tuning, up from 0.685",
-      },
-    ],
-    stack: [
-      "Python",
-      "PyTorch",
-      "LeRobot DiffusionPolicy",
-      "LIBERO",
-      "robosuite / MuJoCo",
-      "panda-gym / PyBullet",
-      "Stable-Baselines3 (TQC)",
-    ],
-    repo: "https://github.com/rharshavardhanan/sequential-conformal-prediction-for-long-robotic-tasks",
-    team: "With Akileshguhan A · guided by Dr. Sankari M, VIT Chennai",
-    problem:
-      "A robot working through a long, multi-step task can be failing for hundreds of steps before anyone notices. Checking it at every step does not work either: test a 600-step episode 600 times and even a perfectly normal run raises an alarm almost every time.",
-    built:
-      "A monitor on the gap between what a frozen LeRobot diffusion policy planned and what the arm actually did, in LIBERO simulation. Conformal prediction is calibrated on the largest score of each normal rollout, so the false-alarm guarantee holds per rollout, not per step. Each stage (reach, grasp, carry, place, found from the gripper opening and closing) gets its own threshold. A second track uses the alarm to hand control from a cheap policy to an expert one on a reach-then-push task.",
-    result:
-      "Over 450 rollouts on three tasks, the stage-aware monitor catches more failures than one global threshold at every matched false-alarm rate from 0.10 up, on all three tasks: 7.1 points more at the working point (α 0.10). Handing control to the expert on an alarm lifts the cheap policy from 0.44 to 0.53 success while using the expert on only 13% of steps.",
-    hard: "Two results went against the idea, and both are reported. Compared at the same α, the stage-aware monitor looks worse, by up to 27 points; that comparison is invalid, because the two monitors then run at different false-alarm rates, and the order flips once those are matched. And handing control over on an alarm did not beat handing it over at random moments with the same expert budget: 2.6 points better, a confidence interval that crosses zero, p = 0.24. The honest sample size is three tasks, and below a false-alarm rate of 0.10 the stage-aware monitor cannot run at all with the calibration data available.",
-    flow: [
-      "Frozen diffusion policy acts",
-      "Planned vs executed tracking error",
-      "Stage from the gripper opening and closing",
-      "Per-stage conformal threshold",
-      "Alarm, mid-episode",
-      "Hand control to the expert",
-    ],
-  },
-  {
     slug: "aftermeet",
     title: "Aftermeet",
     role: "Solo project",
@@ -207,6 +152,61 @@ export const projects: Project[] = [
       "Stitched in order, speaker labels added",
       "Strict-schema extraction, checked with Zod",
       "Tasks, decisions, email and minutes, saved together",
+    ],
+  },
+  {
+    slug: "scp",
+    title: "Sequential Conformal Prediction",
+    role: "Final-year project, with Akileshguhan A",
+    year: "2026",
+    tags: ["Robotics", "Conformal prediction", "Diffusion policy"],
+    pitch:
+      "Catching a robot arm that is failing a long task while it is still happening, with a guaranteed cap on false alarms.",
+    stats: [
+      {
+        n: 7.1,
+        decimals: 1,
+        prefix: "+",
+        suffix: " pts",
+        label:
+          "more failures caught than one global threshold, at the same false-alarm rate",
+      },
+      {
+        n: 450,
+        label: "rollouts of a frozen diffusion policy on three LIBERO tasks",
+      },
+      {
+        n: 0.9,
+        decimals: 2,
+        label:
+          "push-expert success on 200 fresh seeds after fine-tuning, up from 0.685",
+      },
+    ],
+    stack: [
+      "Python",
+      "PyTorch",
+      "LeRobot DiffusionPolicy",
+      "LIBERO",
+      "robosuite / MuJoCo",
+      "panda-gym / PyBullet",
+      "Stable-Baselines3 (TQC)",
+    ],
+    repo: "https://github.com/rharshavardhanan/sequential-conformal-prediction-for-long-robotic-tasks",
+    team: "With Akileshguhan A · guided by Dr. Sankari M, VIT Chennai",
+    problem:
+      "A robot working through a long, multi-step task can be failing for hundreds of steps before anyone notices. Checking it at every step does not work either: test a 600-step episode 600 times and even a perfectly normal run raises an alarm almost every time.",
+    built:
+      "A monitor on the gap between what a frozen LeRobot diffusion policy planned and what the arm actually did, in LIBERO simulation. Conformal prediction is calibrated on the largest score of each normal rollout, so the false-alarm guarantee holds per rollout, not per step. Each stage (reach, grasp, carry, place, found from the gripper opening and closing) gets its own threshold. A second track uses the alarm to hand control from a cheap policy to an expert one on a reach-then-push task.",
+    result:
+      "Over 450 rollouts on three tasks, the stage-aware monitor catches more failures than one global threshold at every matched false-alarm rate from 0.10 up, on all three tasks: 7.1 points more at the working point (α 0.10). Handing control to the expert on an alarm lifts the cheap policy from 0.44 to 0.53 success while using the expert on only 13% of steps.",
+    hard: "Two results went against the idea, and both are reported. Compared at the same α, the stage-aware monitor looks worse, by up to 27 points; that comparison is invalid, because the two monitors then run at different false-alarm rates, and the order flips once those are matched. And handing control over on an alarm did not beat handing it over at random moments with the same expert budget: 2.6 points better, a confidence interval that crosses zero, p = 0.24. The honest sample size is three tasks, and below a false-alarm rate of 0.10 the stage-aware monitor cannot run at all with the calibration data available.",
+    flow: [
+      "Frozen diffusion policy acts",
+      "Planned vs executed tracking error",
+      "Stage from the gripper opening and closing",
+      "Per-stage conformal threshold",
+      "Alarm, mid-episode",
+      "Hand control to the expert",
     ],
   },
   {

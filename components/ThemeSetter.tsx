@@ -2,14 +2,18 @@
 
 import { useEffect } from "react";
 
-// Renders nothing. On a case-study page it puts the project's name on
-// <html data-theme>, so the whole window (header, cursor, page background)
-// takes that project's colours. It removes it again when you leave.
+// Renders nothing. On a project page it puts the project's name on
+// <html data-theme>, so the whole window (frame, cursor, page background)
+// takes that project's colours, and on <html data-active>, so the frame's
+// bottom row names it. It removes both again when you leave.
 export function ThemeSetter({ theme }: { theme: string }) {
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    const html = document.documentElement;
+    html.dataset.theme = theme;
+    html.dataset.active = theme;
     return () => {
-      delete document.documentElement.dataset.theme;
+      delete html.dataset.theme;
+      delete html.dataset.active;
     };
   }, [theme]);
   return null;

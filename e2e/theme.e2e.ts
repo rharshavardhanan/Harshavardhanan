@@ -94,7 +94,7 @@ test.describe("reduced motion", () => {
 
   test("colours are simply there, with no wipe", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(ownLayer(page, "cache")).toHaveCSS("clip-path", "none");
   });
 });

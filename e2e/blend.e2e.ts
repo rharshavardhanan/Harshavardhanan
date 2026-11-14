@@ -33,13 +33,12 @@ async function renderedContrast(page: Page, target: Locator) {
 
 test.use({ viewport: { width: 1280, height: 800 }, reducedMotion: "reduce" });
 
-test("header and hero text are readable on paper", async ({ page }) => {
+test("the frame and hero text are readable on paper", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => document.fonts.ready);
   for (const target of [
-    page.getByRole("link", { name: "H.R." }),
-    page.locator("header time"),
-    page.getByRole("button", { name: "Menu" }),
+    page.locator(".corners").getByRole("link", { name: "Harshavardhanan" }),
+    page.locator(".corners").getByRole("link", { name: "Menu" }),
     page.locator("[data-hero] p").first(),
     page.locator("h1 span").first(),
   ]) {
@@ -47,7 +46,7 @@ test("header and hero text are readable on paper", async ({ page }) => {
   }
 });
 
-test("the header stays readable over a dark project", async ({ page }) => {
+test("the frame stays readable over a dark project", async ({ page }) => {
   await page.goto("/");
   await page
     .locator('section[data-zone="road"]')
@@ -55,24 +54,20 @@ test("the header stays readable over a dark project", async ({ page }) => {
   await page.evaluate(() => window.scrollBy(0, 200));
   await page.evaluate(() => document.fonts.ready);
   for (const target of [
-    page.getByRole("link", { name: "H.R." }),
-    page.getByRole("button", { name: "Menu" }),
+    page.locator(".corners").getByRole("link", { name: "Harshavardhanan" }),
+    page.locator(".corners").getByRole("link", { name: "Menu" }),
   ]) {
     expect(await renderedContrast(page, target)).toBeGreaterThanOrEqual(4.5);
   }
 });
 
-test("the menu, which sits inside the header, is readable", async ({
+test("the menu is readable", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
   const menu = page.getByRole("dialog", { name: "Menu" });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("link", { name: "About" })).toHaveCSS(
-    "text-transform",
-    "none",
-  );
   for (const name of ["Close"]) {
     expect(
       await renderedContrast(page, menu.getByRole("button", { name })),
@@ -93,7 +88,7 @@ test("no page throws while loading", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("the header is readable on every case study, light or dark", async ({
+test("the frame is readable on every case study, light or dark", async ({
   page,
 }) => {
   for (const slug of [
@@ -108,7 +103,10 @@ test("the header is readable on every case study, light or dark", async ({
     await page.goto(`/work/${slug}`);
     await page.evaluate(() => document.fonts.ready);
     expect(
-      await renderedContrast(page, page.getByRole("link", { name: "H.R." })),
+      await renderedContrast(
+        page,
+        page.locator(".corners").getByRole("link", { name: "Harshavardhanan" }),
+      ),
       slug,
     ).toBeGreaterThanOrEqual(4.5);
   }

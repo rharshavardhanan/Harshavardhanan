@@ -19,21 +19,24 @@ test.describe("desktop with a mouse", () => {
       .toEqual([420, 410]);
     await expect(dot).toHaveAttribute("data-over", "");
 
-    await page.getByRole("link", { name: "H.R." }).hover();
+    await page
+      .locator(".corners")
+      .getByRole("link", { name: "Harshavardhanan" })
+      .hover();
     await expect(dot).toHaveAttribute("data-over", "link");
   });
 
   test("the system cursor is hidden except in text fields", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/contact");
     await expect(page.locator("html")).toHaveClass(/has-cursor/);
     expect(
       await page.evaluate(() => getComputedStyle(document.body).cursor),
     ).toBe("none");
     expect(
       await page
-        .locator("#contact textarea")
+        .locator("main textarea")
         .evaluate((el) => getComputedStyle(el).cursor),
     ).toBe("text");
   });
@@ -44,7 +47,7 @@ test.describe("reduced motion", () => {
 
   test("there is no custom cursor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(page.locator(".cursor-dot")).toHaveCount(0);
     await expect(page.locator("html")).not.toHaveClass(/has-cursor/);
   });
@@ -59,7 +62,7 @@ test.describe("phone", () => {
 
   test("there is no custom cursor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(page.locator(".cursor-dot")).toHaveCount(0);
   });
 });

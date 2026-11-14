@@ -23,6 +23,8 @@ export function Wipe() {
       if (event.shiftKey || event.altKey || event.defaultPrevented) return;
       const link = (event.target as Element).closest("a");
       if (!link || link.target || link.hasAttribute("download")) return;
+      // Links that open something on this page instead (MENU, INQUIRE).
+      if (link.hasAttribute("data-no-wipe")) return;
       const url = new URL(link.href);
       if (url.origin !== location.origin) return;
       if (url.pathname === location.pathname) return;

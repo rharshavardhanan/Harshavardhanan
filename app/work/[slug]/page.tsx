@@ -10,7 +10,7 @@ import { MediaView } from "@/components/MediaView";
 import { Motion } from "@/components/Motion";
 import { ThemeSetter } from "@/components/ThemeSetter";
 import { project, projects, type Stat } from "@/content/projects";
-import { CASE_MEDIA, media } from "@/lib/media";
+import { CASE_MEDIA, media, shapedMedia } from "@/lib/media";
 
 // One file makes all five case-study pages. The [slug] folder name means the
 // last part of the address (/work/odovox) is handed to this page as `slug`,
@@ -218,8 +218,12 @@ export default async function CaseStudy({ params }: Props) {
           aria-label="Screens"
           className="px-gutter grid gap-x-8 gap-y-16 py-28 md:grid-cols-2"
         >
-          {gallery.map((file, index) => {
-            const shot = media(file, item.slug);
+          {(
+            await Promise.all(
+              gallery.map((file) => shapedMedia(file, item.slug)),
+            )
+          ).map((shot, index) => {
+            const file = shot.file;
             return (
               <div
                 key={file}

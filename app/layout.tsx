@@ -5,12 +5,11 @@ import {
   JetBrains_Mono,
 } from "next/font/google";
 import { Cursor } from "@/components/Cursor";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
-import { HeaderTone } from "@/components/HeaderTone";
+import { Corners } from "@/components/Corners";
 import { Loader } from "@/components/Loader";
 import { Magnet } from "@/components/Magnet";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { Tone } from "@/components/Tone";
 import { Wipe } from "@/components/Wipe";
 import { PERSON, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -28,9 +27,11 @@ const sans = Inter_Tight({
   subsets: ["latin"],
   variable: "--font-inter-tight",
 });
+// Monospace now appears only inside the demos, so it is not preloaded.
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  preload: false,
 });
 
 // What search engines and link previews are told about the site. Pages can
@@ -91,14 +92,13 @@ export default function RootLayout({
         {/* Hidden above the window until a keyboard user tabs to it. */}
         <a
           href="#main"
-          className="bg-fg label text-bg left-gutter fixed top-4 z-70 -translate-y-24 px-4 py-2 font-mono transition-transform duration-150 ease-out focus:translate-y-0"
+          className="bg-fg label text-bg left-gutter fixed top-4 z-70 -translate-y-24 px-4 py-2 transition-transform duration-150 ease-out focus:translate-y-0"
         >
           Skip to content
         </a>
-        <Header />
-        <HeaderTone />
+        <Corners />
+        <Tone />
         <main id="main">{children}</main>
-        <Footer />
         <SmoothScroll />
         <Cursor />
         <Magnet />

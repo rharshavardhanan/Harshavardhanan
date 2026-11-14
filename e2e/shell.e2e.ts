@@ -13,8 +13,8 @@ test.describe("desktop", () => {
         .evaluate((el) => getComputedStyle(el).fontFamily);
     expect(await family("h1")).toContain("Instrument Serif");
     expect(await family("[data-hero] p")).toContain("Inter Tight");
-    expect(await family("header")).toContain("JetBrains Mono");
-    for (const name of ["Instrument Serif", "Inter Tight", "JetBrains Mono"]) {
+    expect(await family(".corners")).toContain("Inter Tight");
+    for (const name of ["Instrument Serif", "Inter Tight"]) {
       expect(
         await page.evaluate((n) => document.fonts.check(`16px "${n}"`), name),
       ).toBe(true);
@@ -31,8 +31,8 @@ test.describe("desktop", () => {
     await page.goto("/");
     await expect(page.locator("[data-chapter] h2")).toHaveText([
       "Odovox",
-      "Sequential Conformal Prediction",
       "Aftermeet",
+      "Sequential Conformal Prediction",
       "Automated Road Damage Survey",
       "Kattral Academy",
       "Edge Cache RL",

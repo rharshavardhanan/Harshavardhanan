@@ -98,7 +98,7 @@ test.describe("desktop with reduced motion", () => {
 
   test("there is no canvas and the video does not play", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(page.locator(".stage")).toHaveAttribute("data-mode", "poster");
     await expect(page.locator("canvas")).toHaveCount(0);
     // The video element is only there for its still picture; it never plays.

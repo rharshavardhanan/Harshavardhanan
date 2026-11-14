@@ -15,7 +15,16 @@ export function DemoFrame({
   className?: string;
 }) {
   return (
-    <figure className={className}>
+    // --label-font: this demo's small capitals are monospace (everywhere
+    // else on the site they are Inter Tight).
+    <figure
+      className={className}
+      style={
+        {
+          "--label-font": "var(--font-jetbrains-mono), ui-monospace, monospace",
+        } as React.CSSProperties
+      }
+    >
       <figcaption className="label border-line mb-8 flex flex-wrap justify-between gap-x-6 gap-y-1 border-b pb-3">
         <span className="text-accent">{title}</span>
         <span className="text-muted">{note}</span>

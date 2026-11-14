@@ -71,10 +71,17 @@ for (const theme of [
   });
 }
 
-test("menu open", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+for (const name of ["Menu", "Inquire"]) {
+  test(`${name} open`, async ({ page }) => {
+    await page.goto("/work/odovox");
+    await page.locator(".corners").getByRole("link", { name }).click();
+    await expect(page.getByRole("dialog", { name })).toBeVisible();
+    expect(await audit(page)).toEqual([]);
+  });
+}
+
+test("contact page", async ({ page }) => {
+  await page.goto("/contact");
   expect(await audit(page)).toEqual([]);
 });
 

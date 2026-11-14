@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 
 const slugs = [
   "odovox",
-  "scp",
   "aftermeet",
+  "scp",
   "road",
   "kattral",
   "cache",

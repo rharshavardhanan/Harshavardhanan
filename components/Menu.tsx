@@ -1,104 +1,115 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { projects, type Slug } from "@/content/projects";
+import { AnomalyCount } from "./Anomaly";
+import { Sound } from "./Sound";
 
-// The full-screen menu. It is the browser's own <dialog>: opening it with
-// showModal() keeps keyboard focus inside it and makes Escape close it,
-// without any code here. How it looks and animates is under "Menu" in
-// app/globals.css.
-export function Menu() {
+// The full-screen index. MENU is a link to the home page's list of projects,
+// so it still works with JavaScript off; with JavaScript it opens this
+// <dialog> instead. showModal() keeps keyboard focus inside the dialog and
+// makes Escape close it, with no code here. Hovering or focusing a project
+// shows its poster behind the list. How it looks and animates is under
+// "Menu" in app/globals.css.
+export function Menu({ posters }: { posters: Record<Slug, string> }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [hovered, setHovered] = useState<Slug | null>(null);
-  let i = 0; // counts the links, so each can rise a moment after the last
+  let i = 0; // counts the lines, so each can rise a moment after the last
 
   return (
     <>
-      <button
-        type="button"
+      <Link
+        href="/#projects"
         aria-haspopup="dialog"
-        className="py-2"
-        onClick={() => dialog.current?.showModal()}
+        data-no-wipe
+        className="inline-block py-2"
+        onClick={(event) => {
+          event.preventDefault();
+          dialog.current?.showModal();
+        }}
       >
         Menu
-      </button>
+      </Link>
 
       <dialog
         ref={dialog}
         aria-label="Menu"
         className="menu"
+        data-theme="ink"
         data-lenis-prevent
         // Choosing any link closes the menu.
         onClick={(event) => {
           if ((event.target as Element).closest("a")) dialog.current?.close();
         }}
+        onClose={() => setHovered(null)}
       >
-        <button
-          type="button"
-          className="label self-end py-2 font-mono"
-          onClick={() => dialog.current?.close()}
-        >
-          Close
-        </button>
+        {/* The hovered project's poster, filling the window behind the list. */}
+        <div aria-hidden className="menu-poster">
+          {hovered && (
+            // A plain <img>: the posters are already small AVIF stills.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={hovered} src={posters[hovered]} alt="" />
+          )}
+        </div>
 
-        <nav aria-label="Menu" className="my-auto grid grid-cols-12 gap-x-4">
-          <ul className="col-span-12 lg:col-span-7">
-            <li style={{ "--i": i++ } as React.CSSProperties}>
-              <Link href="/#work" className="text-h2 font-serif">
-                Work
-              </Link>
-              <ul
-                className="text-h3 mt-2 mb-4 font-serif"
-                onPointerLeave={() => setHovered(null)}
+        <div className="label flex items-center justify-between">
+          <button
+            type="button"
+            className="py-2"
+            onClick={() => dialog.current?.close()}
+          >
+            Close
+          </button>
+          <span className="sm:hidden">
+            <Sound />
+          </span>
+        </div>
+
+        <nav aria-label="Projects" className="my-auto py-12">
+          <ol
+            className="text-h2 flex flex-wrap gap-x-[0.35em] font-serif"
+            onPointerLeave={() => setHovered(null)}
+          >
+            {projects.map((project, index) => (
+              <li
+                key={project.slug}
+                style={{ "--i": i++ } as React.CSSProperties}
+                data-dim={hovered !== null && hovered !== project.slug}
               >
-                {projects.map((project) => (
-                  <li
-                    key={project.slug}
-                    style={{ "--i": i++ } as React.CSSProperties}
-                  >
-                    <Link
-                      href={`/work/${project.slug}`}
-                      className="text-muted hover:text-fg focus-visible:text-fg inline-block py-1 transition-colors duration-150"
-                      onPointerEnter={() => setHovered(project.slug)}
-                      onFocus={() => setHovered(project.slug)}
-                    >
-                      {project.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
+                <Link
+                  href={`/work/${project.slug}`}
+                  className="menu-link"
+                  onPointerEnter={() => setHovered(project.slug)}
+                  onFocus={() => setHovered(project.slug)}
+                >
+                  {project.title}
+                  <sup className="label ml-1 align-super">0{index + 1}</sup>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div className="label flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+          <ul className="flex flex-wrap gap-x-8">
             {[
-              ["About", "/#about"],
-              ["Contact", "/#contact"],
+              ["About", "/about"],
+              ["Inquire", "/contact"],
               ["Résumé", "/resume.pdf"],
             ].map(([label, href]) => (
               <li key={href} style={{ "--i": i++ } as React.CSSProperties}>
-                <a href={href} className="text-h2 font-serif">
+                <a href={href} className="inline-block py-2">
                   {label}
                 </a>
               </li>
             ))}
           </ul>
-
-          {/* The hovered project's symbol, on wide screens only. */}
-          <div aria-hidden className="col-span-5 self-center max-lg:hidden">
-            {hovered && (
-              <Image
-                key={hovered}
-                src={`/media/cover-${hovered}.avif`}
-                unoptimized
-                alt=""
-                width={1280}
-                height={720}
-                sizes="40vw"
-                className="demo-in aspect-video w-full object-cover"
-              />
-            )}
-          </div>
-        </nav>
+          <p className="text-muted flex flex-wrap gap-x-8">
+            <AnomalyCount />
+            <span>© 2026 · designed &amp; built by Harsha</span>
+          </p>
+        </div>
       </dialog>
     </>
   );

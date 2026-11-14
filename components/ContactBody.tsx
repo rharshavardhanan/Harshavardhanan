@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { contact } from "@/content/about";
 import { ArrowUpRight } from "./ArrowUpRight";
+import { Clock } from "./Clock";
 
 // The email address, very large. Clicking it copies it and says so; the small
 // link beside it opens the mail app instead. (With JavaScript off, the big
 // address is an ordinary mail link.)
 function Email() {
+  const hint = useId();
   const [copied, setCopied] = useState(false);
   const timer = useRef(0);
 
@@ -36,12 +38,12 @@ function Email() {
         }}
         data-cursor="Copy"
         className="email-fit block font-serif no-underline"
-        aria-describedby="email-hint"
+        aria-describedby={hint}
       >
         {contact.email}
       </a>
       <p
-        id="email-hint"
+        id={hint}
         className="label text-muted mt-4 flex flex-wrap gap-x-8 gap-y-2"
       >
         <span>Click to copy</span>
@@ -65,7 +67,11 @@ function Email() {
 // own mail app with the message already written, addressed to Harsha. With
 // JavaScript off the browser does much the same on its own, because the form's
 // action is a mailto: address.
-export function Contact() {
+//
+// This is the contact sheet. It is shown twice over: as the /contact page, and
+// inside the INQUIRE dialog that every page has (components/Inquire.tsx).
+export function ContactBody() {
+  const title = useId();
   const [mailto, setMailto] = useState("");
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -88,22 +94,22 @@ export function Contact() {
 
   return (
     <section
-      id="contact"
-      aria-labelledby="contact-title"
-      className="px-gutter grid grid-cols-12 gap-x-4 gap-y-20 pt-48 pb-40"
+      aria-labelledby={title}
+      className="grid grid-cols-12 gap-x-4 gap-y-14 py-12"
     >
-      <div className="col-span-12">
-        <h2 id="contact-title" data-lines className="text-h2 max-w-[14ch]">
-          Have a hard problem? <em>Let’s build it.</em>
-        </h2>
-      </div>
+      <h2 id={title} className="text-h2 col-span-12 max-w-[14ch]">
+        Have a hard problem? <em>Let’s build it.</em>
+      </h2>
 
       <div className="col-span-12">
         <Email />
       </div>
 
-      <div className="col-span-12 lg:col-span-5">
-        <ul className="label flex flex-wrap gap-x-10 gap-y-3">
+      <div className="label col-span-12 space-y-6 lg:col-span-5">
+        <p className="text-muted">
+          Chennai, India · <Clock />
+        </p>
+        <ul className="flex flex-wrap gap-x-10 gap-y-3">
           {contact.links.map((link) => (
             <li key={link.label}>
               <a href={link.href} className="inline-block py-2">
@@ -121,7 +127,7 @@ export function Contact() {
         encType="text/plain"
         onSubmit={onSubmit}
         data-mailto={mailto}
-        className="col-span-12 space-y-10 lg:col-span-5 lg:col-start-8"
+        className="col-span-12 space-y-10 lg:col-span-6 lg:col-start-7"
       >
         <label className="label block">
           Name

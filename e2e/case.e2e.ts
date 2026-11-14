@@ -71,10 +71,6 @@ test("the home page's case-study link opens the page", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Automated Road Damage Survey",
   );
-  // And the header leads back to the home page's work index.
-  await page.getByRole("link", { name: "Work", exact: true }).click();
-  await expect(page).toHaveURL(/\/#work$/);
-  await expect(page.locator("#work")).toBeInViewport();
 });
 
 test("an unknown project is a 404", async ({ request }) => {
@@ -101,7 +97,7 @@ test.describe("reduced motion", () => {
 
   test("the hero shows the still, not the video", async ({ page }) => {
     await page.goto("/work/odovox");
-    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
     await expect(page.locator(".case-media video")).toHaveCount(0);
     await expect(page.locator(".case-media img")).toBeVisible();
   });
