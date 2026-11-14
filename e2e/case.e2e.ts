@@ -104,16 +104,23 @@ test("each page opens like a film poster: title, credits, quote, laurels", async
   await expect(page.locator(".laurel").first()).toContainText("7.1");
 });
 
-test("AI films are labelled, the particle stand-in is not", async ({
-  page,
-}) => {
-  await page.goto("/work/odovox");
-  await expect(page.locator("[data-film] .film-ai")).toHaveText(
-    "AI-generated film",
-  );
-  await page.goto("/work/hallucination");
-  await expect(page.locator("[data-film]")).toHaveCount(1);
-  await expect(page.locator("[data-film] .film-ai")).toHaveCount(0);
+// (A project without a film would show its unlabelled particle recording;
+// lib/media.test.ts covers that. Today all seven have films.)
+test("AI films are labelled", async ({ page }) => {
+  for (const [slug, file] of [
+    ["odovox", "mood-odovox"],
+    ["hallucination", "mood-halluc"],
+  ]) {
+    await page.goto(`/work/${slug}`);
+    await expect(page.locator("[data-film]")).toHaveCount(1);
+    await expect(page.locator("[data-film] .film-ai")).toHaveText(
+      "AI-generated film",
+    );
+    await expect(page.locator("[data-film] video")).toHaveAttribute(
+      "src",
+      new RegExp(file),
+    );
+  }
 });
 
 test("scrolling to the end grows the next project and opens it", async ({
@@ -127,9 +134,7 @@ test("scrolling to the end grows the next project and opens it", async ({
   await expect(page).toHaveURL(/\/work\/aftermeet$/, { timeout: 8000 });
   // (The page left behind stays in the document, hidden, for the Back
   // button, so ask for the heading a visitor can see.)
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Aftermeet",
-  );
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Aftermeet");
   // And it starts at the top, not at the old page's height (smooth scrolling
   // keeps its own record of the position; it is reset on every page change).
   await page.waitForTimeout(400);
