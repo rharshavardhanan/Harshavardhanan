@@ -5,8 +5,8 @@ test.use({ viewport: { width: 1280, height: 800 } });
 test("the demo turns the sample transcript into owned, dated tasks", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.locator("section#aftermeet figure");
+  await page.goto("/work/aftermeet");
+  const demo = page.locator("article figure");
   await demo.getByRole("button", { name: "Extract" }).focus();
   await page.keyboard.press("Enter");
   await expect(demo.getByRole("status")).toHaveText(
@@ -26,8 +26,8 @@ test("the demo turns the sample transcript into owned, dated tasks", async ({
 });
 
 test("a pasted transcript of your own works too", async ({ page }) => {
-  await page.goto("/");
-  const demo = page.locator("section#aftermeet figure");
+  await page.goto("/work/aftermeet");
+  const demo = page.locator("article figure");
   await demo
     .getByRole("textbox")
     .fill("Ravi will prepare the budget by Monday. Okay, thanks all.");
@@ -39,18 +39,16 @@ test("a pasted transcript of your own works too", async ({ page }) => {
 test("the chapter is light, credited as solo, and links to the site and code", async ({
   page,
 }) => {
-  await page.goto("/");
-  const chapter = page.locator("section#aftermeet");
+  await page.goto("/work/aftermeet");
+  const chapter = page.locator("article");
   await expect(chapter).toContainText("Solo project");
   await expect(
-    chapter.getByRole("link", { name: "Live site" }),
+    chapter.getByRole("link", { name: /live site/i }),
   ).toHaveAttribute("href", "https://aftermeet-z1ey.vercel.app");
   await expect(
-    chapter.getByRole("link", { name: "Code on GitHub" }),
+    chapter.getByRole("link", { name: /Code on GitHub/ }),
   ).toHaveAttribute("href", "https://github.com/rharshavardhanan/Aftermeet");
-  await chapter.scrollIntoViewIfNeeded();
-  await chapter.locator("h2").scrollIntoViewIfNeeded();
-  await expect(page.locator("html")).toHaveAttribute("data-tone", "light");
+  await expect(page.locator("article")).toHaveAttribute("data-tone", "light");
 });
 
 test("its real screenshots are served", async ({ request }) => {

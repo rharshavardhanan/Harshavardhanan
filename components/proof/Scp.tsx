@@ -1,8 +1,6 @@
-import type { Project } from "@/content/projects";
-import { ScpDemo } from "../demos/ScpDemo";
-import { SectionPaint } from "../SectionPaint";
+import { media } from "@/lib/media";
+import { MediaView } from "../MediaView";
 import { SyncedClips } from "../SyncedClips";
-import { ChapterLabel, ChapterLinks, Stats } from "./parts";
 
 // The same simulated task, same starting position (seed 230044), three ways.
 // Recordings from the project repository, slowed to a quarter of real speed.
@@ -30,45 +28,13 @@ const SAME_START = [
   },
 ];
 
-// 02 · Sequential Conformal Prediction: a lab notebook. The title, then the
-// same task three ways side by side, then the monitor itself at work on a
-// LIBERO task (one run it flags, one it leaves alone), then the comparison
-// that gets reported backwards, then the figures.
-export function Scp({
-  project,
-  index,
-  prev,
-}: {
-  project: Project;
-  index: number;
-  prev: string;
-}) {
+// A lab notebook: the same task three ways side by side, the handover live on
+// its dashboard, then the monitor itself at work on a LIBERO task (one run it
+// flags, one it leaves alone).
+export function ScpProof() {
   return (
-    <section
-      id={project.slug}
-      data-chapter={project.slug}
-      data-zone={project.slug}
-      data-theme={project.slug}
-      data-tone="dark"
-      aria-labelledby={`${project.slug}-title`}
-      className="paint scroll-mt-8"
-    >
-      <SectionPaint prev={prev} />
-
-      <div className="px-gutter grid grid-cols-12 gap-x-4 gap-y-10 pt-40 pb-24">
-        <div className="col-span-12 lg:col-span-8">
-          <ChapterLabel project={project} index={index} />
-          <h2 id={`${project.slug}-title`} data-lines className="text-h2 mt-6">
-            {project.title}
-          </h2>
-        </div>
-        <div className="col-span-12 lg:col-span-4 lg:self-end">
-          <p data-lines>{project.pitch}</p>
-          <p className="label text-muted mt-6">{project.team}</p>
-        </div>
-      </div>
-
-      <div className="px-gutter pb-32">
+    <>
+      <div>
         <h3 className="label text-muted mb-8">
           One starting position, three ways · simulated, quarter speed
         </h3>
@@ -80,9 +46,22 @@ export function Scp({
         </p>
       </div>
 
-      <div className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 pb-32">
+      <div data-cursor="Play" className="mx-auto max-w-4xl">
+        <MediaView
+          media={media("scp-arena.mp4", "scp")}
+          alt="Recording of the handover dashboard: the run starts on the cheap policy, the monitor escalates to the expert, and the push succeeds"
+          sizes="(min-width: 1024px) 56rem, 100vw"
+          className="aspect-[1500/1076] rounded-lg bg-[#0b0b0b]"
+        />
+        <p className="label text-muted mt-5">
+          The handover, live (seed 400016): cheap policy, escalated to the
+          expert, pushed home
+        </p>
+      </div>
+
+      <div className="grid grid-cols-12 gap-x-4 gap-y-12">
         <div className="col-span-12 lg:col-span-4">
-          <h3 data-lines className="text-h3 font-serif">
+          <h3 className="text-h3 font-serif">
             The monitor, watching a robot in LIBERO
           </h3>
           <p className="text-muted mt-6 max-w-[38ch]">
@@ -104,22 +83,11 @@ export function Scp({
           />
         </div>
       </div>
-
-      <div className="px-gutter pb-32">
-        <div className="mx-auto max-w-6xl">
-          <ScpDemo />
-        </div>
-      </div>
-
-      <div className="px-gutter pb-40">
-        <Stats stats={project.stats} />
-        <ChapterLinks project={project} className="mt-20" />
-      </div>
-    </section>
+    </>
   );
 }
 
-// A recording with the browser's own controls. (Not a <figure>: the chapter's
+// A recording with the browser's own controls. (Not a <figure>: the page's
 // one figure is its demo.)
 function Watch({
   src,

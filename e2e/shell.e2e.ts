@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test("renders the three typefaces", async ({ page }) => {
-    await page.goto("/");
+  test("renders the two typefaces", async ({ page }) => {
+    await page.goto("/about");
     await page.evaluate(() => document.fonts.ready);
     const family = (selector: string) =>
       page
@@ -12,7 +12,6 @@ test.describe("desktop", () => {
         .first()
         .evaluate((el) => getComputedStyle(el).fontFamily);
     expect(await family("h1")).toContain("Instrument Serif");
-    expect(await family("[data-hero] p")).toContain("Inter Tight");
     expect(await family(".corners")).toContain("Inter Tight");
     for (const name of ["Instrument Serif", "Inter Tight"]) {
       expect(
@@ -21,15 +20,17 @@ test.describe("desktop", () => {
     }
   });
 
-  test("has exactly one h1, and it is the name", async ({ page }) => {
+  test("has exactly one h1, and it names him", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("h1")).toHaveCount(1);
-    await expect(page.locator("h1")).toHaveText("Harshavardhanan");
+    await expect(page.locator("h1")).toHaveText(
+      "Harshavardhanan: selected work",
+    );
   });
 
   test("shows every project in order", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("[data-chapter] h2")).toHaveText([
+    await expect(page.locator("#projects .text-h2")).toHaveText([
       "Odovox",
       "Aftermeet",
       "Sequential Conformal Prediction",

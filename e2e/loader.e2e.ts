@@ -12,7 +12,7 @@ test("first visit shows the loader, then gets out of the way", async ({
   await expect(page.locator(".loader")).toContainText("H.R.");
   await expect.poll(() => loading(page), { timeout: 4000 }).toBeNull();
   await expect(page.locator(".loader")).toBeHidden();
-  await expect(page.locator("h1")).toBeVisible();
+  await expect(page.locator(".ring")).toBeVisible();
 });
 
 test("a second visit in the same session skips it", async ({ page }) => {
@@ -40,9 +40,6 @@ test("without JavaScript there is no loader and the page is readable", async ({
   const page = await context.newPage();
   await page.goto("/");
   await expect(page.locator(".loader")).toBeHidden();
-  await expect(page.locator("h1")).toBeVisible();
-  await expect(page.locator("[data-hero]")).toContainText(
-    "currently building Odovox",
-  );
+  await expect(page.locator("#projects a")).toHaveCount(7);
   await context.close();
 });

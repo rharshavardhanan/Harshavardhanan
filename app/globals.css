@@ -252,32 +252,6 @@
 }
 
 /* ==========================================================================
-   SECTION COLOUR (components/SectionPaint.tsx)
-   Every section paints its own colour, so its text always sits on the colour
-   it was designed for. Two layers lie behind the section's content: the
-   PREVIOUS section's colour, and on top of it this section's own colour.
-   components/Motion.tsx reveals the top layer as a growing circle when the
-   section arrives, so one colour wipes over the other with no grey blend.
-   Without JavaScript, or with reduced motion, the top layer is simply there.
-   ========================================================================== */
-.paint {
-  position: relative;
-  color: var(--fg);
-}
-.paint-prev,
-.paint-own {
-  position: absolute;
-  inset: 0;
-  background: var(--bg);
-}
-.paint-prev {
-  z-index: -3;
-}
-.paint-own {
-  z-index: -2;
-}
-
-/* ==========================================================================
    CORNERS (components/Corners.tsx)
    The frame pinned to the window's four corners. Each row is ink over light
    parts of the page and paper over dark ones: components/Tone.tsx writes
@@ -463,48 +437,10 @@ html[data-loading="out"] .loader {
   }
 }
 
-/* ==========================================================================
-   HERO (components/Hero.tsx)
-   ========================================================================== */
-
-/* The hero is two screens tall and its content sticks to the window for the
-   first of them. While it is stuck, components/Motion.tsx shrinks the name up
-   into the header. With reduced motion it is one ordinary screen. */
-.hero {
-  height: 200svh;
-}
-.hero-pin {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-}
-/* The name has its own pinned layer, white and inverted against what lies
-   behind it ("difference"): dark on paper, light where it crosses the
-   particles. (It must be the whole layer that blends: a sticky element is
-   its own layer, and the name alone would blend with nothing.) */
-.hero-name-layer {
-  color: #fff;
-  mix-blend-mode: difference;
-}
-/* The subtitle, status and scroll cue: ordinary text on a second pinned
-   layer, laid over the first. */
-.hero-text-layer {
-  margin-top: -100svh;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero {
-    height: auto;
-  }
-  .hero-pin {
-    position: static;
-  }
-}
-
 /* The name always fills the width of its container. "HARSHAVARDHANAN" in
    Instrument Serif capitals is 6.87 times as wide as its font size, so
    dividing the container's width (100cqi) by a little more than that gives a
-   font size that fits exactly at any window width.
-   "difference" blending makes it invert where it crosses the particles. */
+   font size that fits exactly at any window width (the loader's "H.R."). */
 .name {
   font-size: calc(100cqi / 6.97);
   line-height: 1;
@@ -513,169 +449,6 @@ html[data-loading="out"] .loader {
   white-space: nowrap;
   overflow: clip; /* hides each letter until it rises into view */
   transform-origin: 0 0;
-}
-
-/* Each letter rises from below the line, one after another. --i is the
-   letter's position, set in components/Hero.tsx. */
-.name > span {
-  display: inline-block;
-  animation: letter-rise 1000ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i) * 35ms + 100ms);
-}
-@keyframes letter-rise {
-  from {
-    transform: translateY(105%);
-  }
-}
-/* While the loader is up, the letters wait. */
-html[data-loading="in"] .name > span {
-  animation-play-state: paused;
-}
-
-/* The small dot in "currently building Odovox". */
-.status-dot {
-  width: 0.5em;
-  height: 0.5em;
-  border-radius: 50%;
-  background: currentColor;
-  animation: status-pulse 2.4s ease-in-out infinite;
-}
-@keyframes status-pulse {
-  50% {
-    opacity: 0.25;
-  }
-}
-
-/* "Scroll" with a line that keeps drawing downwards. */
-.scroll-cue::after {
-  content: "";
-  display: block;
-  width: 1px;
-  height: 3.5rem;
-  margin: 0.75rem auto 0;
-  background: currentColor;
-  transform-origin: top;
-  animation: scroll-cue 2s var(--ease-in-out) infinite;
-}
-@keyframes scroll-cue {
-  0% {
-    transform: scaleY(0);
-  }
-  50% {
-    transform: scaleY(1);
-    transform-origin: top;
-  }
-  51% {
-    transform-origin: bottom;
-  }
-  100% {
-    transform: scaleY(0);
-    transform-origin: bottom;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .name > span,
-  .status-dot,
-  .scroll-cue::after {
-    animation: none;
-  }
-}
-
-/* ==========================================================================
-   PARTICLE STAGE (components/ParticleStage.tsx)
-   The layer that holds the particle object (or, on phones, its video). It
-   sticks to the window from the hero to the end of the last chapter, behind
-   the text. Where it sits and how big it is depends on which part of the page
-   is on screen: components/ThemeWatcher.tsx writes that to <html data-active>,
-   and the rules below move the object. It eases between poses by itself.
-   ========================================================================== */
-.stage {
-  position: sticky;
-  top: 0;
-  z-index: -1;
-  height: 100svh;
-  pointer-events: none;
-}
-/* The hero is pulled up over the stage so both start at the top. */
-.stage + .hero {
-  margin-top: -100svh;
-}
-
-.stage-box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(74svh, 92vw);
-  aspect-ratio: 1;
-  translate: calc(-50% + var(--x, 0px)) calc(-50% + var(--y, 0px));
-  scale: var(--s, 1);
-  transition:
-    translate 1.4s var(--ease-in-out),
-    scale 1.4s var(--ease-in-out),
-    opacity 0.6s ease;
-}
-
-/* Beside the work index: smaller, lower right. */
-html[data-active="index"] .stage-box {
-  --x: 36vw;
-  --y: 22svh;
-  --s: 0.42;
-  opacity: 0.6;
-}
-/* In a chapter: a small emblem in the top-right corner. */
-html:is(
-    [data-active="odovox"],
-    [data-active="scp"],
-    [data-active="aftermeet"],
-    [data-active="road"],
-    [data-active="kattral"],
-    [data-active="cache"],
-    [data-active="hallucination"]
-  )
-  .stage-box {
-  --x: 36vw;
-  --y: -27svh;
-  --s: 0.34;
-}
-
-/* On phones the object is a recorded video; it stays in the hero only. */
-@media (max-width: 1023px) {
-  .stage {
-    position: absolute;
-    inset: 0 0 auto 0;
-  }
-  .stage + .hero {
-    margin-top: 0;
-  }
-}
-
-.stage video {
-  transition: opacity 600ms ease;
-}
-
-/* The live object's colour is the accent of whichever theme it is given;
-   this makes that colour fade when the theme changes. */
-.stage [data-shape] {
-  transition: --accent 0.6s ease;
-}
-
-/* During the loader, on desktop, the live object sits above the loader so its
-   dot is visible, and the still stays out of sight until the loader has gone.
-   On phones the stage stays underneath, where the still loads straight away:
-   it is the largest thing on the first screen, so painting it early is what
-   the "largest contentful paint" speed measure rewards. */
-html[data-loading] .stage[data-mode="particles"] {
-  z-index: 90;
-}
-html[data-loading] .stage[data-mode="particles"] video {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .stage-box {
-    transition: none;
-  }
 }
 
 /* ==========================================================================
@@ -1146,41 +919,114 @@ html[data-loading] .stage[data-mode="particles"] video {
 }
 
 /* ==========================================================================
-   KATTRAL STRIP (components/chapters/Kattral.tsx)
-   On wide screens, with motion allowed, the chapter is one row of panels that
-   slides sideways while the section stays pinned (data-strip, see
-   components/Motion.tsx). Everywhere else the panels simply stack.
+   RING (components/ring/Ring.tsx, app/page.tsx)
+   The home page is one screen. Underneath, the seven projects are a plain
+   list ("reel") of posters: a row that scrolls sideways on wide screens, a
+   column on phones. When the WebGL ring starts (data-state="on") the list is
+   hidden from sight but kept for keyboards and screen readers, the canvas
+   fills the window, and the page takes the colours of the project in the
+   middle, fading from one to the next.
    ========================================================================== */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .strip-wrap {
+.ring {
+  position: relative;
+  min-height: 100svh;
+  transition: background-color 700ms ease;
+}
+.reel {
+  display: grid;
+  gap: 1.5rem;
+  padding: 5rem var(--spacing-gutter) 4.5rem;
+}
+.reel-item {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  text-decoration: none;
+}
+.reel-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* The name sits on a dark fade at the foot of the poster. */
+.reel-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: 0.5rem;
+  padding: 4rem 1.25rem 1.25rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.75), transparent);
+  color: #f4f2ee;
+}
+.reel-caption .text-muted {
+  color: #d9d6cf;
+}
+@media (min-width: 48rem) {
+  .reel {
+    display: flex;
     height: 100svh;
-    overflow: hidden;
-  }
-  .strip {
-    flex-direction: row;
     align-items: center;
-    width: max-content;
-    height: 100%;
-    gap: 8vw;
-    padding-block: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-inline: 20vw;
+    gap: 4vw;
   }
-  .strip > * {
-    flex: none;
+  .reel li {
+    flex: 0 0 60vw;
+    scroll-snap-align: center;
   }
-  .strip > :nth-child(1) {
-    width: 40vw;
-  }
-  .strip > :nth-child(2) {
-    width: 58vw;
-  }
-  .strip > :nth-child(3) {
-    width: 38vw;
+  .reel-item {
+    aspect-ratio: 16 / 9;
   }
 }
 
-/* On the full-bleed Road Damage section the particle object steps aside. */
-html[data-active="road"] .stage-box {
-  opacity: 0;
+/* The ring is running: one screen, no scrolling, the list out of sight. */
+.ring[data-state="on"] {
+  height: 100svh;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+.ring[data-state="on"] .reel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ring-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+.ring[data-state="on"] .ring-canvas {
+  display: block;
+}
+/* The middle panel's click area, exactly over it. When a project's link in
+   the hidden list has keyboard focus, this shows the focus ring instead. */
+.ring-hit {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  translate: -50% -50%;
+}
+.ring:has(.reel a:focus-visible) .ring-hit {
+  outline: 2px solid var(--accent);
+  outline-offset: 8px;
+}
+.ring-ai {
+  position: absolute;
+  top: calc(100% + 1.25rem);
+  left: 0;
+  color: var(--muted);
 }
 
 /* ==========================================================================

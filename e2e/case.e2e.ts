@@ -59,12 +59,11 @@ for (const [index, item] of projects.entries()) {
   });
 }
 
-test("the home page's case-study link opens the page", async ({ page }) => {
+test("the home page's link to a project opens its page", async ({ page }) => {
   await page.goto("/");
-  await page
-    .locator("section#road")
-    .getByRole("link", { name: "Open case study" })
-    .click();
+  // The list of links under the ring is the keyboard's way in.
+  await page.locator('#projects a[href="/work/road"]').focus();
+  await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/work\/road$/);
   // (The page you came from can stay in the document, hidden, so ask for
   // the heading a visitor can actually see.)

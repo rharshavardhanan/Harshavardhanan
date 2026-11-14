@@ -7,7 +7,7 @@ import { Anomaly } from "./Anomaly";
 // content/about.ts.
 export function About() {
   return (
-    <section id="about" aria-labelledby="about-title" className="pt-40">
+    <section id="about" aria-labelledby="about-title" className="pt-32 pb-24">
       <div className="px-gutter grid grid-cols-12 gap-x-4 gap-y-16">
         {/* The portrait's paper is warmer than the page's, so it is shown as
             a print. Hovering it makes its grain shift (see .portrait). */}
@@ -23,9 +23,9 @@ export function About() {
         </figure>
 
         <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-          <h2 id="about-title" data-lines className="text-h2">
+          <h1 id="about-title" data-lines className="text-h2">
             About
-          </h2>
+          </h1>
           {bioIsDraft && (
             <p className="label border-fg mt-8 inline-block border px-2 py-1">
               Draft · Harsha to rewrite
@@ -55,9 +55,9 @@ export function About() {
 
       {/* Skills: one line per group, in large type. */}
       <div className="px-gutter mt-40">
-        <h3 className="label text-muted flex items-center font-sans">
+        <h2 className="label text-muted flex items-center font-sans">
           Skills <Anomaly id="about" />
-        </h3>
+        </h2>
         <dl className="mt-10">
           {skills.map(([group, items]) => (
             <div

@@ -5,8 +5,8 @@ test.use({ viewport: { width: 1280, height: 800 } });
 test("the same-start recordings play together in the browser", async ({
   page,
 }) => {
-  await page.goto("/");
-  const chapter = page.locator("section#scp");
+  await page.goto("/work/scp");
+  const chapter = page.locator("article");
   const clips = chapter.locator("ul video");
   await expect(clips).toHaveCount(3);
   await clips.first().scrollIntoViewIfNeeded();
@@ -34,8 +34,8 @@ test("the monitor recordings have the browser's own controls and load", async ({
   request,
   page,
 }) => {
-  await page.goto("/");
-  const watch = page.locator("section#scp video[controls]");
+  await page.goto("/work/scp");
+  const watch = page.locator("article video[controls]");
   await expect(watch).toHaveCount(2);
   for (const path of [
     "/media/real/scp-cheap.mp4",
@@ -54,8 +54,8 @@ test("the monitor recordings have the browser's own controls and load", async ({
 test("the demo flips its verdict between same α and same false-alarm rate", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.locator("section#scp figure");
+  await page.goto("/work/scp");
+  const demo = page.locator("article figure");
   await expect(demo.getByRole("status")).toContainText("8.4 points worse");
   await demo.getByRole("radio", { name: "Same α" }).focus();
   await page.keyboard.press("ArrowRight");
@@ -67,8 +67,8 @@ test("the demo flips its verdict between same α and same false-alarm rate", asy
 });
 
 test("the team and the code are credited", async ({ page }) => {
-  await page.goto("/");
-  const chapter = page.locator("section#scp");
+  await page.goto("/work/scp");
+  const chapter = page.locator("article");
   await expect(chapter).toContainText("Akileshguhan A");
   await expect(
     chapter.getByRole("link", { name: "Code on GitHub" }),
@@ -84,8 +84,8 @@ test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("nothing plays until asked", async ({ page }) => {
-    await page.goto("/");
-    const clips = page.locator("section#scp ul video");
+    await page.goto("/work/scp");
+    const clips = page.locator("article ul video");
     await clips.first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(800);
     expect(
@@ -94,7 +94,7 @@ test.describe("reduced motion", () => {
       ),
     ).toBe(true);
     await page
-      .locator("section#scp")
+      .locator("article")
       .getByRole("button", { name: "Play" })
       .click();
     await expect

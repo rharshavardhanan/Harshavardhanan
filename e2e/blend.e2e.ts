@@ -1,7 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-// The hero name is white text with "difference" blending, and the header
-// changes colour with what is under it, so their real colour depends on what
+// The frame changes colour with what is under it, so their real colour depends on what
 // is behind them. This test measures the pixels actually drawn: inside each
 // element, the contrast between its darkest and lightest pixel must be at
 // least 4.5:1 (the text against its background).
@@ -33,25 +32,21 @@ async function renderedContrast(page: Page, target: Locator) {
 
 test.use({ viewport: { width: 1280, height: 800 }, reducedMotion: "reduce" });
 
-test("the frame and hero text are readable on paper", async ({ page }) => {
-  await page.goto("/");
+test("the frame is readable on paper", async ({ page }) => {
+  await page.goto("/about");
   await page.evaluate(() => document.fonts.ready);
   for (const target of [
     page.locator(".corners").getByRole("link", { name: "Harshavardhanan" }),
     page.locator(".corners").getByRole("link", { name: "Menu" }),
-    page.locator("[data-hero] p").first(),
-    page.locator("h1 span").first(),
   ]) {
     expect(await renderedContrast(page, target)).toBeGreaterThanOrEqual(4.5);
   }
 });
 
-test("the frame stays readable over a dark project", async ({ page }) => {
+test("the frame stays readable on the home page's dark colours", async ({
+  page,
+}) => {
   await page.goto("/");
-  await page
-    .locator('section[data-zone="road"]')
-    .evaluate((el) => el.scrollIntoView({ block: "start" }));
-  await page.evaluate(() => window.scrollBy(0, 200));
   await page.evaluate(() => document.fonts.ready);
   for (const target of [
     page.locator(".corners").getByRole("link", { name: "Harshavardhanan" }),

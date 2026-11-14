@@ -6,8 +6,8 @@ test.use({ viewport: { width: 1280, height: 800 } });
 test("Odovox: the dictation becomes a record the doctor verifies", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.locator("section#odovox figure");
+  await page.goto("/work/odovox");
+  const demo = page.locator("article figure");
   await demo.scrollIntoViewIfNeeded();
   const verify = demo.getByRole("button", { name: "Verify record" });
   await expect(verify).toBeVisible({ timeout: 10_000 });
@@ -19,8 +19,8 @@ test("Odovox: the dictation becomes a record the doctor verifies", async ({
 });
 
 test("Road Damage: switching model changes what is found", async ({ page }) => {
-  await page.goto("/");
-  const demo = page.locator("section#road figure");
+  await page.goto("/work/road");
+  const demo = page.locator("article figure");
   await expect(demo.getByRole("status")).toHaveText("4 of 17 found");
   await demo.getByRole("radio", { name: "General model" }).focus();
   await page.keyboard.press("ArrowRight");
@@ -29,8 +29,8 @@ test("Road Damage: switching model changes what is found", async ({ page }) => {
 });
 
 test("Kattral: the class fills up and the chat appears", async ({ page }) => {
-  await page.goto("/");
-  const demo = page.locator("section#kattral figure");
+  await page.goto("/work/kattral");
+  const demo = page.locator("article figure");
   await demo.scrollIntoViewIfNeeded();
   await expect(demo.getByRole("status")).toHaveText("6 in class", {
     timeout: 10_000,
@@ -42,8 +42,8 @@ test("Kattral: the class fills up and the chat appears", async ({ page }) => {
 test("Cache Wars: a run finishes with three hit rates and a verdict", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.locator("section#cache figure");
+  await page.goto("/work/cache");
+  const demo = page.locator("article figure");
   // Q-Learning is chosen at first; one press of the left arrow moves to LFU.
   await demo.getByRole("radio", { name: "Q-Learning" }).focus();
   await page.keyboard.press("ArrowLeft");
@@ -60,8 +60,8 @@ test("Cache Wars: a run finishes with three hit rates and a verdict", async ({
 test("Spot the Hallucination: five answers, then the score", async ({
   page,
 }) => {
-  await page.goto("/");
-  const demo = page.locator("section#hallucination figure");
+  await page.goto("/work/hallucination");
+  const demo = page.locator("article figure");
   // Correct answers, in order: made up, supported, made up, supported, supported.
   for (const answer of [
     "Made up",
@@ -83,13 +83,14 @@ test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("scripted demos show their end state at once", async ({ page }) => {
-    await page.goto("/");
-    const odovox = page.locator("section#odovox figure");
+    await page.goto("/work/odovox");
+    const odovox = page.locator("article figure");
     await odovox.scrollIntoViewIfNeeded();
     await expect(
       odovox.getByRole("button", { name: "Verify record" }),
     ).toBeVisible();
-    const cache = page.locator("section#cache figure");
+    await page.goto("/work/cache");
+    const cache = page.locator("article figure");
     await cache.getByRole("button", { name: "Run" }).click();
     await expect(cache.getByRole("status")).toContainText("kept the most hits");
   });

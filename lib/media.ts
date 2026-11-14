@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import type { Slug } from "@/content/projects";
 
@@ -62,10 +62,6 @@ export function film(slug: Slug): Film {
 export type Media = {
   src: string;
   video: boolean;
-  /** True for a tall picture, such as a phone screenshot. */
-  portrait: boolean;
-  /** Width divided by height, for pictures whose size could be read. */
-  ratio?: number;
   /** True when the real file is missing and the particle cover stands in. */
   placeholder: boolean;
   /** The real file's name, for the placeholder label. */
@@ -80,7 +76,6 @@ export function media(file: string, slug: Slug): Media {
     return {
       src: `/media/cover-${slug}.avif`,
       video: false,
-      portrait: false,
       placeholder: true,
       file,
     };
@@ -88,69 +83,7 @@ export function media(file: string, slug: Slug): Media {
   return {
     src,
     video: file.endsWith(".mp4"),
-    portrait: false,
     placeholder: false,
     file,
   };
 }
-
-/** The same, plus its shape: a PNG's width and height are read from its
- *  header. "use cache" makes Next.js read it once, while building: reading a
- *  file directly inside a page made the dev server report an error, because a
- *  library it loads stamps the time whenever a file is closed. */
-export async function shapedMedia(file: string, slug: Slug): Promise<Media> {
-  "use cache";
-  const found = media(file, slug);
-  if (found.placeholder || !file.endsWith(".png")) return found;
-  const header = readFileSync(path.join(PUBLIC, found.src));
-  const [width, height] = [header.readUInt32BE(16), header.readUInt32BE(20)];
-  return { ...found, portrait: height > width, ratio: width / height };
-}
-
-// The one picture or recording that stands for each project in the work index.
-// Kattral has no real media (not allowed), so it always uses its cover.
-export const PREVIEW: Record<Slug, string> = {
-  odovox: "odovox-queue.png",
-  scp: "scp-arbitrated.mp4",
-  aftermeet: "aftermeet-workspace.png",
-  road: "road-detections.png",
-  kattral: "kattral-none",
-  cache: "cache-dashboard.mp4",
-  hallucination: "halluc-roc.png",
-};
-
-export const previews = async () =>
-  Object.fromEntries(
-    await Promise.all(
-      (Object.keys(PREVIEW) as Slug[]).map(async (slug) => [
-        slug,
-        await shapedMedia(PREVIEW[slug], slug),
-      ]),
-    ),
-  ) as Record<Slug, Media>;
-
-// What each case-study page shows: one wide picture or recording across the
-// full width, then a gallery of further screens. Kattral has none: Zerofence
-// has not allowed screenshots of the product.
-export const CASE_MEDIA: Record<Slug, { wide?: string; gallery: string[] }> = {
-  odovox: {
-    wide: "odovox-queue.png",
-    gallery: ["odovox-verify.png", "odovox-bill.png", "odovox-mobile.png"],
-  },
-  scp: {
-    wide: "scp-monitor-fail.mp4",
-    gallery: ["scp-arena.mp4", "scp-monitor-safe.mp4"],
-  },
-  aftermeet: {
-    wide: "aftermeet-landing.png",
-    gallery: [
-      "aftermeet-workspace.png",
-      "aftermeet-mobile.png",
-      "aftermeet-extension.png",
-    ],
-  },
-  road: { wide: "road-detections.png", gallery: ["road-map.png"] },
-  kattral: { gallery: [] },
-  cache: { wide: "cache-dashboard.mp4", gallery: [] },
-  hallucination: { wide: "halluc-roc.png", gallery: [] },
-};

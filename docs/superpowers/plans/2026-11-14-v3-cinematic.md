@@ -34,6 +34,8 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 
 ## Phase 1: Frame, menu, Inquire, type, dev error
 
+> Done 2026-11-14 (d07bd12).
+
 ### Task 1.1: The dev server shows no prerender error
 
 - **Goal:** Loading `/` in `pnpm dev` logs no "unstable value `Date.now()`" error.
@@ -117,6 +119,10 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 - **Done when:** All four checks pass, and `git log -1 --format=%s` reads "v3 phase 1: corner frame, menu index, Inquire, type".
 
 ## Phase 2: Home WebGL ring
+
+> Done 2026-11-14. Task 5.1 (proof components) moved into this phase: deleting
+> the old home page deleted the chapters that held each project's real material,
+> so it had to land in the same commit to keep the suite green.
 
 ### Task 2.1: The ring's maths is pure and tested
 

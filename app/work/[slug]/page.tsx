@@ -4,13 +4,11 @@ import { notFound } from "next/navigation";
 import { CountUp } from "@/components/CountUp";
 import { demos } from "@/components/demos";
 import { Flow } from "@/components/Flow";
-import { Frame } from "@/components/Frame";
 import { LoopVideo } from "@/components/LoopVideo";
-import { MediaView } from "@/components/MediaView";
 import { Motion } from "@/components/Motion";
 import { ThemeSetter } from "@/components/ThemeSetter";
 import { project, projects, type Stat } from "@/content/projects";
-import { CASE_MEDIA, media, shapedMedia } from "@/lib/media";
+import { proofs } from "@/components/proof";
 
 // One file makes all five case-study pages. The [slug] folder name means the
 // last part of the address (/work/odovox) is handed to this page as `slug`,
@@ -96,7 +94,7 @@ export default async function CaseStudy({ params }: Props) {
 
   const next = projects[(projects.indexOf(item) + 1) % projects.length];
   const Demo = demos[item.slug];
-  const { wide, gallery } = CASE_MEDIA[item.slug];
+  const Proof = proofs[item.slug];
   const meta = [
     ["Role", item.role],
     ...(item.team ? [["Team", item.team]] : []),
@@ -145,21 +143,17 @@ export default async function CaseStudy({ params }: Props) {
         {item.pitch}
       </p>
 
-      {/* 3. The real product, full width. */}
-      {wide && (
-        <div className="px-gutter">
-          <div className="overflow-hidden" data-cursor="View">
-            <div data-scale-in>
-              <MediaView
-                media={media(wide, item.slug)}
-                alt={`${item.title}: the product`}
-                sizes="100vw"
-                className="aspect-[16/9]"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 3. The real product: screens, recordings and charts. */}
+      <section
+        id="proof"
+        aria-labelledby="proof-title"
+        className="px-gutter space-y-32 py-16"
+      >
+        <h2 id="proof-title" className="sr-only">
+          The real product
+        </h2>
+        <Proof />
+      </section>
 
       {/* 4. Problem, what I built, result, each with a figure. */}
       <Statement
@@ -211,53 +205,6 @@ export default async function CaseStudy({ params }: Props) {
           <Flow steps={item.flow} />
         </div>
       </section>
-
-      {/* 6. More screens, in two offset columns that drift as you scroll. */}
-      {gallery.length > 0 && (
-        <section
-          aria-label="Screens"
-          className="px-gutter grid gap-x-8 gap-y-16 py-28 md:grid-cols-2"
-        >
-          {(
-            await Promise.all(
-              gallery.map((file) => shapedMedia(file, item.slug)),
-            )
-          ).map((shot, index) => {
-            const file = shot.file;
-            return (
-              <div
-                key={file}
-                data-parallax={index % 2 ? "" : undefined}
-                className={index % 2 ? "md:mt-40" : ""}
-              >
-                {shot.portrait ? (
-                  // A phone screenshot, in a phone.
-                  <Frame kind="phone" cursor="View">
-                    <MediaView
-                      media={shot}
-                      alt={`${item.title}: a screen of the app`}
-                      sizes="20rem"
-                      inPhone
-                      className="absolute inset-0"
-                    />
-                  </Frame>
-                ) : (
-                  // A chart or a wide screen, at its own shape.
-                  <div data-cursor="View">
-                    <MediaView
-                      media={shot}
-                      alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "").replace("-", " ")}`}
-                      sizes="(min-width: 768px) 46vw, 100vw"
-                      className="w-full"
-                      ratio={shot.ratio ?? 5 / 3}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </section>
-      )}
 
       {/* 7. What was hard, on the opposite colours. */}
       <section

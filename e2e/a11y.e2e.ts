@@ -40,9 +40,28 @@ const audit = async (page: Page) => {
 
 test.use({ reducedMotion: "reduce" }); // audit the settled page, not mid-animation
 
-test("home page, neutral", async ({ page }) => {
+test("home page (the list of films, as reduced motion shows it)", async ({
+  page,
+}) => {
   await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("data-active", "hero");
+  await expect(page.locator(".corners time")).toHaveText(/IST$/);
+  expect(await audit(page)).toEqual([]);
+});
+
+test.describe("with motion", () => {
+  test.use({ reducedMotion: "no-preference" });
+
+  test("home page with the ring running", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
+      timeout: 15000,
+    });
+    expect(await audit(page)).toEqual([]);
+  });
+});
+
+test("about page", async ({ page }) => {
+  await page.goto("/about");
   expect(await audit(page)).toEqual([]);
 });
 
@@ -55,15 +74,6 @@ for (const theme of [
   "cache",
   "hallucination",
 ]) {
-  test(`home page in the ${theme} theme`, async ({ page }) => {
-    await page.goto("/");
-    await page
-      .locator(`section[data-zone="${theme}"]`)
-      .evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await expect(page.locator("html")).toHaveAttribute("data-active", theme);
-    expect(await audit(page)).toEqual([]);
-  });
-
   test(`case study: ${theme}`, async ({ page }) => {
     await page.goto(`/work/${theme}`);
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
@@ -99,7 +109,7 @@ test.describe("phone", () => {
 
   test("home page", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("html")).toHaveAttribute("data-active", "hero");
+    await expect(page.locator(".corners time")).toHaveText(/IST$/);
     expect(await audit(page)).toEqual([]);
   });
 });

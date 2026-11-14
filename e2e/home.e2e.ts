@@ -5,7 +5,7 @@ test.use({ viewport: { width: 1280, height: 800 } });
 test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/about");
   const about = page.locator("#about");
   const portrait = about.getByRole("img", { name: /portrait of Harsha/ });
   await portrait.scrollIntoViewIfNeeded();
@@ -32,13 +32,8 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
 });
 
 test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
-  await page.goto("/");
-  const anomalies = page.getByRole("button", { name: "Anomaly: fix it" });
-  await expect(anomalies).toHaveCount(8);
-  await page
-    .locator("section#road")
-    .getByRole("button", { name: "Anomaly: fix it" })
-    .click();
+  await page.goto("/about");
+  await page.getByRole("button", { name: "Anomaly: fix it" }).click();
   // The count is in the menu (closed, so found by its label, not its role).
   const count = page.locator('dialog[aria-label="Menu"]');
   await expect(count).toContainText("anomalies resolved 1 / 8");
@@ -52,7 +47,7 @@ test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
 test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/work/odovox");
   const open = page.locator(".corners").getByRole("link", { name: "Menu" });
   await open.focus();
   await page.keyboard.press("Enter");
@@ -76,10 +71,11 @@ test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
 test("Page wipe: a sheet in the next page's colour covers the change", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/work/kattral");
+  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
   await page
-    .locator("section#odovox")
-    .getByRole("link", { name: "Open case study" })
+    .getByRole("dialog", { name: "Menu" })
+    .getByRole("link", { name: /Odovox/ })
     .click();
   const wipe = page.locator(".wipe");
   await expect(wipe).toHaveAttribute("data-state", "in");
@@ -126,10 +122,11 @@ test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("pages change without a wipe", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/work/kattral");
+    await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
     await page
-      .locator("section#road")
-      .getByRole("link", { name: "Open case study" })
+      .getByRole("dialog", { name: "Menu" })
+      .getByRole("link", { name: /Automated Road/ })
       .click();
     await expect(page).toHaveURL(/\/work\/road$/);
     await expect(page.locator(".wipe")).not.toHaveAttribute("data-state", /.+/);
