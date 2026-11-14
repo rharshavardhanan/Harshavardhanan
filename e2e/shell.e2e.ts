@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+// These check other things: skip the first-visit loader (and its Enter gate,
+// e2e/loader.e2e.ts tests those).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("loaded", "1"));
+});
+
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

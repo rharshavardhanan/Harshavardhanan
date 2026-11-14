@@ -58,6 +58,53 @@ test("About is one click away: in the corner on wide screens, large in the menu"
   expect((await inMenu.boundingBox())!.height).toBeGreaterThanOrEqual(32);
 });
 
+test("GitHub and LinkedIn are easy to find: in the frame on wide screens, and in the menu", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/work/cache");
+  const frame = corners(page);
+  await expect(frame.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+    "href",
+    "https://github.com/rharshavardhanan",
+  );
+  await expect(frame.getByRole("link", { name: /LinkedIn/ })).toBeVisible();
+  await page.setViewportSize({ width: 360, height: 740 });
+  await frame.getByRole("link", { name: "Menu" }).click();
+  const pages = page
+    .getByRole("dialog", { name: "Site menu" })
+    .getByRole("navigation", { name: "Pages" });
+  await expect(pages.getByRole("link", { name: /GitHub/ })).toBeVisible();
+  await expect(pages.getByRole("link", { name: /LinkedIn/ })).toBeVisible();
+});
+
+test("the pointer stays visible between the menu's links", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/work/cache");
+  await page.mouse.move(640, 400); // wakes the custom cursor
+  await corners(page).getByRole("link", { name: "Menu" }).click();
+  const pages = page
+    .getByRole("dialog", { name: "Site menu" })
+    .getByRole("navigation", { name: "Pages" });
+  await expect(pages).toBeVisible();
+  // Halfway between Home and About: what is under the pointer there?
+  const under = await pages.evaluate((nav) => {
+    const [a, b] = [...nav.querySelectorAll("a")].map((link) =>
+      link.getBoundingClientRect(),
+    );
+    const el = document.elementFromPoint(
+      (a.right + b.left) / 2,
+      (a.top + a.bottom) / 2,
+    )!;
+    return {
+      inMenu: !!el.closest("dialog[open]"),
+      cursor: getComputedStyle(el).cursor,
+    };
+  });
+  expect(under.inMenu).toBe(true);
+  expect(under.cursor).not.toBe("none");
+});
+
 test("labels are Inter Tight, except inside a demo", async ({ page }) => {
   await page.goto("/work/cache");
   await page.evaluate(() => document.fonts.ready);

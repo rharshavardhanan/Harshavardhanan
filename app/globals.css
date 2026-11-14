@@ -372,6 +372,13 @@ html:has(dialog[open]) .corner-row {
 html:has(dialog[open]) .corners dialog[open] {
   visibility: visible;
 }
+/* The frame lets the pointer through (pointer-events: none above) and its
+   links take it back. A dialog takes all of it back: otherwise the gaps
+   between its links let the pointer fall through to the page below, where
+   the custom cursor hides it, and the pointer vanishes. */
+.corners dialog {
+  pointer-events: auto;
+}
 
 /* A dialog (the menu, INQUIRE) is drawn above everything, the custom dot
    included, so inside one the ordinary cursor comes back. */
@@ -434,10 +441,65 @@ html[data-loading="out"] .loader {
   opacity: 0;
 }
 
-/* "H.R." is simply there (the counter is what moves): drawing it in would
-   make the visitor's first full picture wait for the animation. */
-.loader-initials {
+/* Enter (the home page's first visit): hidden while the counter runs, then
+   it fades in under the name and waits to be pressed. */
+.loader-enter {
+  align-self: center;
+  margin-bottom: 4.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.9rem 2.4rem;
+  min-height: 2.75rem;
   color: var(--fg);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 500ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+html[data-loading="gate"] .loader-enter {
+  opacity: 1;
+  visibility: visible;
+}
+@media (hover: hover) {
+  .loader-enter:hover {
+    background: var(--fg);
+    color: var(--bg);
+  }
+}
+
+/* The name fills the width of the window (Instrument Serif, written as a
+   name, is about 6.4 times as wide as its font size). It is grey; a white
+   copy on top is uncovered from left to right in step with the counter, so
+   the name itself is the progress bar. */
+.loader-name {
+  position: relative;
+  font-family: var(--font-instrument-serif), serif;
+  font-size: calc(100cqi / 6.6);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  /* A dark grey (30% of the text colour), so the white sweeping over it
+     reads as filling. */
+  color: color-mix(in oklab, var(--fg) 30%, var(--bg));
+}
+/* The fill and the counter share one steady curve (ease-in-out, 1.4s), so
+   the white edge moves with the number instead of jumping most of the way at
+   once. components/Loader.tsx lifts or shows Enter just after, at 1.5s. */
+.loader-fill {
+  position: absolute;
+  inset: 0;
+  color: var(--fg);
+  animation: loader-fill 1400ms cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+@keyframes loader-fill {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }
 
 /* The counter is a number the browser animates from 0 to 100 and prints
@@ -455,7 +517,7 @@ html[data-loading="out"] .loader {
 .loader-count {
   font-variant-numeric: tabular-nums;
   counter-reset: loader var(--loader-count);
-  animation: loader-count 1000ms var(--ease-out) forwards;
+  animation: loader-count 1400ms cubic-bezier(0.45, 0, 0.25, 1) forwards;
 }
 .loader-count::after {
   content: counter(loader, loader-digits);
@@ -464,20 +526,6 @@ html[data-loading="out"] .loader {
   to {
     --loader-count: 100;
   }
-}
-
-/* The name always fills the width of its container. "HARSHAVARDHANAN" in
-   Instrument Serif capitals is 6.87 times as wide as its font size, so
-   dividing the container's width (100cqi) by a little more than that gives a
-   font size that fits exactly at any window width (the loader's "H.R."). */
-.name {
-  font-size: calc(100cqi / 6.97);
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: clip; /* hides each letter until it rises into view */
-  transform-origin: 0 0;
 }
 
 /* ==========================================================================
@@ -935,7 +983,8 @@ html[data-loading="out"] .loader {
 }
 /* A project chosen: the others fade while its poster grows into the page. */
 .site-menu[data-leaving] .menu-row:not([data-chosen]),
-.site-menu[data-leaving] :is(.menu-bar, .menu-foot, .menu-pages, .menu-quote, .menu-quote + p) {
+.site-menu[data-leaving]
+  :is(.menu-bar, .menu-foot, .menu-pages, .menu-quote, .menu-quote + p) {
   opacity: 0;
   transition: opacity 250ms ease;
 }
@@ -1047,7 +1096,6 @@ html[data-loading="out"] .loader {
   .menu-here {
     display: none;
   }
-
 }
 
 /* While a dialog is open the page underneath stays still. */

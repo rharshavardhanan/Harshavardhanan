@@ -1,10 +1,16 @@
 import { expect, test } from "@playwright/test";
 
+// These check other things: skip the first-visit loader (and its Enter gate,
+// e2e/loader.e2e.ts tests those).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("loaded", "1"));
+});
+
 test.describe("desktop with a mouse", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
   test("a dot follows the pointer and grows over links", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/about");
     await expect(page.locator("html")).toHaveClass(/has-cursor/);
     await page.mouse.move(400, 400);
     await page.mouse.move(420, 410);

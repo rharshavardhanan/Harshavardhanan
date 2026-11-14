@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { contact } from "@/content/about";
 import { projects, type Slug } from "@/content/projects";
 import { film } from "@/lib/media";
+import { ArrowUpRight } from "./ArrowUpRight";
 import { CornerStatus } from "./CornerStatus";
 import { Inquire } from "./Inquire";
 import { Menu } from "./Menu";
@@ -37,6 +39,20 @@ export function Corners() {
           <Link href="/about" className="inline-block py-2 max-sm:hidden">
             About
           </Link>
+          {/* GitHub and LinkedIn, where there is room (and always in the
+              menu). */}
+          {contact.links
+            .filter((link) => link.label !== "Résumé")
+            .map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="inline-block py-2 max-lg:hidden"
+              >
+                {link.label}
+                <ArrowUpRight />
+              </a>
+            ))}
           <Inquire />
         </div>
       </header>

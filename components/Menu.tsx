@@ -9,6 +9,7 @@ import {
   useState,
   ViewTransition,
 } from "react";
+import { contact } from "@/content/about";
 import { projects, type Slug } from "@/content/projects";
 import { play } from "@/lib/sound";
 
@@ -243,6 +244,13 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
                 Inquire
               </a>
               <a href="/resume.pdf">Résumé ↗</a>
+              {contact.links
+                .filter((link) => link.label !== "Résumé")
+                .map((link) => (
+                  <a key={link.label} href={link.href}>
+                    {link.label} ↗
+                  </a>
+                ))}
             </nav>
 
             {/* The pointed-at project: its poster, its line, its role and year. */}

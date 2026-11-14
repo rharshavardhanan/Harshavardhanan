@@ -11,7 +11,7 @@
 // studio. You make "nodes" (a source of sound, a filter, a volume knob) and
 // plug them into each other like guitar pedals, ending at the speakers
 // (context.destination). Every sound here goes through one shared volume knob,
-// the master gain, which the SOUND switch turns between 0.8 and 0.
+// the master gain (0.8).
 //
 // There is no switch: the sounds play from the visitor's first click, key or
 // tap (browsers allow no sound before one of those), and never for visitors
@@ -107,9 +107,7 @@ async function renderTick(sampleRate: number) {
 
 /** Makes the sounds that are recorded once (select is played live). */
 function build(context: AudioContext) {
-  void renderTick(context.sampleRate).then((tick) =>
-    buffers.set("tick", tick),
-  );
+  void renderTick(context.sampleRate).then((tick) => buffers.set("tick", tick));
   // Click: the same, dying more slowly (4ms), so it is rounder and softer.
   buffers.set(
     "click",
@@ -232,11 +230,11 @@ export function install() {
   // Open the studio on the first click, key or tap.
   const first = () => {
     unlock();
-    for (const type of ["pointerdown", "keydown", "touchend"]) {
+    for (const type of ["pointerdown", "keydown", "touchend", "click"]) {
       window.removeEventListener(type, first, true);
     }
   };
-  for (const type of ["pointerdown", "keydown", "touchend"]) {
+  for (const type of ["pointerdown", "keydown", "touchend", "click"]) {
     window.addEventListener(type, first, true);
   }
 
