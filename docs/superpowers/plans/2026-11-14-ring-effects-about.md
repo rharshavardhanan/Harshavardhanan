@@ -79,3 +79,30 @@ Each task is checked with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e`
 - **Done when:** In `e2e/case.e2e.ts`, `scrollY < 50` after "next project", after a menu link, and after Back.
 
 > Tasks 1–7 done 2026-11-14 (104 browser tests passing).
+
+### Task 8: A site menu that is easy to use
+
+- **Goal:** Harsha's spec of 2026-11-14:
+  - one project per line with its number, and a preview column (poster, quote, role and year)
+  - a bar matching the frame, and a bottom row of links
+  - hover and focus light one name and dim the rest
+  - a wipe-down opening, and a closing played back
+  - choosing a project morphs its poster into the new page's film
+  - a modal dialog, arrow keys, `aria-current` and `aria-expanded`
+  - the page locked while open (with Lenis stopped)
+  - reduced motion: a fade only
+  - phones: thumbnails instead of the preview
+- **Files:** `components/Menu.tsx`, `components/Inquire.tsx`, `components/SmoothScroll.tsx`, `components/ring/Ring.tsx`, `components/NextProject.tsx`, `app/globals.css`, `e2e/frame.e2e.ts` (and the tests that open the menu).
+- **Done when:** `e2e/frame.e2e.ts › MENU opens…` passes (7 projects one per line, `aria-current` on the current one, focus on the first, arrow keys, hover preview, Escape returns focus to MENU), and so does `› choosing a project…`.
+
+### Task 9: The ring looks like a cinema screen
+
+- **Goal:**
+  - Each panel curves towards you at its sides (`x²`; bend 0.18 at rest + 0.35 × speed, capped at 0.45, through the 30° lens).
+  - Panels fill about 85% of the width, with the neighbours peeking in.
+  - Rounded corners (a distance function with `fwidth`), a softer vignette, and a faint floor glow.
+  - The grain's inputs are kept small (`mod 512` / `mod 64`) so it never stripes; its strength is 0.05.
+- **Files:** `components/ring/shaders.ts`, `components/ring/gl.ts`, `lib/ring.ts`, `app/globals.css`.
+- **Done when:** A screenshot of `/` at rest shows a rounded panel whose sides are slightly taller than its middle, with both neighbours visible at the edges.
+
+> Tasks 8–9 done 2026-11-14 (105 browser tests passing).

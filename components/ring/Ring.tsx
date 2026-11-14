@@ -65,6 +65,9 @@ export function Ring({
   const [on, setOn] = useState(false);
   const [centre, setCentre] = useState(0);
   const [size, setSize] = useState<PanelSize | null>(null);
+  // The project being opened: only then does the canvas carry its film's
+  // name (two things on a page must never share one).
+  const [opening, setOpening] = useState<string | null>(null);
   const router = useRouter();
 
   // Hide the list before the first paint while the ring is on its way, so it
@@ -154,6 +157,7 @@ export function Ring({
           at: performance.now(),
           href: `/work/${items[index].slug}`,
         };
+        setOpening(items[index].slug);
       };
 
       const touched = () => {
@@ -434,6 +438,7 @@ export function Ring({
       // effect again later, so leave the state ready for a fresh start.)
       setOn(false);
       setSize(null);
+      setOpening(null);
     };
   }, [items, router]);
 
@@ -452,7 +457,7 @@ export function Ring({
     >
       {children}
       <ViewTransition
-        name={`film-${item.slug}`}
+        name={opening ? `film-${opening}` : undefined}
         share="film-morph"
         default="none"
       >

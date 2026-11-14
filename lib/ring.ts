@@ -42,8 +42,10 @@ export function panelSize(vw: number, vh: number): PanelSize {
     const gap = vh * 0.06;
     return { w, h, gap, vertical: true, step: h + gap };
   }
-  const w = Math.min(vw * 0.5, (vh * 0.6 * 16) / 9);
+  // Big, like a cinema screen: with its sides curved towards you it fills
+  // about 85% of the width, and its neighbours just peek in at the edges.
+  const w = Math.min(vw * 0.74, (vh * 0.66 * 16) / 9);
   const h = (w * 9) / 16;
-  const gap = vw * 0.05;
+  const gap = vw * 0.03;
   return { w, h, gap, vertical: false, step: w + gap };
 }

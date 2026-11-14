@@ -89,11 +89,14 @@ for (const theme of [
   });
 }
 
-for (const name of ["Menu", "Inquire"]) {
+for (const [name, dialog] of [
+  ["Menu", "Site menu"],
+  ["Inquire", "Inquire"],
+]) {
   test(`${name} open`, async ({ page }) => {
     await page.goto("/work/odovox");
     await page.locator(".corners").getByRole("link", { name }).click();
-    await expect(page.getByRole("dialog", { name })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: dialog })).toBeVisible();
     expect(await audit(page)).toEqual([]);
   });
 }

@@ -68,11 +68,21 @@ export function SmoothScroll() {
         lenis.current.on("scroll", ScrollTrigger.update);
       };
 
+      // While a dialog has the page locked (<html data-lock>, set by the
+      // menu and INQUIRE), smooth scrolling stops too.
+      const html = document.documentElement;
+      const lock = new MutationObserver(() => {
+        if ("lock" in html.dataset) lenis.current?.stop();
+        else lenis.current?.start();
+      });
+      lock.observe(html, { attributeFilter: ["data-lock"] });
+
       sync();
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
       reduce.addEventListener("change", sync);
       cleanup = () => {
+        lock.disconnect();
         reduce.removeEventListener("change", sync);
         gsap.ticker.remove(tick);
         lenis.current?.destroy();

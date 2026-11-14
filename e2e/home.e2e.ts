@@ -36,7 +36,7 @@ test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
   await page.goto("/about");
   await page.getByRole("button", { name: "Anomaly: fix it" }).click();
   // The count is in the menu (closed, so found by its label, not its role).
-  const count = page.locator('dialog[aria-label="Menu"]');
+  const count = page.locator('dialog[aria-label="Site menu"]');
   await expect(count).toContainText("anomalies resolved 1 / 8");
   await page.reload();
   await expect(count).toContainText("anomalies resolved 1 / 8");
@@ -52,7 +52,7 @@ test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
   const open = page.locator(".corners").getByRole("link", { name: "Menu" });
   await open.focus();
   await page.keyboard.press("Enter");
-  const menu = page.getByRole("dialog", { name: "Menu" });
+  const menu = page.getByRole("dialog", { name: "Site menu" });
   await expect(menu).toBeVisible();
   expect(
     await page.evaluate(() => !!document.activeElement?.closest("dialog")),
@@ -72,17 +72,15 @@ test("Menu: opens, holds focus, closes with Escape, and navigates", async ({
 test("Page wipe: a sheet in the next page's colour covers the change", async ({
   page,
 }) => {
+  // (Links to projects morph their poster into the film instead; other
+  // links between pages get the wipe.)
   await page.goto("/work/kattral");
-  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
-  await page
-    .getByRole("dialog", { name: "Menu" })
-    .getByRole("link", { name: /Odovox/ })
-    .click();
+  await page.locator(".corners").getByRole("link", { name: "About" }).click();
   const wipe = page.locator(".wipe");
   await expect(wipe).toHaveAttribute("data-state", "in");
-  await expect(wipe).toHaveAttribute("data-theme", "odovox");
-  await expect(wipe).toHaveCSS("background-color", "rgb(15, 31, 28)");
-  await expect(page).toHaveURL(/\/work\/odovox$/);
+  await expect(wipe).toHaveAttribute("data-theme", "neutral");
+  await expect(wipe).toHaveCSS("background-color", "rgb(244, 242, 238)");
+  await expect(page).toHaveURL(/\/about$/);
   await expect(wipe).not.toHaveAttribute("data-state", /.+/, { timeout: 4000 });
 });
 
@@ -91,8 +89,8 @@ test("The menu carries the credit and the anomaly count", async ({
 }) => {
   await page.goto("/work/kattral");
   await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
-  const menu = page.getByRole("dialog", { name: "Menu" });
-  await expect(menu).toContainText("© 2026 · designed & built by Harsha");
+  const menu = page.getByRole("dialog", { name: "Site menu" });
+  await expect(menu).toContainText("© 2026 Harsha");
   await expect(menu).toContainText("anomalies resolved 0 / 8");
 });
 
@@ -162,7 +160,7 @@ test.describe("reduced motion", () => {
     await page.goto("/work/kattral");
     await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
     await page
-      .getByRole("dialog", { name: "Menu" })
+      .getByRole("dialog", { name: "Site menu" })
       .getByRole("link", { name: /Automated Road/ })
       .click();
     await expect(page).toHaveURL(/\/work\/road$/);

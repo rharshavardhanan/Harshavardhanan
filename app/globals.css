@@ -721,6 +721,280 @@ html[data-loading="out"] .loader {
   }
 }
 
+/* --- Site menu (components/Menu.tsx) --------------------------------------
+   Dark, full window: a bar matching the frame; the seven names, one per
+   line, each led by its number; a preview of the pointed-at project; and a
+   row of links. Pointing at a name lights it and slides it 12px right while
+   the others dim; its poster crossfades in the preview. */
+.site-menu {
+  /* The names: 40 to 96px, but never so big that the longest name ("Halluci-
+     nation Detection in LLMs", about 11 times its font size wide) leaves its
+     column, or the seven stop fitting the window's height. */
+  --name: min(
+    clamp(2.5rem, 6vw, 6rem),
+    (57vw - 7rem) / 11.2,
+    (100dvh - 16rem) / 8
+  );
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 0 var(--spacing-gutter) 1rem;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-inter-tight), system-ui, sans-serif;
+  font-size: var(--text-body);
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+}
+.site-menu[open] {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+.site-menu::backdrop {
+  background: none;
+}
+/* The bar: CLOSE ✕ · HARSHAVARDHANAN · INQUIRE, each at least 44px square
+   to press. */
+.menu-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+.menu-bar > *,
+.menu-foot a {
+  display: inline-flex;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  align-items: center;
+}
+.menu-bar > :first-child {
+  justify-self: start;
+}
+.menu-main {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  align-items: center;
+  gap: 4vw;
+  padding-block: 1.5rem;
+}
+.menu-list {
+  display: grid;
+  gap: 0.15em;
+}
+.menu-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  text-decoration: none;
+  transition:
+    opacity 300ms ease,
+    translate 400ms var(--ease-out);
+}
+/* The number sits level with the top of the name's capitals. */
+.menu-num {
+  display: inline-flex;
+  min-width: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: calc(var(--name) * 0.14);
+}
+.menu-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.menu-name {
+  display: block;
+  overflow: clip; /* the mask the name rises from */
+  font-family: var(--font-instrument-serif), serif;
+  font-size: var(--name);
+  line-height: 1;
+}
+.menu-name > span {
+  display: block;
+}
+/* Wide windows: every name on one line. */
+@media (min-width: 70rem) {
+  .menu-name {
+    white-space: nowrap;
+  }
+}
+.menu-here {
+  margin-top: calc(var(--name) * 0.14);
+  color: var(--accent);
+}
+.menu-row:is(:hover, :focus-visible) {
+  translate: 12px 0;
+}
+.menu-list:has(.menu-row:is(:hover, :focus-visible))
+  .menu-row:not(:hover, :focus-visible) {
+  opacity: 0.3;
+}
+.menu-thumb {
+  display: none;
+}
+/* The preview: all seven posters stacked; the shown one fades and settles. */
+.menu-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+}
+.menu-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  scale: 1.04;
+  transition:
+    opacity 400ms ease,
+    scale 400ms var(--ease-out);
+}
+.menu-poster[data-on="true"] {
+  opacity: 1;
+  scale: 1;
+}
+.menu-quote {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.menu-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+}
+/* A project chosen: the others fade while its poster grows into the page. */
+.site-menu[data-leaving] .menu-row:not([data-chosen]),
+.site-menu[data-leaving] :is(.menu-bar, .menu-foot, .menu-quote, .menu-quote + p) {
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+/* Opening: the dark page wipes down from the top (0.6s), the names rise
+   from their masks one after another (0.05s apart), then the preview fades
+   in. Closing: the wipe runs back up, faster (0.45s). */
+.site-menu[open] {
+  animation: site-menu-in 600ms var(--ease-in-out) both;
+}
+.site-menu[open] .menu-name > span {
+  animation: menu-rise 900ms var(--ease-out) both;
+  animation-delay: calc(300ms + var(--i, 0) * 50ms);
+}
+.site-menu[open] .menu-preview {
+  animation: menu-fade 500ms ease both;
+  animation-delay: 650ms;
+}
+.site-menu[data-closing] {
+  animation: site-menu-out 450ms var(--ease-in-out) both;
+}
+@keyframes site-menu-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes site-menu-out {
+  from {
+    clip-path: inset(0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes menu-rise {
+  from {
+    translate: 0 105%;
+  }
+}
+@keyframes menu-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes menu-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* Reduced motion: no wipe and no slide; a 0.2s fade, and the preview swaps
+   at once. */
+@media (prefers-reduced-motion: reduce) {
+  .site-menu[open] {
+    animation: menu-fade 200ms ease both;
+  }
+  .site-menu[data-closing] {
+    animation: menu-fade-out 200ms ease both;
+  }
+  .site-menu[open] .menu-name > span,
+  .site-menu[open] .menu-preview {
+    animation: none;
+  }
+  .menu-row:is(:hover, :focus-visible) {
+    translate: none;
+  }
+  .menu-poster {
+    transition: none;
+  }
+}
+/* Phones: one column, names 36 to 44px, a small poster before each name
+   instead of the preview; the whole row is the thing to tap. */
+@media (max-width: 47.99rem) {
+  .site-menu {
+    --name: clamp(2.25rem, 10vw, 2.75rem);
+  }
+  .menu-main {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .menu-preview {
+    display: none;
+  }
+  .menu-list {
+    gap: 0.5rem;
+  }
+  .menu-row {
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+  }
+  .menu-thumb {
+    display: block;
+    width: 3.5rem;
+    height: 3.5rem;
+    flex: none;
+    object-fit: cover;
+  }
+  .menu-num {
+    margin-top: 0;
+  }
+  /* No room for the words on a phone: the accent dot marks where you are. */
+  .menu-here {
+    display: none;
+  }
+  .menu-foot {
+    font-size: 1.125rem;
+  }
+}
+
+/* While a dialog is open the page underneath stays still. */
+html[data-lock] {
+  overflow: hidden;
+}
+
 /* --- Page wipe (components/Wipe.tsx) ---------------------------------------
    A sheet in the next page's colour. "in": it rises from the bottom to cover
    the window. "out": it carries on up and off. Otherwise it waits below. */
@@ -971,6 +1245,21 @@ html[data-loading="out"] .loader {
 html[data-ring="wait"] .ring .reel {
   opacity: 0;
 }
+/* A faint glow on the "floor" under the middle panel, like light from a
+   screen in a dark room. */
+.ring[data-state="on"]::after {
+  content: "";
+  position: fixed;
+  inset: auto 15% 5% 15%;
+  height: 16%;
+  background: radial-gradient(
+    ellipse at center,
+    rgb(255 255 255 / 0.08),
+    transparent 70%
+  );
+  filter: blur(20px);
+  pointer-events: none;
+}
 .ring-ai {
   position: absolute;
   top: calc(100% + 1.25rem);
@@ -1162,10 +1451,12 @@ html[data-ring="wait"] .ring .reel {
 }
 
 /* The ring's middle panel turning into a project's film (a view transition,
-   components/ring/Ring.tsx). Both are already the size of the window, so the
-   morph is a short settle; everything else crossfades. */
+   components/ring/Ring.tsx), the menu's preview poster growing into one
+   (components/Menu.tsx), and the next project's poster becoming its film
+   (components/NextProject.tsx): 0.7s, expo in-out; everything else
+   crossfades. */
 ::view-transition-group(.film-morph) {
-  animation-duration: 500ms;
+  animation-duration: 700ms;
   animation-timing-function: var(--ease-in-out);
 }
 @media (prefers-reduced-motion: reduce) {

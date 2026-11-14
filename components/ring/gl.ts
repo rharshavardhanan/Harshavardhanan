@@ -54,10 +54,16 @@ export type RingGL = {
 // The settings. Change these to change the look.
 // ---------------------------------------------------------------------------
 const LOOK = {
-  // How much the ring curves: at rest, and how much more at full speed.
-  bend: { rest: 0.6, restPhone: 0.35, speed: 1.1, speedPhone: 0.6 },
+  // How much each panel's sides come towards you: at rest, and how much
+  // more at full speed. (Phones' panels are narrow, so they need more.)
+  // Subtle at rest (you notice the curve, it is not a fishbowl), and capped
+  // so a fast flick cannot over-bend them. The lens is a narrow 30° (see
+  // the camera in shaders.ts), which keeps the near edges from ballooning.
+  bend: { rest: 0.18, restPhone: 0.3, speed: 0.35, speedPhone: 0.35, max: 0.45 },
+  // Corner radius, as a share of the panel's width.
+  radius: 0.025,
   // Film grain (shaders.ts, applyGrain).
-  grain: { amount: 0.08, size: 1.5, fps: 24, shadows: 0.6 },
+  grain: { amount: 0.05, size: 1.5, fps: 24, shadows: 0.6 },
   // The cursor's trail (shaders.ts, TRAIL).
   trail: {
     brushSize: 0.09, // radius, as a share of the window's height
@@ -397,9 +403,12 @@ export function createRing(
     const bend = LOOK.bend;
     gl.uniform1f(
       at("uBend"),
-      phone
-        ? bend.restPhone + f.speed * bend.speedPhone
-        : bend.rest + f.speed * bend.speed,
+      Math.min(
+        bend.max,
+        phone
+          ? bend.restPhone + f.speed * bend.speedPhone
+          : bend.rest + f.speed * bend.speed,
+      ),
     );
     gl.uniform1f(at("uSpeed"), phone ? f.speed * 0.5 : f.speed);
     gl.uniform1f(at("uTime"), f.time);
@@ -447,6 +456,8 @@ export function createRing(
         panel.aspect > box ? 1 : panel.aspect / box,
       );
       gl.uniform2f(at("uSize"), w, h);
+      gl.uniform2f(at("uBox"), width, height);
+      gl.uniform1f(at("uRadius"), LOOK.radius * w * (1 - expand));
       gl.uniform1f(at("uAlong"), place * step);
       gl.uniform1f(at("uExpand"), expand);
       gl.uniform1f(at("uDepth"), Math.pow(1 - intro, 3) * 1400);

@@ -29,13 +29,17 @@ float hash(vec2 p) {
 
 vec3 applyGrain(vec3 color) {
   // Pixels in blocks of uGrainSize share one speck: bigger = coarser grain.
-  vec2 cell   = floor(gl_FragCoord.xy / uGrainSize);
+  // mod(…, 512) keeps the numbers small: hash() multiplies them by over a
+  // hundred, and big results keep too few decimals on many graphics cards,
+  // which turns the "random" specks into stripes.
+  vec2 cell   = mod(floor(gl_FragCoord.xy / uGrainSize), 512.0);
   // A whole number that only goes up uGrainFps times a second: the pattern
-  // jumps like film instead of sliding.
-  float frame = floor(uTime * uGrainFps);
+  // jumps like film instead of sliding. (Also kept small: 64 frames, then
+  // it starts again, which no one can see.)
+  float frame = mod(floor(uTime * uGrainFps), 64.0);
   // This block's speck on this frame, from -0.5 to 0.5 (as often darker as
   // lighter, so the brightness overall does not change).
-  float n     = hash(cell + mod(frame, 512.0) * 17.0) - 0.5;
+  float n     = hash(cell + frame * 17.0) - 0.5;
   // How bright the pixel is: 0 black, 1 white (eyes weigh green most).
   float luma  = dot(color, vec3(0.299, 0.587, 0.114));
   // Dark pixels get extra grain, bright ones the normal amount.
@@ -163,8 +167,9 @@ uniform vec2 uSize;      // this panel's width and height, in pixels
 uniform float uAlong;    // how far this panel's centre is from the middle of
                          // the window along the ring, in pixels
 uniform float uVertical; // 0: the ring runs sideways (desktop); 1: downwards (phone)
-uniform float uBend;     // how strongly the ring curves away from you; it grows
-                         // with speed, so the panels bow as they rush past
+uniform float uBend;     // how strongly each panel curves towards you at its
+                         // sides; it grows with speed, so the panels bow as
+                         // they rush past
 uniform float uExpand;   // 0: in the ring; 1: grown flat to fill the window
                          // (when you open a project)
 uniform float uDepth;    // pixels pushed back into the screen (the fly-in)
@@ -184,14 +189,16 @@ void main() {
   float slide = uAlong * (1.0 - uExpand);
   p += mix(vec2(slide, 0.0), vec2(0.0, -slide), uVertical);
 
-  // The curve. The further a point is from the middle of the window along
-  // the ring, the further back it goes (a parabola, close to a cylinder).
-  float along = mix(p.x, p.y, uVertical);
-  float span = mix(uScreen.x, uScreen.y, uVertical);
-  float z = -uBend * (1.0 - uExpand) * along * along / span - uDepth;
+  // The curve, like a cinema screen: each panel's sides come towards you
+  // and its middle stays back. x runs from -1 at the panel's left edge to +1
+  // at its right; x * x is 0 in the middle and 1 at both edges, so only the
+  // sides move. (z grows towards the camera.) Flat again when it expands.
+  float x = aPosition.x * 2.0;
+  float z = uBend * (1.0 - uExpand) * x * x * size.x * 0.5 - uDepth;
 
   // Perspective: a camera with a 30° view, placed so a point at z = 0 shows
-  // at its true size in pixels. Things further back (z < 0) come out smaller.
+  // at its true size in pixels. Nearer things (z > 0) come out bigger, which
+  // is what makes the curved sides look taller; further ones smaller.
   float camera = uScreen.y * 1.866;
   gl_Position = vec4(p / (uScreen * 0.5), 0.0, (camera - z) / camera);
 }
@@ -217,9 +224,19 @@ uniform sampler2D uTrail; // the cursor's trail (pass 1)
 uniform vec2 uScreenPx;   // the canvas's size in pixels, to find this pixel in the trail
 uniform float uFluidShift; // how far the trail pushes the picture
 uniform float uRgbShift;   // how far the trail pulls red and blue apart
+uniform vec2 uBox;         // the panel's size on screen right now, in pixels
+uniform float uRadius;     // how round its corners are, in pixels
 ${GRAIN}
 
 out vec4 colour;
+
+// How far a point is from the edge of a rectangle with rounded corners:
+// below 0 inside, above 0 outside. abs(p) folds the four corners onto one,
+// so the maths only has to handle one corner.
+float roundedBox(vec2 p, vec2 halfSize, float r) {
+  vec2 q = abs(p) - halfSize + r;
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
 
 void main() {
   vec2 uv = (vUv - 0.5) * uCover + 0.5;
@@ -251,13 +268,21 @@ void main() {
   c = mix(vec3(grey), c, 0.35 + 0.65 * uFocus);
   c *= 0.5 + 0.5 * uFocus;
 
-  // A soft vignette, darker towards the panel's edges.
-  vec2 q = vUv - 0.5;
-  c *= 1.0 - dot(q, q) * 0.5;
+  // Darker towards the edges: down to 75% at the corners, so the picture
+  // glows from its middle like a lit cinema screen.
+  float vig = smoothstep(0.9, 0.2, length(vUv - 0.5));
+  c *= mix(0.75, 1.0, vig);
 
   c = applyGrain(c);
 
+  // Rounded corners: fully there inside, fading out over about one pixel at
+  // the edge (fwidth: how much d changes from one pixel to the next), so the
+  // corners are smooth rather than jagged.
+  float d = roundedBox((vUv - 0.5) * uBox, uBox * 0.5, uRadius);
+  float alpha = 1.0 - smoothstep(0.0, fwidth(d) * 1.5, d);
+
   // Colour times opacity: the canvas expects "premultiplied" colour.
-  colour = vec4(c * uOpacity, uOpacity);
+  float a = uOpacity * alpha;
+  colour = vec4(c * a, a);
 }
 `;

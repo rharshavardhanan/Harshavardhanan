@@ -52,7 +52,7 @@ test("About is one click away: in the corner on wide screens, large in the menu"
   ).toBeHidden();
   await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
   const inMenu = page
-    .getByRole("dialog", { name: "Menu" })
+    .getByRole("dialog", { name: "Site menu" })
     .getByRole("link", { name: "About" });
   await expect(inMenu).toBeVisible();
   expect((await inMenu.boundingBox())!.height).toBeGreaterThanOrEqual(32);
@@ -75,16 +75,53 @@ test("MENU opens the index of all seven projects, with posters", async ({
 }) => {
   await page.goto("/work/odovox");
   await corners(page).getByRole("link", { name: "Menu" }).click();
-  const menu = page.getByRole("dialog", { name: "Menu" });
+  const menu = page.getByRole("dialog", { name: "Site menu" });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("navigation").getByRole("link")).toHaveCount(7);
-  await menu.getByRole("link", { name: /Aftermeet/ }).hover();
-  await expect(menu.locator(".menu-poster img")).toHaveAttribute(
+  const projects = menu.getByRole("navigation").getByRole("link");
+  await expect(projects).toHaveCount(7);
+  // You are on Odovox: it is marked, and the preview starts on it.
+  await expect(projects.first()).toHaveAttribute("aria-current", "page");
+  await expect(projects.first()).toContainText("you’re here");
+  await expect(
+    corners(page).getByRole("link", { name: "Menu" }),
+  ).toHaveAttribute("aria-expanded", "true");
+  // Focus starts on the first project; the arrow keys move down the list.
+  await expect(projects.first()).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(projects.nth(1)).toBeFocused();
+  // Pointing at a project shows its poster in the preview.
+  await projects.nth(3).hover();
+  await expect(menu.locator('.menu-poster[data-on="true"]')).toHaveAttribute(
     "src",
-    /poster-aftermeet/,
+    /poster-road/,
   );
+  // One project per line: each row starts below the one before it.
+  const rows = await projects.evaluateAll((links) =>
+    links.map((link) => {
+      const box = link.getBoundingClientRect();
+      return [box.top, box.bottom];
+    }),
+  );
+  for (let i = 1; i < rows.length; i++) {
+    expect(rows[i][0]).toBeGreaterThanOrEqual(rows[i - 1][1] - 1);
+  }
   await page.keyboard.press("Escape");
   await expect(menu).toBeHidden();
+  await expect(corners(page).getByRole("link", { name: "Menu" })).toBeFocused();
+});
+
+test("choosing a project in the menu opens it at the top", async ({ page }) => {
+  await page.goto("/work/odovox");
+  await corners(page).getByRole("link", { name: "Menu" }).click();
+  await page
+    .getByRole("dialog", { name: "Site menu" })
+    .getByRole("link", { name: /Edge Cache RL/ })
+    .click();
+  await expect(page).toHaveURL(/\/work\/cache$/);
+  await expect(page.getByRole("dialog", { name: "Site menu" })).toBeHidden();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Edge Cache RL",
+  );
 });
 
 test("INQUIRE opens the contact sheet over the page", async ({ page }) => {

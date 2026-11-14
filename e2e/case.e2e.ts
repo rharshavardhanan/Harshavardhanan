@@ -143,7 +143,7 @@ test("the menu and Back both land at the top of the page", async ({ page }) => {
   await page.waitForTimeout(600);
   await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
   await page
-    .getByRole("dialog", { name: "Menu" })
+    .getByRole("dialog", { name: "Site menu" })
     .getByRole("link", { name: /Edge Cache RL/ })
     .click();
   await expect(page).toHaveURL(/\/work\/cache$/);

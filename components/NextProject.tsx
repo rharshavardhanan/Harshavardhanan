@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, ViewTransition } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
@@ -26,6 +26,17 @@ export function NextProject({
   const track = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLAnchorElement>(null);
   const router = useRouter();
+  // Set when this card opens the next page: only then does it carry the
+  // film's name (two things on a page must never share one), and the page
+  // changes on the next render, once the name is in place.
+  const [going, setGoing] = useState(false);
+  useEffect(() => {
+    if (!going) return;
+    router.push(`/work/${slug}`);
+    // Cleared when this page is set aside (Next.js keeps it for the Back
+    // button), so coming back does not set off the trip again.
+    return () => setGoing(false);
+  }, [going, router, slug]);
 
   useEffect(() => {
     if (window.matchMedia(REDUCE).matches) return;
@@ -49,7 +60,7 @@ export function NextProject({
       if (p > 0.985 && !gone) {
         wait ||= window.setTimeout(() => {
           gone = true;
-          router.push(`/work/${slug}`);
+          setGoing(true);
         }, 350);
       } else if (wait) {
         clearTimeout(wait);
@@ -69,7 +80,7 @@ export function NextProject({
       window.removeEventListener("scroll", queue);
       window.removeEventListener("resize", queue);
     };
-  }, [slug, router]);
+  }, [slug]);
 
   return (
     <div ref={track} data-theme={slug} className="next-track bg-bg">
@@ -81,9 +92,14 @@ export function NextProject({
           data-cursor="View"
           data-tone="media"
           className="next-card"
+          onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+            event.preventDefault();
+            setGoing(true);
+          }}
         >
           <ViewTransition
-            name={`film-${slug}`}
+            name={going ? `film-${slug}` : undefined}
             share="film-morph"
             default="none"
           >

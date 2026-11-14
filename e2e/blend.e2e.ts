@@ -61,7 +61,7 @@ test("the menu is readable", async ({
 }) => {
   await page.goto("/");
   await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
-  const menu = page.getByRole("dialog", { name: "Menu" });
+  const menu = page.getByRole("dialog", { name: "Site menu" });
   await expect(menu).toBeVisible();
   for (const name of ["Close"]) {
     expect(
