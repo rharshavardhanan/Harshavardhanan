@@ -27,7 +27,9 @@ email (`.email-fit`); so does the footer line (`.lets-build`).
 
 Components use five roles (`bg`, `fg`, `muted`, `accent`, `line`); a theme assigns
 them (`app/globals.css`, "Themes"). Project backgrounds and accents are as in the brief, plus the sixth project
-(`scp`, Sequential Conformal Prediction): lab steel `#10171B`, alarm coral `#FF6A4D`.
+(`scp`, Sequential Conformal Prediction): lab steel `#10171B`, alarm coral `#FF6A4D`;
+and the one light project (`aftermeet`): manila `#F4E9DB`, ink, ember `#9F4500`.
+A light project sets `tone: "light"` in `content/projects.ts`.
 Secondary text is `#5C5952` on paper and `#B0ADA5` on every dark theme, at least 7:1
 there. `app/tokens.test.ts` enforces 4.5:1 for all text and 7:1 for dark-theme labels.
 
@@ -51,6 +53,7 @@ composition:
 | Work index | full-width serif rows; the others dim on hover; a preview trails the pointer; grid view 7/5, 5/7, 12 |
 | Odovox | giant title; pitch beside a tilting browser frame; demo beside a sticky laptop recording; three giant figures |
 | Sequential CP | a lab notebook: title, three synced recordings of one start, two monitor clips with controls, the matched-α / matched-FAR toggle |
+| Aftermeet | a dossier: facts pinned in a narrow left column, the live site, workspace, demo, phone and extension scrolling on the right |
 | Road Damage | full-bleed photo under the title; a full-width bar chart; two big choice words |
 | Kattral | a pinned sideways strip of three panels; gradient avatars with a speaking ring |
 | Edge Cache | centred; three racing percentages and a round Run button; laptop recording |

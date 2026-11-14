@@ -7,7 +7,13 @@
 // until he confirms it; delete the line to remove the tag.
 
 export type Slug =
-  "odovox" | "scp" | "road" | "kattral" | "cache" | "hallucination";
+  | "odovox"
+  | "scp"
+  | "aftermeet"
+  | "road"
+  | "kattral"
+  | "cache"
+  | "hallucination";
 
 /** One figure shown in a chapter. Give `n` to make it count up, or `text` to show it as is. */
 export type Stat = {
@@ -30,10 +36,14 @@ export type Project = {
   stats: Stat[];
   stack: string[];
   live?: string;
+  /** What the live link is called on the page ("Live dashboard", "Live site"). */
+  liveLabel?: string;
   /** Link to the code. */
   repo?: string;
   /** Who else built it, for team projects. */
   team?: string;
+  /** "light" for a project whose colours are light (the header turns ink). */
+  tone?: "light";
   // Case-study page
   problem: string;
   built: string;
@@ -142,6 +152,64 @@ export const projects: Project[] = [
     ],
   },
   {
+    slug: "aftermeet",
+    title: "Aftermeet",
+    role: "Solo project",
+    year: "2026",
+    tags: ["Full-stack", "Speech-to-text", "LLM extraction"],
+    pitch:
+      "Turns a meeting into execution: drop in a recording or a transcript and get back the action items, decisions, risks, a follow-up email and formatted minutes.",
+    stats: [
+      {
+        n: 3,
+        label: "surfaces on one backend: web app, Chrome extension, Android",
+      },
+      {
+        n: 3,
+        label:
+          "speech-to-text engines tried in turn for every five-minute chunk",
+      },
+      {
+        text: "Solo",
+        label:
+          "design, backend, web app, extension and Android shell, Jun–Sep 2026",
+      },
+    ],
+    stack: [
+      "Next.js 15",
+      "React 19",
+      "NestJS 11",
+      "PostgreSQL (Supabase)",
+      "Prisma",
+      "NextAuth (Google)",
+      "Groq Whisper",
+      "Gemini",
+      "ffmpeg",
+      "Stripe",
+      "Chrome MV3",
+      "Capacitor (Android)",
+    ],
+    live: "https://aftermeet-z1ey.vercel.app",
+    liveLabel: "Live site",
+    tone: "light",
+    repo: "https://github.com/rharshavardhanan/Aftermeet",
+    problem:
+      "Meetings produce talk, and the work they decide gets lost between the call and the next morning. Most tools hand back a wall of transcript and call it done.",
+    built:
+      "One NestJS backend that owns every write and all the AI, behind three surfaces: a Next.js web app, a Chrome extension that captures Zoom and Google Meet tabs, and an Android shell. Audio is normalised and cut into five-minute chunks with ffmpeg, transcribed four at a time with Groq Whisper, falling back to Gemini and then OpenAI Whisper, stitched back in order and given speaker labels. A strict JSON schema, checked with Zod and retried on failure, turns the transcript into tasks with owners, dates, a confidence score and the exact quote each came from.",
+    result:
+      "A deployed product (web app on Vercel, backend on Render): Google sign-in, meeting history, tasks, exports to Markdown, PDF and Google Docs, Stripe checkout with plan limits, and a demo mode that runs the whole flow on a pasted transcript without any AI key.",
+    hard: "Cookies do not cross origins, so the extension and the web app could not share a sign-in with the backend; the web app mints a five-minute signed token from the session instead, and the backend checks it. Long calls broke one-shot transcription, so audio is chunked, and a chunk that fails every engine twice becomes [unintelligible segment] instead of failing the whole transcript. And nothing is pinned to one language: a sentence that starts in Tamil and ends in English stays that way.",
+    flow: [
+      "Audio or a pasted transcript",
+      "ffmpeg: mono 16 kHz, five-minute chunks",
+      "Groq Whisper, then Gemini, then OpenAI Whisper",
+      "Stitched in order, speaker labels added",
+      "Strict-schema extraction, checked with Zod",
+      "Tasks, decisions, email and minutes, saved together",
+    ],
+  },
+  {
     slug: "road",
     title: "Automated Road Damage Survey",
     role: "Project",
@@ -241,6 +309,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "Q-Learning", "FastAPI", "React"],
     live: "https://rlcachemanagement-grq86hhh3.vercel.app",
+    liveLabel: "Live dashboard",
     problem:
       "A cache has to decide what to throw away. LRU and LFU each follow one fixed rule, and each is wrong for some kinds of traffic.",
     built:

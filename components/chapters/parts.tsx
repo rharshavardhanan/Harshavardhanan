@@ -85,7 +85,7 @@ export function ChapterLinks({
       </Link>
       {project.live && (
         <a href={project.live} className="label py-2">
-          Live dashboard
+          {project.liveLabel ?? "Live"}
           <ArrowUpRight />
         </a>
       )}

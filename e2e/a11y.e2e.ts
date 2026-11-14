@@ -49,6 +49,7 @@ test("home page, neutral", async ({ page }) => {
 for (const theme of [
   "odovox",
   "scp",
+  "aftermeet",
   "road",
   "kattral",
   "cache",

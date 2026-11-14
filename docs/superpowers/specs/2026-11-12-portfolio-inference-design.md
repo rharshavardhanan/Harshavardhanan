@@ -384,3 +384,23 @@ github.com/rharshavardhanan/sequential-conformal-prediction-for-long-robotic-tas
   stage-aware monitor looks worse; at the same false-alarm rate it is better.
 - **The honest results stay in:** the arbiter did not beat matched-cost random
   escalation (p = 0.24), and the effective sample size is three tasks.
+
+## 10. Seventh project: Aftermeet (2026-11-14)
+
+From github.com/rharshavardhanan/Aftermeet (solo: all 51 commits are Harsha's,
+June to September 2026) and the live site aftermeet-z1ey.vercel.app.
+
+- **Facts from the repo's README, PRODUCT.md and ARCHITECTURE.md only.** No pricing or
+  marketing figures from the landing page are repeated as claims.
+- **Real visuals** are captures of the live landing page (hero, a phone view) and two
+  illustrations from it (the workspace and the extension panel), labelled as
+  illustrations. The signed-in app was not entered.
+- **The demo** is a miniature of Aftermeet's own no-AI demo mode, run in the browser
+  (`lib/meeting-extract.ts`), with two disclosed changes so its output reads sensibly:
+  owners come from the sentence, decisions from what was agreed.
+- **The one light project.** Aftermeet's brand is "ink on warm paper" with an ember
+  accent; its dark mode would have matched Kattral. Theme `aftermeet`: manila
+  `#F4E9DB`, ink `#221D18`, ember `#9F4500` (5.3:1), labels `#4A443E` (8.0:1). Projects
+  can now declare `tone: "light"`; the header, the inverted "what was hard" panel and
+  the next-project link follow it.
+- **Position 03**, after Sequential Conformal Prediction.

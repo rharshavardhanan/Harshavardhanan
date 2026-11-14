@@ -23,6 +23,7 @@ const PUSH = 0.42; // how hard it pushes
 const SEQUENCE: Record<string, ShapeName[]> = {
   odovox: ["waveform", "tooth"],
   scp: ["arm"],
+  aftermeet: ["doc"],
   road: ["road"],
   kattral: ["tiles"],
   cache: ["blocks"],

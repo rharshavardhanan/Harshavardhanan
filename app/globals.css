@@ -107,6 +107,16 @@
   --line: #393e41;
 }
 
+/* Aftermeet: its own "ink on warm paper", a manila page with an ember
+   accent. The one light project. */
+[data-theme="aftermeet"] {
+  --bg: #f4e9db;
+  --fg: #221d18;
+  --muted: #4a443e;
+  --accent: #9f4500;
+  --line: #d2c8bc;
+}
+
 [data-theme="road"] {
   --bg: #121212;
   --fg: #f4f2ee;
@@ -574,6 +584,7 @@ html[data-active="index"] .stage-box {
 html:is(
     [data-active="odovox"],
     [data-active="scp"],
+    [data-active="aftermeet"],
     [data-active="road"],
     [data-active="kattral"],
     [data-active="cache"],

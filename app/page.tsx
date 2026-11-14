@@ -1,4 +1,5 @@
 import { About } from "@/components/About";
+import { Aftermeet } from "@/components/chapters/Aftermeet";
 import { Cache } from "@/components/chapters/Cache";
 import { Hallucination } from "@/components/chapters/Hallucination";
 import { Kattral } from "@/components/chapters/Kattral";
@@ -19,6 +20,7 @@ import { previews } from "@/lib/media";
 const CHAPTERS = {
   odovox: Odovox,
   scp: Scp,
+  aftermeet: Aftermeet,
   road: Road,
   kattral: Kattral,
   cache: Cache,

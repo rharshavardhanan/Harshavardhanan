@@ -18,7 +18,10 @@ import { chromium } from "@playwright/test";
 const URL = process.argv[2] ?? "http://localhost:3100/";
 // Sequential Conformal Prediction ("scp") is not recorded here: its cover and
 // case video are cut from the project's own simulator recordings instead.
-const SLUGS = ["odovox", "road", "kattral", "cache", "hallucination"];
+// To record only some projects: pnpm record:covers http://localhost:3100/ aftermeet
+const SLUGS = process.argv.slice(3).length
+  ? process.argv.slice(3)
+  : ["odovox", "aftermeet", "road", "kattral", "cache", "hallucination"];
 const FPS = 24;
 const SECONDS = 8;
 const OUT = "public/media";
@@ -44,14 +47,17 @@ for (const slug of SLUGS) {
       header, main * { visibility: hidden }
       .stage, .stage * { visibility: visible !important }
       .stage { position: fixed !important; inset: 0; height: auto !important; margin: 0 !important }
-      .stage-box { top: 50% !important; right: 50% !important; translate: 50% -50% !important; width: 108vh !important }
+      .stage-box { --x: 0px !important; --y: 0px !important; --s: 1 !important; opacity: 1 !important; transition: none !important; width: 108vh !important }
     `,
   });
   await page.locator("[data-shape]").waitFor();
   // Switch the page to this project's theme by hand, then give the colours
   // time to fade and Odovox time to go from waveform to tooth.
+  // data-theme colours the page; data-active is what the particle object
+  // follows to choose its shape.
   await page.evaluate((name) => {
     document.documentElement.dataset.theme = name;
+    document.documentElement.dataset.active = name;
   }, slug);
   await page.waitForTimeout(2600);
 

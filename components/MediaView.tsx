@@ -16,6 +16,7 @@ export function MediaView({
   priority = false,
   inPhone = false,
   position = "",
+  ratio,
   className = "",
 }: {
   media: Media;
@@ -25,10 +26,14 @@ export function MediaView({
   inPhone?: boolean;
   /** Which part of the picture to keep when it is cropped, e.g. "object-left". */
   position?: string;
+  /** Width divided by height, when the box should take the picture's own shape. */
+  ratio?: number;
   className?: string;
 }) {
   // Positioned "relative" unless the caller already positions it (absolute).
   const box = `overflow-hidden ${/\babsolute\b/.test(className) ? "" : "relative"} ${className}`;
+
+  const shape = ratio ? { aspectRatio: String(ratio) } : undefined;
 
   if (media.portrait && !inPhone) {
     const slug = media.file.split("-")[0];
@@ -57,7 +62,7 @@ export function MediaView({
   }
 
   return (
-    <div className={box}>
+    <div className={box} style={shape}>
       {media.video ? (
         <LazyVideo
           src={media.src}

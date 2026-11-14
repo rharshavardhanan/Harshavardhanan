@@ -27,11 +27,12 @@ test.describe("desktop", () => {
     await expect(page.locator("h1")).toHaveText("Harshavardhanan");
   });
 
-  test("shows the five projects in order", async ({ page }) => {
+  test("shows every project in order", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("[data-chapter] h2")).toHaveText([
       "Odovox",
       "Sequential Conformal Prediction",
+      "Aftermeet",
       "Automated Road Damage Survey",
       "Kattral Academy",
       "Edge Cache RL",

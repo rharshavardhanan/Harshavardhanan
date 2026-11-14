@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { COUNT, insideTooth, shape, shapeNames } from "./shapes";
 
-test("there are nine shapes", () => {
+test("there are ten shapes", () => {
   expect(shapeNames).toEqual([
     "dot",
     "cloud",
@@ -11,6 +11,7 @@ test("there are nine shapes", () => {
     "tiles",
     "blocks",
     "bubble",
+    "doc",
     "arm",
   ]);
 });

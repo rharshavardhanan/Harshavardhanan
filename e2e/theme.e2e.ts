@@ -5,6 +5,7 @@ import { expect, type Page, test } from "@playwright/test";
 const backgrounds = {
   odovox: "rgb(15, 31, 28)",
   scp: "rgb(16, 23, 27)",
+  aftermeet: "rgb(244, 233, 219)",
   road: "rgb(18, 18, 18)",
   kattral: "rgb(28, 20, 16)",
   cache: "rgb(11, 16, 32)",

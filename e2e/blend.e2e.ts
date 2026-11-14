@@ -92,3 +92,24 @@ test("no page throws while loading", async ({ page }) => {
   }
   expect(errors).toEqual([]);
 });
+
+test("the header is readable on every case study, light or dark", async ({
+  page,
+}) => {
+  for (const slug of [
+    "odovox",
+    "scp",
+    "aftermeet",
+    "road",
+    "kattral",
+    "cache",
+    "hallucination",
+  ]) {
+    await page.goto(`/work/${slug}`);
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+      await renderedContrast(page, page.getByRole("link", { name: "H.R." })),
+      slug,
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+});

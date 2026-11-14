@@ -107,7 +107,11 @@ export default async function CaseStudy({ params }: Props) {
   return (
     // data-theme here colours the page even with JavaScript off;
     // ThemeSetter then extends the theme to the whole window.
-    <article data-theme={item.slug} data-tone="dark" className="bg-bg text-fg">
+    <article
+      data-theme={item.slug}
+      data-tone={item.tone ?? "dark"}
+      className="bg-bg text-fg"
+    >
       <ThemeSetter theme={item.slug} />
 
       {/* 1. The project's video across the whole screen, title over it. */}
@@ -180,7 +184,7 @@ export default async function CaseStudy({ params }: Props) {
         <p className="px-gutter flex flex-wrap gap-6 pb-16">
           {item.live && (
             <a href={item.live} className="btn label">
-              Open the live dashboard ↗
+              Open the {(item.liveLabel ?? "live").toLowerCase()} ↗
             </a>
           )}
           {item.repo && (
@@ -240,7 +244,8 @@ export default async function CaseStudy({ params }: Props) {
                       media={shot}
                       alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "").replace("-", " ")}`}
                       sizes="(min-width: 768px) 46vw, 100vw"
-                      className={shot.video ? "aspect-[5/3]" : "aspect-[11/8]"}
+                      className="w-full"
+                      ratio={shot.ratio ?? 5 / 3}
                     />
                   </div>
                 )}
@@ -253,8 +258,9 @@ export default async function CaseStudy({ params }: Props) {
       {/* 7. What was hard, on the opposite colours. */}
       <section
         aria-labelledby="hard"
-        data-theme="neutral"
-        data-tone="light"
+        // Inverted: paper on a dark project, ink on a light one.
+        data-theme={item.tone === "light" ? "ink" : "neutral"}
+        data-tone={item.tone === "light" ? "dark" : "light"}
         className="bg-bg text-fg px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-32 lg:py-44"
       >
         <h2 id="hard" data-lines className="text-h2 col-span-12 lg:col-span-5">
@@ -286,6 +292,7 @@ export default async function CaseStudy({ params }: Props) {
       <Link
         href={`/work/${next.slug}`}
         data-theme={next.slug}
+        data-tone={next.tone ?? "dark"}
         data-cursor="View"
         className="bg-bg text-fg px-gutter group flex min-h-[80svh] flex-col justify-end pt-32 pb-20 no-underline"
       >

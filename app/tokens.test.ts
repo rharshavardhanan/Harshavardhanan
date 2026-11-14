@@ -34,8 +34,9 @@ function contrast(a: string, b: string) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-test("the stylesheet defines all seven themes", () => {
+test("the stylesheet defines every theme", () => {
   expect(themes.map((theme) => theme.name).sort()).toEqual([
+    "aftermeet",
     "cache",
     "hallucination",
     "ink",

@@ -15,7 +15,8 @@ export type ShapeName =
   | "tiles"
   | "blocks"
   | "bubble"
-  | "arm";
+  | "arm"
+  | "doc";
 
 type Point = [number, number, number];
 type Random = () => number;
@@ -299,6 +300,36 @@ const makers: Record<ShapeName, (rand: Random) => Point> = {
       y + drift * (rand() - 0.3),
       drift * (rand() - 0.5) * 1.2,
     ];
+  },
+
+  // Aftermeet: a page of minutes with a checklist on it.
+  doc: (rand) => {
+    const part = rand();
+    let p: [number, number];
+    if (part < 0.42) {
+      // The page: a rectangle with one corner folded.
+      p = onRoundedRect(rand, 1.1, 1.45, 0.04);
+      if (p[0] > 0.35 && p[1] > 0.52)
+        p = [0.35 + (p[1] - 0.52), 0.52 + (p[0] - 0.35)];
+    } else if (part < 0.5) {
+      // The fold.
+      const t = rand();
+      p = [0.35 + t * 0.2, 0.725 - t * 0.2];
+    } else {
+      // Four lines of text, each with a tick box in front of it.
+      const line = Math.floor(rand() * 4);
+      const y = 0.38 - line * 0.3;
+      if (rand() < 0.35) {
+        const [bx, by] = onRoundedRect(rand, 0.13, 0.13, 0.02);
+        p = [-0.34 + bx, y + by];
+      } else {
+        p = [
+          -0.2 + rand() * (line === 3 ? 0.4 : 0.6),
+          y + (rand() - 0.5) * 0.03,
+        ];
+      }
+    }
+    return turn([p[0], p[1], (rand() - 0.5) * 0.1], 0.05, -0.35);
   },
 
   // Sequential Conformal Prediction: a robot arm reaching for a cube.

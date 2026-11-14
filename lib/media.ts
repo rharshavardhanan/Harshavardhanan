@@ -12,6 +12,8 @@ export type Media = {
   video: boolean;
   /** True for a tall picture, such as a phone screenshot. */
   portrait: boolean;
+  /** Width divided by height, for pictures whose size could be read. */
+  ratio?: number;
   /** True when the real file is missing and the particle cover stands in. */
   placeholder: boolean;
   /** The real file's name, for the placeholder label. */
@@ -44,6 +46,7 @@ export function media(file: string, slug: Slug): Media {
     src: `/media/real/${file}`,
     video: file.endsWith(".mp4"),
     portrait: !!size && size[1] > size[0],
+    ratio: size ? size[0] / size[1] : undefined,
     placeholder: false,
     file,
   };
@@ -54,6 +57,7 @@ export function media(file: string, slug: Slug): Media {
 export const PREVIEW: Record<Slug, string> = {
   odovox: "odovox-queue.png",
   scp: "scp-arbitrated.mp4",
+  aftermeet: "aftermeet-workspace.png",
   road: "road-detections.png",
   kattral: "kattral-none",
   cache: "cache-dashboard.mp4",
@@ -79,6 +83,14 @@ export const CASE_MEDIA: Record<Slug, { wide?: string; gallery: string[] }> = {
   scp: {
     wide: "scp-monitor-fail.mp4",
     gallery: ["scp-arena.mp4", "scp-monitor-safe.mp4"],
+  },
+  aftermeet: {
+    wide: "aftermeet-landing.png",
+    gallery: [
+      "aftermeet-workspace.png",
+      "aftermeet-mobile.png",
+      "aftermeet-extension.png",
+    ],
   },
   road: { wide: "road-detections.png", gallery: ["road-map.png"] },
   kattral: { gallery: [] },

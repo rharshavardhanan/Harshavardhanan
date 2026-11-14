@@ -37,15 +37,16 @@ function preview(slug: Slug | null) {
 }
 
 // The grid's layout: how many of the 12 columns each cover takes, in order.
-// Two side by side (7 + 5), one across, two the other way round (5 + 7), one
-// across.
+// Two side by side (7 + 5), one across, two the other way round (5 + 7), then
+// two halves.
 const SPANS = [
   "lg:col-span-7",
   "lg:col-span-5",
   "lg:col-span-12",
   "lg:col-span-5",
   "lg:col-span-7",
-  "lg:col-span-12",
+  "lg:col-span-6",
+  "lg:col-span-6",
 ];
 
 export function WorkIndex({ media }: { media: Record<Slug, Media> }) {
