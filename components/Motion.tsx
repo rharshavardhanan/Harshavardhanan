@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { afterLoad } from "@/lib/after-load";
+import { scramble, wrap } from "@/lib/scramble";
 
 // Renders nothing. It finds elements carrying one of the attributes below and
 // animates them as they scroll into view, so the page's own files only have
@@ -16,6 +17,8 @@ import { afterLoad } from "@/lib/after-load";
 //   data-bar-y        a vertical line: draws downwards
 //   data-parallax     media: drifts slower than the page
 //   data-tilt         a frame: tips back 12 degrees and straightens on scroll
+//   data-decode       a small label: decodes (lib/scramble.ts) the first
+//                     time it comes into view
 //
 // Nothing here runs for visitors who asked for reduced motion; they see the
 // finished state of everything.
@@ -24,6 +27,8 @@ import { afterLoad } from "@/lib/after-load";
 // after the page's own content has been handed over to React ("hydrated"),
 // or its changes to that content make React throw the content away.
 export function Motion() {
+  useDecodeOnView();
+
   useEffect(() => {
     let undo = () => {};
     let cancelled = false;
@@ -219,4 +224,47 @@ export function Motion() {
   }, []);
 
   return null;
+}
+
+// [data-decode] labels decode the first time they come into view. This needs
+// no GSAP, so it does not wait for it: a layout effect runs as soon as the
+// page is handed to React, before it is painted, so labels already in view
+// start decoding before anyone sees them plain (on a hard reload the server's
+// HTML is painted first, for a moment). Labels further down are watched, and
+// decode once, when they come up past the bottom 8% of the window.
+function useDecodeOnView() {
+  useLayoutEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const labels = new Map(
+      [...document.querySelectorAll<HTMLElement>("[data-decode]")].map((el) => {
+        const label = wrap(el);
+        return [label.box as Element, label];
+      }),
+    );
+    const stops: (() => void)[] = [];
+    const play = (box: Element) => {
+      const label = labels.get(box)!;
+      stops.push(scramble(label.box, label.text));
+    };
+    const seen = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          seen.unobserve(entry.target);
+          play(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px" },
+    );
+    for (const box of labels.keys()) {
+      const { top, bottom } = box.getBoundingClientRect();
+      if (bottom > 0 && top < window.innerHeight * 0.92) play(box);
+      else seen.observe(box);
+    }
+    return () => {
+      seen.disconnect();
+      stops.forEach((stop) => stop());
+      labels.forEach((label) => label.undo());
+    };
+  }, []);
 }

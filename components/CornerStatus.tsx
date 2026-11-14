@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { projects } from "@/content/projects";
+import { Decode } from "./Decode";
 
 // The frame's bottom row: which project you are looking at, and where it sits
 // in the list ("03 / 07"). Pages say which project that is by writing its
@@ -24,12 +25,20 @@ export function CornerStatus() {
   const active = useSyncExternalStore(subscribe, getActive, getServerActive);
   const index = projects.findIndex((project) => project.slug === active);
 
+  // Both decode (components/Decode.tsx) each time they change.
   return (
     <footer className="corner-row corner-bottom">
-      <p className="truncate py-2">{index >= 0 && projects[index].title}</p>
+      <p className="py-2">
+        <Decode
+          className="block truncate"
+          text={index >= 0 ? projects[index].title : ""}
+        />
+      </p>
       <p className="py-2 max-sm:hidden">Selected work</p>
       <p className="justify-self-end py-2">
-        {index >= 0 && `${two(index + 1)} / ${two(projects.length)}`}
+        <Decode
+          text={index >= 0 ? `${two(index + 1)} / ${two(projects.length)}` : ""}
+        />
       </p>
     </footer>
   );

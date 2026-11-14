@@ -60,7 +60,11 @@ function Detail({
       aria-labelledby={id}
       className="border-line grid grid-cols-12 gap-x-4 gap-y-4 border-b py-12"
     >
-      <h3 id={id} className="label text-muted col-span-12 lg:col-span-3">
+      <h3
+        id={id}
+        data-decode
+        className="label text-muted col-span-12 lg:col-span-3"
+      >
         {title}
       </h3>
       <p
@@ -115,7 +119,7 @@ export default async function CaseStudy({ params }: Props) {
             className="poster-title bg-bg"
             data-tone={item.tone === "light" ? "media" : undefined}
           >
-            <p className="label text-muted">
+            <p data-decode className="label text-muted">
               0{index + 1} / 0{projects.length}
             </p>
             <h1
@@ -128,7 +132,9 @@ export default async function CaseStudy({ params }: Props) {
               {credits.map(([term, detail]) => (
                 <div key={term}>
                   <dt className="text-muted">{term}</dt>
-                  <dd className="mt-1">{detail}</dd>
+                  <dd data-decode className="mt-1">
+                    {detail}
+                  </dd>
                 </div>
               ))}
             </dl>

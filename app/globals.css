@@ -532,6 +532,35 @@ html[data-loading="gate"] .loader-enter {
 }
 
 /* ==========================================================================
+   DECODE (lib/scramble.ts, components/Decode.tsx)
+   Two layers in one box. The real text sets the box's size and is what
+   screen readers read; while the decode plays it is made transparent, and
+   the noise is drawn over it, out of the layout (so the box cannot change
+   size) and clipped to it. In the components layer, so a utility such as
+   `block truncate` on the box wins.
+   ========================================================================== */
+@layer components {
+  .decode {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+  .decode-noise {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    white-space: pre-wrap;
+    visibility: hidden;
+  }
+  .decode[data-decoding] > .decode-text {
+    color: transparent;
+  }
+  .decode[data-decoding] > .decode-noise {
+    visibility: visible;
+  }
+}
+
+/* ==========================================================================
    BUTTONS AND SMALL CONTROLS
    ========================================================================== */
 @layer components {

@@ -12,6 +12,7 @@ import {
 import { contact } from "@/content/about";
 import { projects, type Slug } from "@/content/projects";
 import { play } from "@/lib/sound";
+import { Decode } from "./Decode";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const reduced = () => window.matchMedia(REDUCE).matches;
@@ -221,10 +222,22 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
                       {project.slug === here && (
                         <span aria-hidden className="menu-dot" />
                       )}
-                      {two(index + 1)}
+                      {/* The number and the name decode as the menu opens,
+                          row by row with the rise. */}
+                      <Decode
+                        text={two(index + 1)}
+                        active={open}
+                        delay={index * 0.05}
+                      />
                     </span>
                     <span className="menu-name">
-                      <span>{project.title}</span>
+                      <span>
+                        <Decode
+                          text={project.title}
+                          active={open}
+                          delay={index * 0.05}
+                        />
+                      </span>
                     </span>
                     {project.slug === here && (
                       <span className="menu-here label">you’re here</span>
