@@ -1132,6 +1132,52 @@ html[data-ring="wait"] .ring .reel {
   flex: none;
 }
 
+/* --- The next project (components/NextProject.tsx) -------------------------
+   Two screens of the next project's colour; its poster is held in the middle
+   and grows (--grow, 0.42 → 1) as you scroll through them. */
+.next-track {
+  position: relative;
+  height: 200svh;
+}
+.next-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.next-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  text-decoration: none;
+  transform: scale(var(--grow, 1));
+}
+.next-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.next-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 8rem var(--spacing-gutter) 4.5rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.7), transparent);
+  color: #f4f2ee;
+}
+@media (prefers-reduced-motion: reduce) {
+  .next-track {
+    height: auto;
+  }
+  .next-stage {
+    position: static;
+    height: 100svh;
+  }
+}
+
 /* A project's film (components/Film.tsx): the poster, and the video over it. */
 .film {
   position: relative;

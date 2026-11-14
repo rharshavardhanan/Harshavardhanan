@@ -115,3 +115,35 @@ test("AI films are labelled, the particle stand-in is not", async ({
   await expect(page.locator("[data-film]")).toHaveCount(1);
   await expect(page.locator("[data-film] .film-ai")).toHaveCount(0);
 });
+
+test("scrolling to the end grows the next project and opens it", async ({
+  page,
+}) => {
+  await page.goto("/work/odovox");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "odovox");
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  await expect(page).toHaveURL(/\/work\/aftermeet$/, { timeout: 8000 });
+  // (The page left behind stays in the document, hidden, for the Back
+  // button, so ask for the heading a visitor can see.)
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Aftermeet",
+  );
+});
+
+test.describe("reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("the end of a page never opens the next one by itself", async ({
+    page,
+  }) => {
+    await page.goto("/work/odovox");
+    await expect(page.locator(".corners time")).toHaveText(/IST$/);
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await page.waitForTimeout(1200);
+    await expect(page).toHaveURL(/\/work\/odovox$/);
+  });
+});

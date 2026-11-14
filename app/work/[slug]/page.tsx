@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Anomaly } from "@/components/Anomaly";
 import { demos } from "@/components/demos";
@@ -7,6 +6,7 @@ import { Film } from "@/components/Film";
 import { Flow } from "@/components/Flow";
 import { Laurel } from "@/components/Laurel";
 import { Motion } from "@/components/Motion";
+import { NextProject } from "@/components/NextProject";
 import { proofs } from "@/components/proof";
 import { ThemeSetter } from "@/components/ThemeSetter";
 import { Torn } from "@/components/Torn";
@@ -249,19 +249,12 @@ export default async function CaseStudy({ params }: Props) {
         <Torn seed={index * 7 + 11} side="bottom" />
       </section>
 
-      {/* 8. The next project, already wearing its colours. */}
-      <Link
-        href={`/work/${next.slug}`}
-        data-theme={next.slug}
-        data-tone={next.tone ?? "dark"}
-        data-cursor="View"
-        className="bg-bg text-fg px-gutter group flex min-h-[80svh] flex-col justify-end pt-40 pb-20 no-underline"
-      >
-        <span className="label text-muted">Next project</span>
-        <span className="text-display mt-6 block max-w-[14ch] font-serif transition-transform duration-700 ease-[var(--ease-out)] group-hover:translate-x-4 motion-reduce:transition-none">
-          {next.title} →
-        </span>
-      </Link>
+      {/* 8. The next project: its poster grows into its page. */}
+      <NextProject
+        slug={next.slug}
+        title={next.title}
+        poster={film(next.slug).poster}
+      />
       <Motion />
     </article>
   );

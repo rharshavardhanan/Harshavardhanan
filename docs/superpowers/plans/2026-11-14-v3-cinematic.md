@@ -221,6 +221,9 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 
 ## Phase 5: Proof, demo, deep detail, next project
 
+> Done 2026-11-14. Proof (5.1) landed in Phase 2 and the detail in Phase 4;
+> this phase added the growing next-project ending.
+
 ### Task 5.1: Each project's real material sits in one proof component
 
 - **Goal:** `components/proof/{Odovox,Aftermeet,Scp,Road,Kattral,Cache,Hallucination}.tsx` hold everything the chapters showed (phones, synced clips, monitor videos, browser frames, dashboard, ROC, the Kattral note), laid out 2–3 per row in device frames. `CASE_MEDIA`, `components/chapters/` and `previews` are gone.
