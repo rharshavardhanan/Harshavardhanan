@@ -106,7 +106,7 @@ export default async function CaseStudy({ params }: Props) {
   return (
     // data-theme here colours the page even with JavaScript off;
     // ThemeSetter then extends the theme to the whole window.
-    <article data-theme={item.slug} className="bg-bg text-fg">
+    <article data-theme={item.slug} data-tone="dark" className="bg-bg text-fg">
       <ThemeSetter theme={item.slug} />
 
       {/* 1. The project's video across the whole screen, title over it. */}
@@ -206,33 +206,39 @@ export default async function CaseStudy({ params }: Props) {
           aria-label="Screens"
           className="px-gutter grid gap-x-8 gap-y-16 py-28 md:grid-cols-2"
         >
-          {gallery.map((file, index) => (
-            <div
-              key={file}
-              data-parallax={index % 2 ? "" : undefined}
-              className={index % 2 ? "md:mt-40" : ""}
-            >
-              {file.includes("mobile") ? (
-                <Frame kind="phone" cursor="View">
-                  <MediaView
-                    media={media(file, item.slug)}
-                    alt={`${item.title} on a phone`}
-                    sizes="20rem"
-                    className="absolute inset-0"
-                  />
-                </Frame>
-              ) : (
-                <Frame kind="browser" cursor="View">
-                  <MediaView
-                    media={media(file, item.slug)}
-                    alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "")} screen`}
-                    sizes="(min-width: 768px) 46vw, 100vw"
-                    className="absolute inset-0"
-                  />
-                </Frame>
-              )}
-            </div>
-          ))}
+          {gallery.map((file, index) => {
+            const shot = media(file, item.slug);
+            return (
+              <div
+                key={file}
+                data-parallax={index % 2 ? "" : undefined}
+                className={index % 2 ? "md:mt-40" : ""}
+              >
+                {shot.portrait ? (
+                  // A phone screenshot, in a phone.
+                  <Frame kind="phone" cursor="View">
+                    <MediaView
+                      media={shot}
+                      alt={`${item.title}: a screen of the app`}
+                      sizes="20rem"
+                      inPhone
+                      className="absolute inset-0"
+                    />
+                  </Frame>
+                ) : (
+                  // A chart or a wide screen, at its own shape.
+                  <div data-cursor="View">
+                    <MediaView
+                      media={shot}
+                      alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "").replace("-", " ")}`}
+                      sizes="(min-width: 768px) 46vw, 100vw"
+                      className="aspect-[11/8]"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </section>
       )}
 
@@ -240,6 +246,7 @@ export default async function CaseStudy({ params }: Props) {
       <section
         aria-labelledby="hard"
         data-theme="neutral"
+        data-tone="light"
         className="bg-bg text-fg px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-32 lg:py-44"
       >
         <h2 id="hard" data-lines className="text-h2 col-span-12 lg:col-span-5">

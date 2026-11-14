@@ -16,22 +16,22 @@ const audit = async (page: Page) => {
     "wcag22aa",
     "best-practice",
   ];
-  // The header and hero use "difference" blending, which axe cannot measure
-  // (it reads them as white on white). Their colours are checked from the
-  // real pixels in e2e/blend.e2e.ts instead; every other rule still applies.
-  const blended = [".site-header", ".hero-pin"];
-  // (One selector per call: an array would mean "inside this frame".)
+  // The hero name uses "difference" blending, which axe cannot measure (it
+  // reads it as white on white). Its rendered colour is checked from the real
+  // pixels in e2e/blend.e2e.ts instead; every other rule still applies to it.
+  const name = ".hero-name-layer";
   const main = await new AxeBuilder({ page })
     .withTags(tags)
-    .exclude(blended[0])
-    .exclude(blended[1])
+    .exclude(name)
     .analyze();
-  const rest = await new AxeBuilder({ page })
-    .withTags(tags)
-    .include(blended[0])
-    .include(blended[1])
-    .disableRules(["color-contrast"])
-    .analyze();
+  const hasName = (await page.locator(name).count()) > 0;
+  const rest = hasName
+    ? await new AxeBuilder({ page })
+        .withTags(tags)
+        .include(name)
+        .disableRules(["color-contrast"])
+        .analyze()
+    : { violations: [] };
   const violations = [...main.violations, ...rest.violations];
   return violations.map(
     (v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`,

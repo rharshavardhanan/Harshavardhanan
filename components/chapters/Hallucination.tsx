@@ -22,6 +22,7 @@ export function Hallucination({
       data-chapter={project.slug}
       data-zone={project.slug}
       data-theme={project.slug}
+      data-tone="dark"
       aria-labelledby={`${project.slug}-title`}
       className="paint px-gutter scroll-mt-8 py-40"
     >

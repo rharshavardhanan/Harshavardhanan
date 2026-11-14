@@ -7,6 +7,7 @@ import {
 import { Cursor } from "@/components/Cursor";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { HeaderTone } from "@/components/HeaderTone";
 import { Loader } from "@/components/Loader";
 import { Magnet } from "@/components/Magnet";
 import { SmoothScroll } from "@/components/SmoothScroll";
@@ -95,6 +96,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <Header />
+        <HeaderTone />
         <main id="main">{children}</main>
         <Footer />
         <SmoothScroll />

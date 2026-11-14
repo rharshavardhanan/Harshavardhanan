@@ -13,15 +13,39 @@ const backgrounds = {
 const ownLayer = (page: Page, name: string) =>
   page.locator(`section[data-zone="${name}"] .paint-own`);
 
+// The animations are set up after the page has loaded; wait for that.
+const ready = (page: Page) =>
+  expect(page.locator("html")).toHaveAttribute("data-motion", "ready");
+
 const scrollTo = (page: Page, name: string) =>
   page
     .locator(`section[data-zone="${name}"]`)
     .evaluate((el) => el.scrollIntoView({ block: "center" }));
 
-test("before a project is reached its colour is hidden", async ({ page }) => {
+test("a page that has not been scrolled shows every colour as it is", async ({
+  page,
+}) => {
   await page.goto("/");
+  await page.waitForLoadState("load");
   await expect(page.locator("html")).toHaveAttribute("data-active", "hero");
-  await expect(ownLayer(page, "cache")).toHaveCSS("clip-path", /circle\(0%/);
+  await expect(ownLayer(page, "cache")).toHaveCSS("clip-path", "none");
+});
+
+test("just before a project arrives its colour is hidden, ready to wipe", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await ready(page);
+  // Put the section's top just below the bottom of the window.
+  await page
+    .locator('section[data-zone="road"]')
+    .evaluate((el) =>
+      window.scrollTo(
+        0,
+        (el as HTMLElement).offsetTop - window.innerHeight * 1.2,
+      ),
+    );
+  await expect(ownLayer(page, "road")).toHaveCSS("clip-path", /circle\(0%/);
 });
 
 for (const [name, colour] of Object.entries(backgrounds)) {
@@ -38,7 +62,12 @@ for (const [name, colour] of Object.entries(backgrounds)) {
 
 test("scrolling back closes the wipe again", async ({ page }) => {
   await page.goto("/");
+  await ready(page);
   await scrollTo(page, "road");
+  await expect(page.locator("html")).toHaveAttribute("data-active", "road");
+  // Give the wipe time to run (0.8s) before scrolling away; a jump down and
+  // straight back within one frame never registers as having arrived.
+  await page.waitForTimeout(1200);
   await expect(ownLayer(page, "road")).toHaveCSS("clip-path", "none");
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(ownLayer(page, "road")).toHaveCSS("clip-path", /circle\(0%/);

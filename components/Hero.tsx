@@ -28,7 +28,7 @@ const KERN: Record<number, number> = {
 export function Hero() {
   return (
     <section data-hero data-zone="hero" className="hero">
-      <div className="hero-pin px-gutter flex flex-col justify-center">
+      <div className="hero-pin hero-name-layer px-gutter flex flex-col justify-center">
         {/* @container lets the name size itself from this box's width. */}
         <div className="@container">
           <h1 className="name" aria-label={NAME} data-hero-name>
@@ -48,9 +48,11 @@ export function Hero() {
             ))}
           </h1>
         </div>
+      </div>
 
+      <div className="hero-pin hero-text-layer px-gutter pointer-events-none">
         <div className="px-gutter absolute inset-x-0 bottom-8 flex items-end justify-between gap-8">
-          <div>
+          <div className="pointer-events-auto">
             <p className="max-w-[30ch]">
               Software engineer &amp; founder. I build AI products end to end,
               from model to interface.

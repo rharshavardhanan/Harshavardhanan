@@ -5,7 +5,11 @@ import { Sound } from "./Sound";
 // The big line is sized from its container, like the name in the hero.
 export function Footer() {
   return (
-    <footer data-theme="ink" className="bg-bg text-fg px-gutter pt-24 pb-8">
+    <footer
+      data-theme="ink"
+      data-tone="dark"
+      className="bg-bg text-fg px-gutter pt-24 pb-8"
+    >
       <div className="@container">
         <p data-lines className="lets-build font-serif">
           Let’s build

@@ -247,15 +247,46 @@
 
 /* ==========================================================================
    HEADER
-   Fixed to the top. "difference" blending inverts it against whatever is
-   underneath, so it stays readable over paper, ink and every project colour.
+   Fixed to the top. It is ink over light parts of the page and paper over
+   dark ones: components/HeaderTone.tsx writes which to <html data-tone>.
    ========================================================================== */
 .site-header {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 60;
-  color: #fff;
-  mix-blend-mode: difference;
+  color: #0e0e0e;
+  transition: color 300ms ease;
+}
+html[data-tone="dark"] .site-header {
+  color: #f4f2ee;
+}
+/* Over a full-bleed photograph (data-tone="media") the sky behind the header
+   can be bright, so a dark band fades in behind the paper-coloured letters. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -2rem 0;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.62) 0%,
+    rgb(0 0 0 / 0.62) 60%,
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+html[data-tone="media"] .site-header {
+  color: #f4f2ee;
+}
+html[data-tone="media"] .site-header::before {
+  opacity: 1;
+}
+/* Without JavaScript nothing writes the tone, so a case-study page, which
+   starts dark, says so here. */
+html:not([data-tone]):has(article[data-tone="dark"]) .site-header {
+  color: #f4f2ee;
 }
 
 /* ==========================================================================
@@ -384,12 +415,19 @@ html[data-loading="out"] .loader {
   position: sticky;
   top: 0;
   height: 100svh;
-  /* Everything in the hero is white and inverted against what lies behind it
-     ("difference"), like the header: dark on paper, light where it crosses
-     the particles. It has to be the whole pinned layer, because a sticky
-     element is its own layer and the name alone would blend with nothing. */
+}
+/* The name has its own pinned layer, white and inverted against what lies
+   behind it ("difference"): dark on paper, light where it crosses the
+   particles. (It must be the whole layer that blends: a sticky element is
+   its own layer, and the name alone would blend with nothing.) */
+.hero-name-layer {
   color: #fff;
   mix-blend-mode: difference;
+}
+/* The subtitle, status and scroll cue: ordinary text on a second pinned
+   layer, laid over the first. */
+.hero-text-layer {
+  margin-top: -100svh;
 }
 @media (prefers-reduced-motion: reduce) {
   .hero {
@@ -419,8 +457,8 @@ html[data-loading="out"] .loader {
    letter's position, set in components/Hero.tsx. */
 .name > span {
   display: inline-block;
-  animation: letter-rise 1200ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i) * 45ms + 150ms);
+  animation: letter-rise 1000ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 35ms + 100ms);
 }
 @keyframes letter-rise {
   from {
@@ -1095,4 +1133,49 @@ html[data-active="road"] .stage-box {
   width: 1px;
   background: var(--accent);
   opacity: 0.6;
+}
+
+/* --- Portrait (components/About.tsx) -------------------------------------
+   A grain layer over the print that slides while the pointer is on it. */
+.portrait {
+  position: relative;
+  overflow: hidden;
+}
+.portrait::after {
+  content: "";
+  position: absolute;
+  inset: -64px;
+  background: url("/grain.png");
+  opacity: 0.08;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .portrait:hover::after {
+    animation: grain 0.45s steps(1) infinite;
+  }
+}
+
+/* --- Page wipe title (components/Wipe.tsx) -------------------------------
+   The next page's title rises inside the coloured sheet as it covers. */
+.wipe-title {
+  overflow: clip;
+}
+.wipe-title > span {
+  display: block;
+  transform: translateY(105%);
+}
+.wipe[data-state="in"] .wipe-title > span {
+  transform: none;
+  transition: transform 900ms var(--ease-out) 350ms;
+}
+
+/* The contact email fills its row: it is 14.23 times as wide as its font size
+   in Instrument Serif, so the row's width divided by a little more fits it on
+   one line at any window width, never larger than the h2 size. */
+.email-fit {
+  font-size: min(calc(100cqi / 14.4), var(--text-h2));
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }

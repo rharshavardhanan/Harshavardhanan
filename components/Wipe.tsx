@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { projects } from "@/content/projects";
 
 // The page transition. When a link to another page of this site is clicked,
 // a sheet in the destination's colour rises over the window, the page changes
@@ -12,6 +13,7 @@ export function Wipe() {
   const pathname = usePathname();
   const sheet = useRef<HTMLDivElement>(null);
   const leaving = useRef(false);
+  const [title, setTitle] = useState("");
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -30,10 +32,12 @@ export function Wipe() {
       event.preventDefault();
       const project = url.pathname.match(/^\/work\/([a-z]+)/)?.[1];
       sheet.current!.dataset.theme = project ?? "neutral";
+      // The destination's title rises in the sheet (none for the home page).
+      setTitle(projects.find((item) => item.slug === project)?.title ?? "");
       sheet.current!.dataset.state = "in";
       leaving.current = true;
       // Change page once the sheet has covered the window.
-      setTimeout(() => router.push(url.pathname + url.hash), 450);
+      setTimeout(() => router.push(url.pathname + url.hash), 900);
     };
     // "true" = hear the click before the link itself does.
     document.addEventListener("click", onClick, true);
@@ -50,5 +54,15 @@ export function Wipe() {
     return () => clearTimeout(done);
   }, [pathname]);
 
-  return <div ref={sheet} aria-hidden className="wipe" />;
+  return (
+    <div
+      ref={sheet}
+      aria-hidden
+      className="wipe px-gutter flex items-end pb-14"
+    >
+      <p className="wipe-title text-display font-serif">
+        <span>{title}</span>
+      </p>
+    </div>
+  );
 }

@@ -220,3 +220,19 @@ test.describe("phone", () => {
     await context.close();
   });
 });
+
+test.describe("email copy", () => {
+  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+
+  test("clicking the big email address copies it", async ({ page }) => {
+    await page.goto("/");
+    const contact = page.locator("#contact");
+    await contact
+      .getByRole("link", { name: "harshavardhananrajasimhan@gmail.com" })
+      .click();
+    await expect(contact.getByRole("status").first()).toHaveText("copied ✓");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      "harshavardhananrajasimhan@gmail.com",
+    );
+  });
+});

@@ -1,8 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-// The header and the hero are white text with "difference" blending, so
-// their real colour depends on what is behind them. Automated audits cannot
-// work that out, so this test measures the pixels actually drawn: inside each
+// The hero name is white text with "difference" blending, and the header
+// changes colour with what is under it, so their real colour depends on what
+// is behind them. This test measures the pixels actually drawn: inside each
 // element, the contrast between its darkest and lightest pixel must be at
 // least 4.5:1 (the text against its background).
 async function renderedContrast(page: Page, target: Locator) {
@@ -41,6 +41,7 @@ test("header and hero text are readable on paper", async ({ page }) => {
     page.locator("header time"),
     page.getByRole("button", { name: "Menu" }),
     page.locator("[data-hero] p").first(),
+    page.locator("h1 span").first(),
   ]) {
     expect(await renderedContrast(page, target)).toBeGreaterThanOrEqual(4.5);
   }

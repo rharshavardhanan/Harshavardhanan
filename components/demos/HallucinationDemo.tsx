@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { DemoFrame } from "./DemoFrame";
 
 // Five answers an AI might give. `made` is true when the answer is made up.
@@ -49,9 +49,18 @@ export function HallucinationDemo() {
   const box = useRef<HTMLDivElement>(null);
 
   // After "Next" or "Try again" the button that was pressed disappears, so
-  // keyboard focus is handed to the first choice of the new question.
-  const focusFirstChoice = () =>
-    requestAnimationFrame(() => box.current?.querySelector("button")?.focus());
+  // keyboard focus is handed to the first choice of the new question. It is
+  // done in the same render that shows the question (useLayoutEffect), so a
+  // fast keyboard user can never have their own choice overridden.
+  const wantFocus = useRef(false);
+  const focusFirstChoice = () => {
+    wantFocus.current = true;
+  };
+  useLayoutEffect(() => {
+    if (!wantFocus.current || !box.current) return;
+    wantFocus.current = false;
+    box.current.querySelector("button")?.focus();
+  });
 
   const index = revealed ? results.length - 1 : results.length;
   const item = ITEMS[index];

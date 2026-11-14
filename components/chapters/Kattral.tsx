@@ -21,6 +21,7 @@ export function Kattral({
       data-chapter={project.slug}
       data-zone={project.slug}
       data-theme={project.slug}
+      data-tone="dark"
       aria-labelledby={`${project.slug}-title`}
       className="paint scroll-mt-8"
     >

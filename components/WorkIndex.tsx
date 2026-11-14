@@ -1,7 +1,6 @@
 "use client";
 
-import gsap from "gsap";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { projects, type Slug } from "@/content/projects";
 import type { Media } from "@/lib/media";
 import { MediaView } from "./MediaView";
@@ -58,22 +57,23 @@ export function WorkIndex({ media }: { media: Record<Slug, Media> }) {
 
   // The preview trails the pointer: each move sets a new target, and GSAP
   // glides it there over 0.6s, so it lags behind softly ("lerp").
-  useEffect(() => {
-    if (!float.current) return;
-    // Centre it on the pointer. (Set here, not with a CSS class, because GSAP
-    // would add a CSS offset to its own and apply it twice.)
-    gsap.set(float.current, { xPercent: -50, yPercent: -50 });
-    follow.current = {
-      x: gsap.quickTo(float.current, "x", {
-        duration: 0.6,
-        ease: "power3.out",
-      }),
-      y: gsap.quickTo(float.current, "y", {
-        duration: 0.6,
-        ease: "power3.out",
-      }),
-    };
-  }, []);
+  // GSAP is fetched the first time a pointer moves over the list, so phones
+  // (which never send that) never download it for this.
+  const loading = useRef(false);
+  const loadFollow = () => {
+    const el = float.current;
+    if (loading.current || !el) return;
+    loading.current = true;
+    void import("gsap").then(({ gsap }) => {
+      // Centre it on the pointer. (Set here, not with a CSS class, because
+      // GSAP would add a CSS offset to its own and apply it twice.)
+      gsap.set(el, { xPercent: -50, yPercent: -50 });
+      follow.current = {
+        x: gsap.quickTo(el, "x", { duration: 0.6, ease: "power3.out" }),
+        y: gsap.quickTo(el, "y", { duration: 0.6, ease: "power3.out" }),
+      };
+    });
+  };
 
   const point = (slug: Slug | null) => {
     setHovered(slug);
@@ -122,6 +122,7 @@ export function WorkIndex({ media }: { media: Record<Slug, Media> }) {
         <ol
           className="group/list mt-16"
           onPointerMove={(event) => {
+            loadFollow();
             follow.current?.x(event.clientX);
             follow.current?.y(event.clientY);
           }}

@@ -23,6 +23,7 @@ export function Cache({
       data-chapter={project.slug}
       data-zone={project.slug}
       data-theme={project.slug}
+      data-tone="dark"
       aria-labelledby={`${project.slug}-title`}
       className="paint px-gutter scroll-mt-8 py-40 text-center"
     >
@@ -52,6 +53,10 @@ export function Cache({
           className="absolute inset-0"
         />
       </Frame>
+      <p className="label text-muted mx-auto mt-6 max-w-[60ch]">
+        A 10-second live run of the real dashboard. On this short run all four
+        policies happen to tie.
+      </p>
 
       <Stats stats={project.stats} className="mt-40 text-left" />
       <ChapterLinks project={project} className="mt-20 justify-center" />
