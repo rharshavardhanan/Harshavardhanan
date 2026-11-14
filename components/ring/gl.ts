@@ -63,8 +63,10 @@ const LOOK = {
   flyIn: 14,
   // Corner radius, as a share of the panel's width on screen.
   radius: 0.015,
-  // Film grain (shaders.ts, applyGrain).
-  grain: { amount: 0.05, size: 1.5, fps: 24, shadows: 0.6 },
+  // Film grain (shaders.ts, applyGrain), multiplied into the picture: subtle
+  // on the panel in front, so the film looks rich and clean, and more on the
+  // panels round the side.
+  grain: { front: 0.025, side: 0.07, size: 1.5, fps: 24 },
   // The cursor's trail (shaders.ts, TRAIL).
   trail: {
     brushSize: 0.09, // radius, as a share of the window's height
@@ -339,14 +341,12 @@ export function createRing(
     sizeTrail(canvas.clientWidth, canvas.clientHeight);
   };
 
-  // The grain's settings, for whichever program is in use.
+  // The grain's size and pace (its strength is set per panel).
   const grain = (at: Program["at"]) => {
-    gl.uniform1f(at("uGrainAmount"), LOOK.grain.amount);
     // gl_FragCoord counts canvas pixels, `ratio` to each CSS pixel: scale the
     // speck so it looks the same size on any screen.
     gl.uniform1f(at("uGrainSize"), LOOK.grain.size * ratio);
     gl.uniform1f(at("uGrainFps"), LOOK.grain.fps);
-    gl.uniform1f(at("uGrainShadows"), LOOK.grain.shadows);
   };
 
   const draw = (f: RingFrame) => {
@@ -461,6 +461,12 @@ export function createRing(
       gl.uniform1f(at("uExpand"), expand);
       gl.uniform1f(at("uDepth"), Math.pow(1 - intro, 3) * LOOK.flyIn);
       gl.uniform1f(at("uSide"), Math.abs(place));
+      // Grain: 0.025 in front, rising to 0.07 one place round.
+      const side = Math.min(Math.abs(place), 1);
+      gl.uniform1f(
+        at("uGrainAmount"),
+        LOOK.grain.front + (LOOK.grain.side - LOOK.grain.front) * side,
+      );
       gl.uniform1f(at("uOpacity"), opacity);
       gl.drawElements(
         gl.TRIANGLES,

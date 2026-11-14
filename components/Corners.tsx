@@ -32,7 +32,7 @@ export function Corners() {
             <Sound />
           </span>
         </div>
-        <Link href="/" className="inline-block py-2">
+        <Link href="/" className="corner-name">
           Harshavardhanan
         </Link>
         <div className="flex items-center gap-x-6 justify-self-end">

@@ -84,8 +84,10 @@ test("MENU opens the index of all seven projects, with posters", async ({
   // You are on Odovox: it is marked, and the preview starts on it.
   await expect(projects.first()).toHaveAttribute("aria-current", "page");
   await expect(projects.first()).toContainText("you’re here");
+  // (The frame's own row hides while the menu covers it, so find MENU by its
+  // address rather than its role.)
   await expect(
-    corners(page).getByRole("link", { name: "Menu" }),
+    corners(page).locator('a[href="/#projects"][aria-haspopup]'),
   ).toHaveAttribute("aria-expanded", "true");
   // Focus starts on the first project; the arrow keys move down the list.
   await expect(projects.first()).toBeFocused();

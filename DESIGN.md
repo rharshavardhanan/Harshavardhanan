@@ -25,7 +25,7 @@ The site is image-first and almost wordless at the front, with every bit of evid
 | `text-body`    | 18 to 20px                                           | prose, skills                                                        |
 | `label`        | 14px Inter Tight, uppercase, 0.04em, tabular figures | the frame, credits, captions, controls                               |
 
-Instrument Serif for everything large, Inter Tight for everything else. JetBrains Mono appears only inside the demos: `DemoFrame` sets `--label-font`, which `label` reads. One exception, asked for by Harsha: the menu's project names, 40 to 96px, sized so the longest fits its column and all seven fit the window.
+Instrument Serif for everything large, Inter Tight for everything else. JetBrains Mono appears only inside the demos: `DemoFrame` sets `--label-font`, which `label` reads. Two exceptions, asked for by Harsha: his name in the frame (Instrument Serif, 22 to 40px, written as a name, not small capitals), and the menu's project names, 40 to 96px, sized so the longest fits its column and all seven fit the window.
 
 ## Colour
 
@@ -60,7 +60,7 @@ Twelve columns, `px-gutter` margins.
 - `Menu`: the site menu, a modal `<dialog>`. Focus starts on the first project, the arrow keys move between them, and Escape plays the closing. Choosing a project fades the others and morphs its poster into the new page's film (view transition). The page is locked while it is open.
 - `components/ring/`, the home ring:
   - `gl.ts`: raw WebGL2, one 48×24 grid shape, one texture per panel.
-  - `shaders.ts`: the cursor trail (a feedback texture that fades 5% a frame); the panels, placed on the circle with sin and cos (`VERTEX`), then pushed and colour-split by the trail and by speed, and softer, greyer and darker the further round they are, with rounded corners and a vignette; and the oily `SMOKE` (domain-warped noise, on its own half-resolution canvas, `smoke.ts`). Film grain, stepped at 24 fps, is shared. Every uniform is commented; the settings are in `LOOK` in `gl.ts` and `smoke.ts`, and the room's proportions are in `lib/ring.ts`.
+  - `shaders.ts`: the cursor trail (a feedback texture that fades 5% a frame); the panels, placed on the circle with sin and cos (`VERTEX`), then pushed and colour-split by the trail and by speed, and softer, greyer and darker the further round they are, with rounded corners and a vignette; and the oily `SMOKE` (domain-warped noise, on its own half-resolution canvas, `smoke.ts`). Film grain, stepped at 24 fps, is multiplied into the films (black stays black; 0.025 in front, up to 0.07 at the sides) and added to the smoke (0.035). Every uniform is commented; the settings are in `LOOK` in `gl.ts` and `smoke.ts`, and the room's proportions are in `lib/ring.ts`.
   - `Ring.tsx`: input, easing, the snap, which films play, open and back transitions.
 - `Film`: poster plus video, the `film-<slug>` view-transition name, the AI label, a Play button under reduced motion.
 - `NextProject`: the next poster, growing with scroll; it opens the next page after a 350ms hold at full size.
@@ -95,8 +95,8 @@ A 12px dot that follows the pointer (difference blending). It grows over links, 
 
 Off by default; the choice is remembered. Every sound is made in the browser (`lib/sound.ts`, Web Audio), none is a file:
 
-- **tick:** 12ms of noise dying in about 3ms, through a 3200Hz band-pass. One for each panel reaching the ring's centre, and one per 90px of page scrolling. At most one per 35ms, each detuned ±25 cents.
-- **click:** the same, softer and lower (4ms, 1800Hz), on opening a panel.
+- **tick:** a soft, dull "tok". It is 10ms of noise × exp(-t/0.5ms), rendered once (OfflineAudioContext) through a 1kHz band-pass (Q 0.9) and a 3kHz low-pass, with its peak set to 0.56. One plays for each panel reaching the home ring's centre; pages scroll silently. At most one per 35ms, each detuned ±25 cents.
+- **click:** the same, softer and lower (4ms, 1400Hz), on opening a panel.
 - **select:** a sine falling from 1200 to 900Hz over 60ms, on other links.
 - **menuOpen / menuClose:** 120ms of noise through a low-pass sweeping 600→2400Hz, or back.
 

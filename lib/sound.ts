@@ -1,7 +1,7 @@
 // The site's sounds, all made here with the Web Audio API: no sound files.
 //
-//   tick       a crisp, woody click: each panel passing the ring's centre, and
-//              every 90px of scrolling a page
+//   tick       a soft, dull "tok": each panel passing the home ring's
+//              centre (pages scroll silently)
 //   click      a lower, softer tick: opening a panel
 //   select     a short falling "blip": any other link
 //   menuOpen   a soft whoosh rising (the menu opening)
@@ -26,6 +26,7 @@ let audio: AudioContext | null = null;
 let master: GainNode | null = null;
 const buffers = new Map<"tick" | "click" | "whoosh", AudioBuffer>();
 let lastTick = 0;
+let tickReady: Promise<void> | null = null; // the tick is made in the background
 
 // ---------------------------------------------------------------------------
 // Whether sound is on. It lives on <html data-sound="on">, so both SOUND
@@ -58,7 +59,7 @@ export function onSoundChange(onChange: () => void) {
  * because it is only loud for a moment.
  */
 function noise(
-  context: AudioContext,
+  context: BaseAudioContext,
   seconds: number,
   shape: (t: number) => number,
 ) {
@@ -74,15 +75,60 @@ function noise(
   return buffer;
 }
 
-/** Makes the three recorded-once sounds (the others are played live). */
-function build(context: AudioContext) {
-  // Tick: 12ms long, but the curve exp(-t / 1.5ms) has fallen to 13% by 3ms
-  // and to almost nothing by 7ms. A sound that short has no time to be a
-  // hiss: the ear hears a tick.
-  buffers.set(
-    "tick",
-    noise(context, 0.012, (t) => Math.exp(-t / 0.0015)),
+/**
+ * The tick: a soft, dull "tok", made once. Measured on the reference: 10ms,
+ * loudest (0.56) at the very first sample, down to a tenth within 1ms and
+ * silent by about 7ms, its energy around 1kHz.
+ *
+ * Three steps, each changing what you hear:
+ *  1. Envelope. Noise times exp(-t / 0.5ms) is down to 13% after 1ms: a
+ *     single hit with no tail. That shortness is what makes it a tick at
+ *     all, rather than a hiss.
+ *  2. Band-pass at 1000Hz (Q 0.9, a wide band). Only the pitches around 1kHz
+ *     get through, which gives the hit a body, a "tok" like a knuckle on
+ *     wood, instead of the "tsk" of raw static.
+ *  3. Low-pass at 3000Hz. It shaves off what the band-pass still lets
+ *     through above 3kHz, the sparkle that would make it sound bright and
+ *     clicky: what is left is soft and dull.
+ *
+ * The filtering is done once, ahead of time, in an OfflineAudioContext (a
+ * studio that renders into a buffer as fast as it can instead of playing
+ * to the speakers). Each tick is then just the finished buffer played back,
+ * which costs nothing. Finally its loudest sample is set to 0.56.
+ */
+async function renderTick(sampleRate: number) {
+  const seconds = 0.01;
+  const offline = new OfflineAudioContext(
+    1,
+    Math.round(sampleRate * seconds),
+    sampleRate,
   );
+  const source = offline.createBufferSource();
+  source.buffer = noise(offline, seconds, (t) => Math.exp(-t / 0.0005));
+  const band = offline.createBiquadFilter();
+  band.type = "bandpass";
+  band.frequency.value = 1000;
+  band.Q.value = 0.9;
+  const low = offline.createBiquadFilter();
+  low.type = "lowpass";
+  low.frequency.value = 3000;
+  source.connect(band).connect(low).connect(offline.destination);
+  source.start();
+  const tick = await offline.startRendering();
+
+  // Normalise: scale every sample so the loudest is exactly 0.56.
+  const data = tick.getChannelData(0);
+  let peak = 0;
+  for (const sample of data) peak = Math.max(peak, Math.abs(sample));
+  if (peak > 0) for (let i = 0; i < data.length; i++) data[i] *= 0.56 / peak;
+  return tick;
+}
+
+/** Makes the sounds that are recorded once (select is played live). */
+function build(context: AudioContext) {
+  tickReady = renderTick(context.sampleRate).then((tick) => {
+    buffers.set("tick", tick);
+  });
   // Click: the same, dying more slowly (4ms), so it is rounder and softer.
   buffers.set(
     "click",
@@ -121,6 +167,8 @@ export function play(name: SoundName) {
   const now = audio.currentTime;
 
   if (name === "tick" || name === "click") {
+    const buffer = buffers.get(name);
+    if (!buffer) return; // the tick is still being made
     // Ticks never come closer than 35ms: a fast flick makes a quick run of
     // them, not a buzz.
     if (name === "tick") {
@@ -128,19 +176,23 @@ export function play(name: SoundName) {
       lastTick = performance.now();
     }
     const source = audio.createBufferSource();
-    source.buffer = buffers.get(name)!;
+    source.buffer = buffer;
     // Each one a touch higher or lower: up to 25 cents (a quarter of a
     // semitone), so a run of ticks never sounds like a machine.
     source.detune.value = (Math.random() * 2 - 1) * 25;
-    // A band-pass filter lets through only the pitches near its frequency.
-    // Raw noise hit through it at 3200Hz sounds like a crisp, woody click
-    // rather than a burst of static; Q 1.2 keeps the band fairly wide, so
-    // it is not a whistle. The click's band is lower, 1800Hz: a duller tap.
-    const filter = audio.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = name === "tick" ? 3200 : 1800;
-    filter.Q.value = 1.2;
-    source.connect(filter).connect(master);
+    if (name === "tick") {
+      // Already filtered (renderTick): straight to the master knob.
+      source.connect(master);
+    } else {
+      // The click: a band-pass at 1400Hz (only the pitches near it pass)
+      // makes the noise a dull tap; Q 1.2 keeps the band wide, so it is not
+      // a whistle.
+      const filter = audio.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 1400;
+      filter.Q.value = 1.2;
+      source.connect(filter).connect(master);
+    }
     source.start(now);
     return;
   }
@@ -197,7 +249,8 @@ export function setEnabled(on: boolean) {
   if (audio && master) {
     master.gain.setTargetAtTime(on ? VOLUME : 0, audio.currentTime, 0.015);
   }
-  if (on) play("tick"); // one tick to say it is on
+  // One tick to say it is on (once the tick has been made).
+  if (on) void tickReady?.then(() => play("tick"));
 }
 
 // ---------------------------------------------------------------------------
@@ -248,21 +301,5 @@ export function install() {
       play("select");
     },
     true,
-  );
-
-  // Scrolling a page: a tick every 90px travelled, up or down.
-  let travelled = 0;
-  let lastY = window.scrollY;
-  window.addEventListener(
-    "scroll",
-    () => {
-      travelled += Math.abs(window.scrollY - lastY);
-      lastY = window.scrollY;
-      if (travelled >= 90) {
-        travelled %= 90;
-        play("tick");
-      }
-    },
-    { passive: true },
   );
 }

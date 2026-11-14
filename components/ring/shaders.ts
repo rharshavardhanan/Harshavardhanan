@@ -14,10 +14,9 @@
 // FILM GRAIN, shared by the smoke and the panels.
 // ---------------------------------------------------------------------------
 const GRAIN = /* glsl */ `
-uniform float uGrainAmount;   // how strong the grain is
+uniform float uGrainAmount;   // how strong the grain is, for this draw
 uniform float uGrainSize;     // how big each grain speck is, in screen pixels
 uniform float uGrainFps;      // how many times per second the pattern changes
-uniform float uGrainShadows;  // how much extra grain to add in dark areas
 
 // A random number between 0 and 1 for a position. GLSL has no random(), so
 // this scrambles the position: the same input always gives the same output,
@@ -28,24 +27,35 @@ float hash(vec2 p) {
   return fract(p.x * p.y);             // and once more, down to 0..1
 }
 
-vec3 applyGrain(vec3 color) {
+// This pixel's grain speck on this frame, from -0.5 to 0.5.
+float speck() {
   // Pixels in blocks of uGrainSize share one speck: bigger = coarser grain.
   // mod(…, 512) keeps the numbers small: hash() multiplies them by over a
   // hundred, and big results keep too few decimals on many graphics cards,
   // which turns the "random" specks into stripes.
   vec2 cell   = mod(floor(gl_FragCoord.xy / uGrainSize), 512.0);
   // A whole number that only goes up uGrainFps times a second: the pattern
-  // jumps like film instead of sliding. (Also kept small: 64 frames, then
-  // it starts again, which no one can see.)
+  // jumps like film instead of sliding (64 frames, then round again).
   float frame = mod(floor(uTime * uGrainFps), 64.0);
-  // This block's speck on this frame, from -0.5 to 0.5 (as often darker as
-  // lighter, so the brightness overall does not change).
-  float n     = hash(cell + frame * 17.0) - 0.5;
-  // How bright the pixel is: 0 black, 1 white (eyes weigh green most).
-  float luma  = dot(color, vec3(0.299, 0.587, 0.114));
-  // Dark pixels get extra grain, bright ones the normal amount.
-  float boost = mix(1.0 + uGrainShadows, 1.0, luma);
-  return color + n * uGrainAmount * boost;
+  return hash(cell + frame * 17.0) - 0.5;
+}
+
+// Grain for the films. It MULTIPLIES the colour: black times anything stays
+// black, so dark areas stay deep and rich (added grain would be cut off at
+// zero and lift black towards grey), and grain only shows where there is
+// picture. It is strongest in the mid-tones: mid is 0 at pure black and pure
+// white and 1 at mid-grey, and w keeps a little grain everywhere.
+vec3 applyGrain(vec3 color, float amount) {
+  float luma = dot(color, vec3(0.299, 0.587, 0.114));
+  float mid  = 4.0 * luma * (1.0 - luma);
+  float w    = mix(0.25, 1.0, mid);
+  return color * (1.0 + speck() * amount * 2.0 * w);
+}
+
+// Grain for the smoke: ADDED, since the smoke never reaches pure black
+// (its darkest is about 0.03), so nothing is cut off.
+vec3 addGrain(vec3 color, float amount) {
+  return color + speck() * amount;
 }
 `;
 
@@ -129,7 +139,7 @@ void main() {
   // And darker towards the window's corners.
   c *= 1.0 - 0.45 * dot(uv, uv);
 
-  colour = vec4(applyGrain(c), 1.0);
+  colour = vec4(addGrain(c, uGrainAmount), 1.0);
 }
 `;
 
@@ -344,7 +354,7 @@ void main() {
   float vig = smoothstep(0.9, 0.2, length(vUv - 0.5));
   c *= mix(0.75, 1.0, vig);
 
-  c = applyGrain(c);
+  c = applyGrain(c, uGrainAmount);
 
   // Rounded corners: fully there inside, fading out over about one pixel at
   // the edge (fwidth: how much d changes from one pixel to the next), so the

@@ -109,10 +109,10 @@ test("Sound is off until switched on", async ({ page }) => {
   await expect(sound).toHaveText("sound on");
 });
 
-test("Sound on: scrolling ticks, and no film is ever heard", async ({
+test("Sound on: pages scroll silently, no film is heard, and it is remembered", async ({
   page,
 }) => {
-  // Count every tick the page plays by wrapping the browser's sound maker.
+  // Count every sound the page makes by wrapping the browser's sound maker.
   await page.addInitScript(() => {
     const w = window as unknown as { ticks: number };
     w.ticks = 0;
@@ -126,18 +126,18 @@ test("Sound on: scrolling ticks, and no film is ever heard", async ({
   await expect(page.locator(".corners time")).toHaveText(/IST$/);
   const ticks = () =>
     page.evaluate(() => (window as unknown as { ticks: number }).ticks);
-  // Off by default: scrolling is silent.
-  await page.mouse.wheel(0, 900);
-  await page.waitForTimeout(400);
-  expect(await ticks()).toBe(0);
-
-  await page.locator(".corners").getByRole("button", { name: /^sound/ }).click();
-  const before = await ticks();
+  const sound = page.locator(".corners").getByRole("button", { name: /^sound/ });
+  await expect(sound).toHaveText("sound off");
+  await sound.click();
+  await expect(sound).toHaveText("sound on");
+  // One tick to say it is on; then scrolling the page makes none (the
+  // tick belongs to the home ring, e2e/ring.e2e.ts).
+  await expect.poll(ticks).toBe(1);
   for (let i = 0; i < 6; i++) {
     await page.mouse.wheel(0, 300);
     await page.waitForTimeout(120);
   }
-  await expect.poll(ticks).toBeGreaterThan(before + 2);
+  expect(await ticks()).toBe(1);
   expect(
     await page.evaluate(
       () => [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
@@ -145,9 +145,7 @@ test("Sound on: scrolling ticks, and no film is ever heard", async ({
   ).toBe(0);
   // The choice is remembered.
   await page.reload();
-  await expect(
-    page.locator(".corners").getByRole("button", { name: /^sound/ }),
-  ).toHaveText("sound on");
+  await expect(sound).toHaveText("sound on");
 });
 
 test("404: the page says so in the site's voice and offers a way home", async ({

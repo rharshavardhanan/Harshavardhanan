@@ -289,6 +289,19 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   white-space: nowrap;
 }
+/* The name, top centre: large, in the serif, written as a name rather than
+   in small capitals, so it reads at a glance. (A size of its own, outside the
+   five: 22px on a phone, where it still fits between MENU and INQUIRE, up to
+   40px.) */
+.corner-name {
+  display: inline-block;
+  padding-block: 0.25rem;
+  font-family: var(--font-instrument-serif), serif;
+  font-size: clamp(1.375rem, 2.7vw, 2.5rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
 .corner-bottom {
   bottom: 0;
 }
@@ -350,6 +363,16 @@ html.has-cursor,
 html.has-cursor * {
   cursor: none;
 }
+/* While a dialog (the menu, INQUIRE) is open, the frame's own row hides:
+   the dialog covers it and it cannot be used. (The dialogs live inside the
+   frame's top row, so they are made visible again.) */
+html:has(dialog[open]) .corner-row {
+  visibility: hidden;
+}
+html:has(dialog[open]) .corners dialog[open] {
+  visibility: visible;
+}
+
 /* A dialog (the menu, INQUIRE) is drawn above everything, the custom dot
    included, so inside one the ordinary cursor comes back. */
 html:has(dialog[open]) :is(.cursor-dot, .cursor-word) {

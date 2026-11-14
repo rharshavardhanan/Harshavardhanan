@@ -181,7 +181,7 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
           <button type="button" onClick={() => shut()}>
             Close&nbsp;<span aria-hidden>✕</span>
           </button>
-          <Link href="/" className="justify-self-center">
+          <Link href="/" className="corner-name justify-self-center">
             Harshavardhanan
           </Link>
           <a href="/contact" className="justify-self-end" onClick={inquire}>

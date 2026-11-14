@@ -10,7 +10,8 @@ const LOOK = {
   distortion: 2, // how "oily" the folding is at rest
   speedDistortion: 1.5, // how much more while the ring turns fast
   resolution: 0.5, // half the screen's pixels
-  grain: { amount: 0.045, size: 1, fps: 24, shadows: 0.6 },
+  // Added grain (shaders.ts, addGrain): the smoke never reaches pure black.
+  grain: { amount: 0.035, size: 1, fps: 24 },
 };
 
 export type SmokeFrame = {
@@ -60,7 +61,6 @@ export function createSmoke(canvas: HTMLCanvasElement): Smoke | null {
     gl.uniform1f(at("uGrainAmount"), LOOK.grain.amount);
     gl.uniform1f(at("uGrainSize"), LOOK.grain.size);
     gl.uniform1f(at("uGrainFps"), LOOK.grain.fps);
-    gl.uniform1f(at("uGrainShadows"), LOOK.grain.shadows);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   };
 

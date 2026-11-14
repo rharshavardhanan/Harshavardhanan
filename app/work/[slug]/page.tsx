@@ -109,7 +109,12 @@ export default async function CaseStudy({ params }: Props) {
         </div>
 
         <div className="poster-body">
-          <header className="poster-title bg-bg">
+          {/* On the light project (Aftermeet) the frame above stays white,
+              on a soft dark band (data-tone="media"), like over a film. */}
+          <header
+            className="poster-title bg-bg"
+            data-tone={item.tone === "light" ? "media" : undefined}
+          >
             <p className="label text-muted">
               0{index + 1} / 0{projects.length}
             </p>
