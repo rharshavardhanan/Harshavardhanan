@@ -305,12 +305,6 @@
 .corner-bottom {
   bottom: 0;
 }
-/* Phones: name · SOUND · counter. */
-@media (max-width: 39.99rem) {
-  .corner-bottom {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-  }
-}
 .corner-row :is(a, button) {
   pointer-events: auto;
 }

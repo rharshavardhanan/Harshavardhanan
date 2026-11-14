@@ -100,52 +100,37 @@ test("The menu carries the credit and the other pages, large", async ({
   ).not.toBe("none");
 });
 
-test("Sound is off until switched on", async ({ page }) => {
-  await page.goto("/");
-  const sound = page.getByRole("button", { name: /^sound/ });
-  await expect(sound).toHaveAttribute("aria-pressed", "false");
-  await sound.click();
-  await expect(sound).toHaveAttribute("aria-pressed", "true");
-  await expect(sound).toHaveText("sound on");
-});
-
-test("Sound on: pages scroll silently, no film is heard, and it is remembered", async ({
+test("No sound switch; pages scroll silently and no film is ever heard", async ({
   page,
 }) => {
   // Count every sound the page makes by wrapping the browser's sound maker.
   await page.addInitScript(() => {
-    const w = window as unknown as { ticks: number };
-    w.ticks = 0;
+    const w = window as unknown as { sounds: number };
+    w.sounds = 0;
     const make = AudioContext.prototype.createBufferSource;
     AudioContext.prototype.createBufferSource = function () {
-      w.ticks++;
+      w.sounds++;
       return make.call(this);
     };
   });
   await page.goto("/work/road");
   await expect(page.locator(".corners time")).toHaveText(/IST$/);
-  const ticks = () =>
-    page.evaluate(() => (window as unknown as { ticks: number }).ticks);
-  const sound = page.locator(".corners").getByRole("button", { name: /^sound/ });
-  await expect(sound).toHaveText("sound off");
-  await sound.click();
-  await expect(sound).toHaveText("sound on");
-  // One tick to say it is on; then scrolling the page makes none (the
-  // tick belongs to the home ring, e2e/ring.e2e.ts).
-  await expect.poll(ticks).toBe(1);
+  await expect(page.getByRole("button", { name: /^sound/i })).toHaveCount(0);
+  // A key press lets the browser make sound; then scroll the page.
+  await page.keyboard.press("Shift");
+  await page.waitForTimeout(300);
   for (let i = 0; i < 6; i++) {
     await page.mouse.wheel(0, 300);
     await page.waitForTimeout(120);
   }
-  expect(await ticks()).toBe(1);
+  expect(
+    await page.evaluate(() => (window as unknown as { sounds: number }).sounds),
+  ).toBe(0);
   expect(
     await page.evaluate(
       () => [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
     ),
   ).toBe(0);
-  // The choice is remembered.
-  await page.reload();
-  await expect(sound).toHaveText("sound on");
 });
 
 test("404: the page says so in the site's voice and offers a way home", async ({

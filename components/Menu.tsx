@@ -11,7 +11,6 @@ import {
 } from "react";
 import { projects, type Slug } from "@/content/projects";
 import { play } from "@/lib/sound";
-import { Sound } from "./Sound";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 const reduced = () => window.matchMedia(REDUCE).matches;
@@ -285,9 +284,6 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
         </div>
 
         <div className="menu-foot label text-muted">
-          <span className="sm:hidden">
-            <Sound />
-          </span>
           <span>© 2026 Harsha</span>
         </div>
       </dialog>

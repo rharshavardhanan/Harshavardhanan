@@ -57,21 +57,6 @@ test("the ring starts, names the middle project and turns with the arrow keys", 
   await expect(page).toHaveURL(/\/work\/aftermeet$/);
 });
 
-test.describe("phone", () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
-
-  test("the SOUND switch is on the home page", async ({ page }) => {
-    await page.goto("/");
-    await running(page);
-    const sound = page
-      .locator(".corners")
-      .getByRole("button", { name: /^sound/ })
-      .filter({ visible: true });
-    await expect(sound).toHaveCount(1);
-    await expect(sound).toBeInViewport();
-  });
-});
-
 test("tabbing to a project's link turns the ring to it", async ({ page }) => {
   await page.goto("/");
   await running(page);
@@ -102,9 +87,7 @@ test.describe("reduced motion", () => {
   });
 });
 
-test("with sound on, a tick plays as each new panel reaches the centre", async ({
-  page,
-}) => {
+test("a tick plays as each new panel reaches the centre", async ({ page }) => {
   // Count the sounds the page makes by wrapping the browser's sound maker.
   await page.addInitScript(() => {
     const w = window as unknown as { sounds: number };
@@ -117,12 +100,13 @@ test("with sound on, a tick plays as each new panel reaches the centre", async (
   });
   await page.goto("/");
   await running(page);
-  await page.locator(".corners").getByRole("button", { name: /^sound/ }).click();
   const sounds = () =>
     page.evaluate(() => (window as unknown as { sounds: number }).sounds);
-  await expect.poll(sounds).toBeGreaterThan(0); // the "it is on" tick
-  const before = await sounds();
+  // No switch: the first key press lets the browser make sound.
+  await page.keyboard.press("Shift");
+  await page.waitForTimeout(300); // the tick is made once, in the background
+  expect(await sounds()).toBe(0);
   await page.keyboard.press("ArrowRight");
   await expect(page.locator("html")).toHaveAttribute("data-active", "aftermeet");
-  await expect.poll(sounds).toBeGreaterThan(before);
+  await expect.poll(sounds).toBeGreaterThan(0);
 });

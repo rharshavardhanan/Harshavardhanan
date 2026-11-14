@@ -13,37 +13,18 @@
 // (context.destination). Every sound here goes through one shared volume knob,
 // the master gain, which the SOUND switch turns between 0.8 and 0.
 //
-// Sound is off until the visitor switches it on, and the choice is
-// remembered. Browsers only allow sound after the visitor has done something
-// (a click, a key, a tap), so the studio is opened on the first of those.
+// There is no switch: the sounds play from the visitor's first click, key or
+// tap (browsers allow no sound before one of those), and never for visitors
+// who asked their system for reduced motion.
 
 export type SoundName = "tick" | "click" | "select" | "menuOpen" | "menuClose";
 
-const KEY = "sound"; // where the choice is remembered (localStorage)
-const VOLUME = 0.8; // the master gain when sound is on
+const VOLUME = 0.8; // the master gain: how loud everything is
 
 let audio: AudioContext | null = null;
 let master: GainNode | null = null;
 const buffers = new Map<"tick" | "click" | "whoosh", AudioBuffer>();
 let lastTick = 0;
-let tickReady: Promise<void> | null = null; // the tick is made in the background
-
-// ---------------------------------------------------------------------------
-// Whether sound is on. It lives on <html data-sound="on">, so both SOUND
-// switches (the frame's and the phone menu's) always agree.
-// ---------------------------------------------------------------------------
-
-export const soundOn = () => document.documentElement.dataset.sound === "on";
-
-/** Calls `onChange` whenever sound is switched on or off; returns a function
- *  that stops listening. */
-export function onSoundChange(onChange: () => void) {
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, {
-    attributeFilter: ["data-sound"],
-  });
-  return () => observer.disconnect();
-}
 
 // ---------------------------------------------------------------------------
 // Making the sounds
@@ -126,9 +107,9 @@ async function renderTick(sampleRate: number) {
 
 /** Makes the sounds that are recorded once (select is played live). */
 function build(context: AudioContext) {
-  tickReady = renderTick(context.sampleRate).then((tick) => {
-    buffers.set("tick", tick);
-  });
+  void renderTick(context.sampleRate).then((tick) =>
+    buffers.set("tick", tick),
+  );
   // Click: the same, dying more slowly (4ms), so it is rounder and softer.
   buffers.set(
     "click",
@@ -154,16 +135,20 @@ export function unlock() {
     // The master volume knob: every sound plugs into this, this plugs into
     // the speakers.
     master = audio.createGain();
-    master.gain.value = soundOn() ? VOLUME : 0;
+    master.gain.value = VOLUME;
     master.connect(audio.destination);
     build(audio);
   }
   if (audio.state === "suspended" && !document.hidden) void audio.resume();
 }
 
-/** Plays one of the sounds, if sound is on and the studio is open. */
+const quiet = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Plays one of the sounds, once the studio is open (and never for
+ *  visitors who asked for reduced motion). */
 export function play(name: SoundName) {
-  if (!audio || !master || !soundOn() || audio.state !== "running") return;
+  if (!audio || !master || quiet() || audio.state !== "running") return;
   const now = audio.currentTime;
 
   if (name === "tick" || name === "click") {
@@ -235,26 +220,8 @@ export function play(name: SoundName) {
   source.start(now);
 }
 
-/** Switches sound on or off, and remembers the choice. Call it from a click
- *  (the SOUND switch), which also lets the studio open. */
-export function setEnabled(on: boolean) {
-  const html = document.documentElement;
-  if (on) html.dataset.sound = "on";
-  else delete html.dataset.sound;
-  try {
-    localStorage.setItem(KEY, on ? "on" : "off");
-  } catch {} // storage blocked (a private window): just not remembered
-  unlock();
-  // Turn the master knob smoothly (over about 50ms), not with a jump.
-  if (audio && master) {
-    master.gain.setTargetAtTime(on ? VOLUME : 0, audio.currentTime, 0.015);
-  }
-  // One tick to say it is on (once the tick has been made).
-  if (on) void tickReady?.then(() => play("tick"));
-}
-
 // ---------------------------------------------------------------------------
-// Setting it all up, once per page load (components/Sound.tsx calls this)
+// Setting it all up, once per page load (components/Sounds.tsx calls this)
 // ---------------------------------------------------------------------------
 
 let installed = false;
@@ -262,14 +229,6 @@ let installed = false;
 export function install() {
   if (installed) return;
   installed = true;
-  const html = document.documentElement;
-
-  // The remembered choice. Off unless the visitor switched it on before
-  // (so reduced-motion visitors, like everyone, start in silence).
-  try {
-    if (localStorage.getItem(KEY) === "on") html.dataset.sound = "on";
-  } catch {}
-
   // Open the studio on the first click, key or tap.
   const first = () => {
     unlock();

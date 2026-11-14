@@ -25,10 +25,6 @@ for (const [width, height] of [
         "Sequential Conformal Prediction",
       );
       await expect(frame.locator(".corner-bottom")).toContainText("03 / 07");
-      // The SOUND switch is always in the frame (on phones, the bottom row).
-      await expect(
-        frame.getByRole("button", { name: /^sound/ }).filter({ visible: true }),
-      ).toHaveCount(1);
       const overflow = await page.evaluate(
         () =>
           document.documentElement.scrollWidth -

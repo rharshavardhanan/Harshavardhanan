@@ -4,7 +4,7 @@ import { film } from "@/lib/media";
 import { CornerStatus } from "./CornerStatus";
 import { Inquire } from "./Inquire";
 import { Menu } from "./Menu";
-import { Sound } from "./Sound";
+import { Sounds } from "./Sounds";
 
 // The frame around every page: small capitals pinned to the four corners of
 // the window, like the credits on a film print.
@@ -27,10 +27,6 @@ export function Corners() {
       <header className="corner-row corner-top">
         <div className="flex items-center gap-x-6">
           <Menu posters={posters} />
-          {/* On phones the sound switch lives in the menu instead. */}
-          <span className="max-sm:hidden">
-            <Sound />
-          </span>
         </div>
         <Link href="/" className="corner-name">
           Harshavardhanan
@@ -45,6 +41,7 @@ export function Corners() {
         </div>
       </header>
       <CornerStatus />
+      <Sounds />
     </div>
   );
 }

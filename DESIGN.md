@@ -93,11 +93,11 @@ A 12px dot that follows the pointer (difference blending). It grows over links, 
 
 ## Sound
 
-Off by default; the choice is remembered. Every sound is made in the browser (`lib/sound.ts`, Web Audio), none is a file:
+No switch (Harsha, 2026-11-14). The sounds play from the visitor's first click, key or tap (browsers allow none before that), and never under reduced motion. All are made in the browser (`lib/sound.ts`, Web Audio); none is a file:
 
 - **tick:** a soft, dull "tok". It is 10ms of noise × exp(-t/0.5ms), rendered once (OfflineAudioContext) through a 1kHz band-pass (Q 0.9) and a 3kHz low-pass, with its peak set to 0.56. One plays for each panel reaching the home ring's centre; pages scroll silently. At most one per 35ms, each detuned ±25 cents.
 - **click:** the same, softer and lower (4ms, 1400Hz), on opening a panel.
 - **select:** a sine falling from 1200 to 900Hz over 60ms, on other links.
 - **menuOpen / menuClose:** 120ms of noise through a low-pass sweeping 600→2400Hz, or back.
 
-Everything runs through one master gain (0.8 on, 0 off). The sound starts only after the first click, key or tap, and is suspended while the tab is hidden. The films are never heard.
+Everything runs through one master gain (0.8); the studio is suspended while the tab is hidden. The films are never heard.
