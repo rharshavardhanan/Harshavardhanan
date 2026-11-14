@@ -59,5 +59,6 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 - Five text sizes only (`text-display`, `text-h2`, `text-h3`, `text-body`, `label`); nothing under 13px.
 - Animate `transform`, `opacity`, `clip-path` and colour only, and honour `prefers-reduced-motion`.
 - Every page works with JavaScript off, with a keyboard, and at 360px wide.
-- Never call Harsha a founder anywhere on the site (Odovox is a personal project). Every AI film is labelled.
+- Never call Harsha a founder anywhere on the site (Odovox is a personal project). Every AI film is credited as AI-generated in its project's credits;
+  no caption on the film itself (Harsha, 2026-11-14: the Gemini ✦ in its corner shows it).
 - One local commit per finished piece. Push only when Harsha asks: a push to `main` goes live. `potrait` (the portrait's source PNG) and `videos/` are git-ignored.

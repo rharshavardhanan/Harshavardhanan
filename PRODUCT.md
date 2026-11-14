@@ -55,7 +55,9 @@ GitHub, LinkedIn and the résumé PDF.
   Prediction (with Akileshguhan A), Automated Road Damage Survey, Kattral Academy
   (Zerofence), Edge Cache RL, Hallucination Detection in LLMs. Metrics are not to be
   rounded up or extended.
-- The mood films are AI-generated and always labelled as such; they must not show a
+- The mood films are AI-generated and always credited as such: "Film · AI-generated, Flow
+  (Veo)" in each project's credits. No caption on the films themselves
+  (Harsha, 2026-11-14: the Gemini ✦ in each film's corner shows it). They must not show a
   product in real use as fact.
 - Odovox: never claim live clinics or users.
 - The phone number never appears on the site.

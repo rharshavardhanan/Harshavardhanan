@@ -21,9 +21,9 @@ This file records only what the brief left open or what was changed with Harsha'
    - Harsha makes them in Flow. The sources live in `videos/`, which is git-ignored.
    - The site uses `public/media/mood/mood-<name>.mp4` (1280×720, H.264, with the film's own sound) and `poster-<name>.avif`, a still taken from the film.
    - The names are odovox, aftermeet, robot (for scp), road, kattral, cache and halluc.
-   - A project without a film falls back to its particle recording (`case-<slug>.mp4` / `cover-<slug>.avif`). Today that is hallucination.
-   - Every AI film carries a visible "AI-generated film" label.
-   - The Odovox film shows a dentist speaking to a phone. With the label it is an illustration of the idea, not a claim of use. Odovox still never claims live clinics.
+   - A project without a film falls back to its particle recording (`case-<slug>.mp4` / `cover-<slug>.avif`). (Since 2026-11-14 all seven have films.)
+   - Every AI film carries a visible "AI-generated film" label. (Changed 2026-11-14, by Harsha: no caption on the films; each project's credits say "Film · AI-generated, Flow (Veo)". Not on About: a row there pushes it past one screen.)
+   - The Odovox film shows the app on a phone in a clinic. With the credit it is an illustration of the idea, not a claim of use. Odovox still never claims live clinics.
 4. **The corner frame.**
    - It is drawn in ink or paper, chosen by sampling what is underneath (top and bottom separately). There is no difference blend, so contrast stays measurable.
    - Bottom centre reads "SELECTED WORK". The years were dropped because the résumé gives none for road, cache or hallucination.

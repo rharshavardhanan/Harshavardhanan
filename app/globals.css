@@ -1403,7 +1403,7 @@ html[data-ring="wait"] .ring .reel {
   opacity: 0;
 }
 /* A faint glow on the "floor" under the middle panel, like light from a
-   screen in a dark room. */
+   screen in a dark room. Kept low (2% white) so the room stays black. */
 .ring[data-state="on"]::after {
   content: "";
   position: fixed;
@@ -1411,17 +1411,11 @@ html[data-ring="wait"] .ring .reel {
   height: 16%;
   background: radial-gradient(
     ellipse at center,
-    rgb(255 255 255 / 0.08),
+    rgb(255 255 255 / 0.02),
     transparent 70%
   );
   filter: blur(20px);
   pointer-events: none;
-}
-.ring-ai {
-  position: absolute;
-  top: calc(100% + 1.25rem);
-  left: 0;
-  color: var(--muted);
 }
 
 /* ==========================================================================
@@ -1588,17 +1582,10 @@ html[data-ring="wait"] .ring .reel {
   inset: 0;
   background: rgb(0 0 0 / 0.28);
 }
-.film-ai,
 .film-play {
   position: absolute;
   color: #f4f2ee;
   text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
-}
-.film-ai {
-  right: var(--spacing-gutter);
-  bottom: 4rem;
-}
-.film-play {
   top: 50%;
   left: 50%;
   translate: -50% -50%;

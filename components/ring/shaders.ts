@@ -171,12 +171,18 @@ void main() {
   // Rim: the steep sides of the folds (facing away from you, n.z small)
   // catch a little light, like the edge of a silk fold.
   float rim = pow(1.0 - max(n.z, 0.0), 2.0);
-  float v = 0.025 + 0.10 * diffuse + 0.35 * spec + 0.12 * rim;
+  // Near-black: a flat stretch (facing the light at about 0.6) comes to
+  // about 0.03, #080808; only the shine lifts a fold's crest, to about
+  // #2a2a2a at most where it catches the light squarely. The diffuse is kept small: it is what lifted the whole
+  // surface into a grey haze.
+  float v = 0.012 + 0.03 * diffuse + 0.22 * spec + 0.05 * rim;
   vec3 c = vec3(v);
 
-  // A faint lighter halo behind the middle panel, and darker corners.
-  c *= 1.0 + 0.6 * exp(-dot(uv, uv) * 3.5);
-  c *= 1.0 - 0.45 * dot(uv, uv);
+  // A faint halo behind the middle panel (a quarter brighter at most), and
+  // corners that sink to almost pure black (8% of the light): dot(uv, uv) is
+  // the squared distance from the middle, about 0.9 at a corner.
+  c *= 1.0 + 0.25 * exp(-dot(uv, uv) * 3.5);
+  c *= 1.0 - 0.92 * smoothstep(0.1, 0.9, dot(uv, uv));
 
   colour = vec4(addGrain(c, uGrainAmount), 1.0);
 }
@@ -384,6 +390,20 @@ void main() {
     }
   }
   c /= readings;
+
+  // The grade: a gentle filmic S-curve, then a touch more colour.
+  // x * x * (3 - 2x) is an S: it keeps 0, 0.5 and 1 where they are, pulls
+  // values below the middle down and pushes values above it up. Mixing 35%
+  // of it with 65% of the straight line keeps it mild: 0.1 → 0.075 (shadows
+  // a quarter darker), 0.5 stays 0.5, 0.9 → 0.925; the middle tones get
+  // about 17% more contrast. Then each colour moves 8% further from its own
+  // grey (more saturated, not brighter). Full strength on the panel in
+  // front; fading out (with d, below) as panels go round to the sides.
+  vec3 graded = clamp(c, 0.0, 1.0);
+  graded = graded * graded * (3.0 - 2.0 * graded) * 0.35 + graded * 0.65;
+  graded = mix(vec3(dot(graded, vec3(0.299, 0.587, 0.114))), graded, 1.08);
+  c = mix(c, graded, 1.0 - d);
+
   float grey = dot(c, vec3(0.299, 0.587, 0.114));
   c = mix(c, vec3(grey), d * 0.5);  // less colour
   c *= mix(1.0, 0.45, d);           // darker

@@ -14,8 +14,9 @@ const LOOK = {
   speedDistortion: 1.5, // how much more while the ring turns fast
   relief: 18, // how deep the folds look (lower, towards 10, is softer)
   resolution: 0.5, // half the screen's pixels
-  // Added grain (shaders.ts, addGrain): the surface never reaches pure black.
-  grain: { amount: 0.035, size: 1, fps: 24 },
+  // Added grain (shaders.ts, addGrain), ±0.0125 around the surface's value:
+  // enough to keep it filmic, little enough that the blacks stay deep.
+  grain: { amount: 0.025, size: 1, fps: 24 },
   // A bigger, slower trail than the ring's: the oil drags behind the cursor
   // and settles over about a second and a half.
   trail: { brushSize: 0.12, brushStrength: 0.9, decay: 0.965 },

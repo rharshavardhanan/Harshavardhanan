@@ -492,9 +492,7 @@ export function Ring({
           data-cursor="View"
           className="ring-hit"
           style={{ width: size.hit.w, height: size.hit.h }}
-        >
-          {item.ai && <span className="label ring-ai">AI-generated film</span>}
-        </Link>
+        />
       )}
     </div>
   );

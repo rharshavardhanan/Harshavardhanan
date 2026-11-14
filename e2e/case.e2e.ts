@@ -104,23 +104,35 @@ test("each page opens like a film poster: title, credits, quote, laurels", async
   await expect(page.locator(".laurel").first()).toContainText("7.1");
 });
 
-// (A project without a film would show its unlabelled particle recording;
+// (A project without a film would show its particle recording;
 // lib/media.test.ts covers that. Today all seven have films.)
-test("AI films are labelled", async ({ page }) => {
+// No caption on the films (Harsha, 2026-11-14: the Gemini mark in each
+// film's corner shows it); the credits say it instead.
+test("AI films are credited, not captioned", async ({ page }) => {
   for (const [slug, file] of [
     ["odovox", "mood-odovox"],
     ["hallucination", "mood-halluc"],
   ]) {
     await page.goto(`/work/${slug}`);
     await expect(page.locator("[data-film]")).toHaveCount(1);
-    await expect(page.locator("[data-film] .film-ai")).toHaveText(
-      "AI-generated film",
-    );
     await expect(page.locator("[data-film] video")).toHaveAttribute(
       "src",
       new RegExp(file),
     );
+    await expect(page.locator("[data-film]")).not.toContainText("AI-generated");
+    await expect(page.locator(".credits")).toContainText(
+      "AI-generated, Flow (Veo)",
+    );
+    // Screen readers still hear what the film is.
+    await expect(page.locator("[data-film] video")).toHaveAttribute(
+      "aria-label",
+      /AI-generated/,
+    );
   }
+  await page.goto("/");
+  await expect(page.locator(".ring, #projects").first()).not.toContainText(
+    "AI-generated",
+  );
 });
 
 test("scrolling to the end grows the next project and opens it", async ({

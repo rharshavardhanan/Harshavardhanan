@@ -97,7 +97,6 @@ export function Film({
             Play the film
           </button>
         )}
-        {film.ai && <p className="film-ai label">AI-generated film</p>}
       </div>
     </ViewTransition>
   );

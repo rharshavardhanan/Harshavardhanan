@@ -42,9 +42,6 @@ export default function Home() {
               <span className="reel-caption">
                 <span className="label">0{index + 1}</span>
                 <span className="text-h2 block font-serif">{item.title}</span>
-                {item.ai && (
-                  <span className="label text-muted">AI-generated film</span>
-                )}
               </span>
             </Link>
           </li>

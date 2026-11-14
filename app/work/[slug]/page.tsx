@@ -92,6 +92,8 @@ export default async function CaseStudy({ params }: Props) {
     ["Built with", item.stack.join(" · ")],
     ...(item.year ? [["Year", item.year]] : []),
     ...(item.status ? [["Status", item.status]] : []),
+    // The film above is AI-generated: said here, not as a caption on it.
+    ...(film(item.slug).ai ? [["Film", "AI-generated, Flow (Veo)"]] : []),
   ];
 
   return (
