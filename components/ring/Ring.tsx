@@ -118,6 +118,10 @@ export function Ring({
         // far it has moved since the last frame: the cursor's trail.
         mouse: [0.5, 0.5] as [number, number],
         move: [0, 0] as [number, number],
+        // Whether that pointer is a mouse. Only a mouse turns the head: a
+        // finger lifts off at the side of the screen and would leave the
+        // room turned there.
+        aiming: false,
         // The head, turned a little towards the pointer (yaw, pitch), and the
         // smoke's drift after it: both eased, so they lag gently behind.
         look: [0, 0] as [number, number],
@@ -219,16 +223,18 @@ export function Ring({
         const velocity = dt ? Math.abs(s.offset - before) / dt : 0;
         s.speed = ease(s.speed, Math.min(1, velocity / 4), dt, 0.2);
         // Turning the head: up to 3° left or right and 1.5° up or down,
-        // towards the pointer, easing 5% of the way each sixtieth of a second.
+        // towards a mouse pointer, easing 5% of the way each sixtieth of a
+        // second. After a touch it eases back to looking straight ahead.
         const degrees = Math.PI / 180;
-        const toward = [(s.mouse[0] - 0.5) * 2, (s.mouse[1] - 0.5) * 2];
+        const aim = s.aiming ? s.mouse : [0.5, 0.5];
+        const toward = [(aim[0] - 0.5) * 2, (aim[1] - 0.5) * 2];
         s.look = [
           ease(s.look[0], toward[0] * 3 * degrees, dt, 0.05),
           ease(s.look[1], toward[1] * 1.5 * degrees, dt, 0.05),
         ];
         s.drift = [
-          ease(s.drift[0], s.mouse[0] - 0.5, dt, 0.05),
-          ease(s.drift[1], s.mouse[1] - 0.5, dt, 0.05),
+          ease(s.drift[0], aim[0] - 0.5, dt, 0.05),
+          ease(s.drift[1], aim[1] - 0.5, dt, 0.05),
         ];
 
         // A tick each time a new panel reaches the centre (if sound is on):
@@ -319,6 +325,7 @@ export function Ring({
         const y = 1 - event.clientY / window.innerHeight;
         s.move = [s.move[0] + x - s.mouse[0], s.move[1] + y - s.mouse[1]];
         s.mouse = [x, y];
+        s.aiming = event.pointerType === "mouse";
         if (!s.dragging) return;
         const moved = along(event) - s.dragAt;
         if (Math.abs(moved) > 6) dragged.current = true;

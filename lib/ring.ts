@@ -40,13 +40,15 @@ const FOV = 44; // the lens: how much it sees up and down, in degrees
 const PANEL_ANGLE = 0.785;
 const PANEL_HEIGHT = 0.53; // × the radius: about 1.5 wide to 1 tall
 const GAP = 0.045; // between panels, as an angle (about 2.5°)
-// Phones: the ring runs up and down, and a 44° lens sees less than 45° from
-// top to bottom, so each panel covers 30° there (about 65% of the height).
+// Upright windows (phones, tablets held up): the ring runs up and down, and a
+// 44° lens sees less than 45° from top to bottom, so each panel covers 30°
+// there (about 65% of the height).
 const PANEL_ANGLE_PHONE = 0.5236;
 const ACROSS_PHONE = 0.84; // on a phone, the panel's share of the width
 
 export type RingLayout = {
-  /** True on a phone: the ring runs up and down instead of sideways. */
+  /** True on an upright window (a phone, a tablet held up): the ring runs
+   *  up and down instead of sideways. */
   vertical: boolean;
   /** The circle's radius, in world units. */
   radius: number;
@@ -77,7 +79,14 @@ export type RingLayout = {
 
 /** The room's layout for a window of vw × vh pixels. */
 export function ringLayout(vw: number, vh: number): RingLayout {
-  const vertical = vw < 768;
+  // The window's shape picks the direction, not its width. Sideways, a 45°
+  // panel takes tan(22.5°) / (tan(22°) × vw/vh) of the width: all of it
+  // once the window is square, and more on anything upright (a tablet held
+  // up, a narrow browser window). So the ring runs sideways only when the
+  // window is at least 1.2 times as wide as it is tall (the front panel then
+  // takes at most 85% of the width, and the neighbours show); otherwise up
+  // and down, as on a phone. A phone on its side runs sideways.
+  const vertical = vw / vh < 1.2;
   const radius = RADIUS;
   // tan(half the view) turns "how far off to the side, per unit of
   // distance" into "how far across the screen" (1 = the screen's edge).

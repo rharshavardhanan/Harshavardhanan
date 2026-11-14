@@ -48,7 +48,10 @@ test("the ring starts, names the middle project and turns with the arrow keys", 
   await expect(page.locator("html")).toHaveAttribute("data-active", "odovox");
   await expect(page.locator(".corner-bottom")).toContainText("01 / 07");
   await page.keyboard.press("ArrowRight");
-  await expect(page.locator("html")).toHaveAttribute("data-active", "aftermeet");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-active",
+    "aftermeet",
+  );
   await expect(page.locator(".corner-bottom")).toContainText("02 / 07");
   // The page takes the middle project's colours.
   await expect(ring(page)).toHaveAttribute("data-theme", "aftermeet");
@@ -78,7 +81,10 @@ test("the mouse wheel turns the ring, and the middle panel opens its project", a
   await running(page);
   await page.mouse.move(700, 450);
   await page.mouse.wheel(0, 400);
-  await expect(page.locator("html")).toHaveAttribute("data-active", "aftermeet");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-active",
+    "aftermeet",
+  );
   await page.locator("[data-ring-hit]").click();
   await expect(page).toHaveURL(/\/work\/aftermeet$/);
 });
@@ -114,6 +120,72 @@ test("a tick plays as each new panel reaches the centre", async ({ page }) => {
   await page.waitForTimeout(300); // the tick is made once, in the background
   expect(await sounds()).toBe(0);
   await page.keyboard.press("ArrowRight");
-  await expect(page.locator("html")).toHaveAttribute("data-active", "aftermeet");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-active",
+    "aftermeet",
+  );
   await expect.poll(sounds).toBeGreaterThan(0);
+});
+
+test.describe("on a touch phone", () => {
+  test.use({
+    viewport: { width: 393, height: 852 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  // The centre panel's empty margins left and right, along the middle row of
+  // a screenshot (pixels darker than 25 count as background).
+  const margins = async (page: Page) => {
+    const shot = (await page.screenshot()).toString("base64");
+    return page.evaluate(async (src) => {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const g = canvas.getContext("2d")!;
+      g.drawImage(img, 0, 0);
+      const row = g.getImageData(0, img.height >> 1, img.width, 1).data;
+      const lum = (i: number) =>
+        0.3 * row[i * 4] + 0.59 * row[i * 4 + 1] + 0.11 * row[i * 4 + 2];
+      let left = 0;
+      let right = img.width - 1;
+      while (left < img.width && lum(left) < 25) left++;
+      while (right > 0 && lum(right) < 25) right--;
+      return { left, right: img.width - 1 - right };
+    }, `data:image/png;base64,${shot}`);
+  };
+
+  test("a swipe on a phone leaves the ring centred", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
+      timeout: 15000,
+    });
+    await page.waitForTimeout(2500);
+    const before = await margins(page);
+    expect(Math.abs(before.left - before.right)).toBeLessThanOrEqual(2);
+
+    // Swipe up with the thumb on the right, as a right hand does.
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: "touchStart" | "touchMove" | "touchEnd", y?: number) =>
+      cdp.send("Input.dispatchTouchEvent", {
+        type,
+        touchPoints: y === undefined ? [] : [{ x: 330, y }],
+      });
+    await touch("touchStart", 600);
+    for (let i = 1; i <= 12; i++) {
+      await touch("touchMove", 600 - i * 25);
+      await page.waitForTimeout(16);
+    }
+    await touch("touchEnd");
+    await page.waitForTimeout(3000);
+
+    const after = await margins(page);
+    expect(Math.abs(after.left - after.right)).toBeLessThanOrEqual(2);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(393);
+  });
 });

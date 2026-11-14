@@ -60,6 +60,31 @@ describe("ringLayout", () => {
     expect(visible).toBeLessThan(215);
   });
 
+  it("the window's shape picks the direction; the front panel always fits", () => {
+    const sizes = [
+      [360, 740],
+      [393, 852],
+      [768, 1024],
+      [820, 1180],
+      [1024, 1366],
+      [740, 360],
+      [1000, 1000],
+      [1024, 768],
+      [1280, 1024],
+      [1280, 800],
+      [1440, 900],
+      [1920, 1080],
+      [2560, 1080],
+    ];
+    for (const [w, h] of sizes) {
+      const l = ringLayout(w, h);
+      expect(l.hit.w, `${w}×${h} width`).toBeLessThanOrEqual(w * 0.9);
+      expect(l.hit.h, `${w}×${h} height`).toBeLessThanOrEqual(h);
+    }
+    expect(ringLayout(768, 1024).vertical).toBe(true); // a tablet held upright
+    expect(ringLayout(740, 360).vertical).toBe(false); // a phone on its side
+  });
+
   it("on a phone the ring runs up and down, one panel per screen", () => {
     const phone = ringLayout(360, 740);
     expect(phone.vertical).toBe(true);
