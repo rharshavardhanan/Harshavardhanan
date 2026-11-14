@@ -80,7 +80,7 @@ Twelve columns, `px-gutter` margins.
   - Turns are eased at 8% per 1/60s and snap after 140ms without input.
   - Opening a project: the middle panel unbends and fills the window (700ms), then the page changes inside a React `ViewTransition` (`film-<slug>`), and the film carries on from the same second.
   - Back starts expanded and settles (800ms).
-- **Loader:** on a first visit, a counter to 100 and "Harshavardhanan" across the window in the serif, dark grey (30% white), filling with white from left to right (a clipped copy on top). The count and the fill share one steady ease-in-out over 1.4s, so the white edge moves with the number. On the home page it then waits on an Enter button (focused): that click is what lets the browser play the ring's ticks from the first panel. Other pages lift by themselves at 1.5s. Then the panels fly in from depth, nearest first (900ms, 60ms apart).
+- **Loader:** on a first visit, a counter to 100 and "Harshavardhanan" centred across the window in the serif, dark grey (30% white), filling with white from left to right (a clipped copy on top). The count and the fill share one steady ease-in-out over 1.4s, so the white edge moves with the number. On the home page it then waits on an Enter button (focused): that click is what lets the browser play the ring's ticks from the first panel. Other pages lift by themselves at 1.5s. Then the panels fly in from depth, nearest first (900ms, 60ms apart).
 - **Under `prefers-reduced-motion`:**
   - No loader, smooth scroll or ring (the poster list is the home page).
   - No word reveal, no growing next project, and nothing opens by itself.

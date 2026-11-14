@@ -69,6 +69,28 @@ test("the name fills from grey to white as the count runs", async ({
   expect(grey).toBeLessThan(75);
 });
 
+for (const [width, height] of [
+  [1440, 900],
+  [360, 740],
+]) {
+  test(`the name sits in the middle of the window (${width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("/work/odovox", { waitUntil: "commit" });
+    const name = page.locator(".loader-name > span").first();
+    await name.waitFor();
+    // The letters themselves, not the box around them (a range over the text).
+    const middle = await name.evaluate((span) => {
+      const range = document.createRange();
+      range.selectNodeContents(span);
+      const box = range.getBoundingClientRect();
+      return box.left + box.width / 2;
+    });
+    expect(Math.abs(middle - width / 2)).toBeLessThan(4);
+  });
+}
+
 test("on any other page it lifts by itself", async ({ page }) => {
   await page.goto("/work/odovox");
   expect(await loading(page)).not.toBeNull();

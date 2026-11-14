@@ -474,6 +474,9 @@ html[data-loading="gate"] .loader-enter {
    copy on top is uncovered from left to right in step with the counter, so
    the name itself is the progress bar. */
 .loader-name {
+  /* Centred, its box hugging the letters, so the fill's clip sweeps from the
+     first letter to the last rather than across empty space. */
+  align-self: center;
   position: relative;
   font-family: var(--font-instrument-serif), serif;
   font-size: calc(100cqi / 6.6);
