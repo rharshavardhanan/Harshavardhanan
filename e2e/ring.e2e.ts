@@ -55,9 +55,9 @@ test("the ring starts, names the middle project and turns with the arrow keys", 
   await expect(page.locator(".corner-bottom")).toContainText("02 / 07");
   // The page takes the middle project's colours.
   await expect(ring(page)).toHaveAttribute("data-theme", "aftermeet");
-  // And the frame stays white over the dark smoke, even for Aftermeet, the
-  // one light project.
-  await expect(page.locator("html")).toHaveAttribute("data-tone", "dark");
+  // And the frame stays white, on its soft dark band (the river of light
+  // runs under it), even for Aftermeet, the one light project.
+  await expect(page.locator("html")).toHaveAttribute("data-tone", "media");
   await expect(page.locator(".corner-name").first()).toHaveCSS(
     "color",
     "rgb(244, 242, 238)",
@@ -183,6 +183,9 @@ test.describe("on a touch phone", () => {
       timeout: 15000,
     });
     await page.waitForTimeout(2500);
+    // This is about the ring's camera: hide the background (its river of
+    // light is bright at the edges and would read as part of the panel).
+    await page.addStyleTag({ content: ".bg-canvas { visibility: hidden }" });
     const before = await margins(page);
     expect(Math.abs(before.left - before.right)).toBeLessThanOrEqual(2);
 

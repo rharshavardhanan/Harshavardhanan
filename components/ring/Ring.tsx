@@ -480,10 +480,11 @@ export function Ring({
       aria-label="Selected work: seven projects"
       className="ring bg-bg text-fg"
       data-theme={item.slug}
-      // The frame's letters: white over the dark smoke, whichever project is
-      // in front (even the light one); on phones, where the next and
-      // previous films slide under the corners, white on a dark band too.
-      data-tone={on && size?.vertical ? "media" : "dark"}
+      // The frame's letters: white on a soft dark band, whichever project is
+      // in front (even the light one): the river of light in the background
+      // (smoke.ts) runs under the corners, and on phones the next and
+      // previous films slide under them too.
+      data-tone={on ? "media" : "dark"}
       data-state={on ? "on" : "off"}
       data-lenis-prevent
     >

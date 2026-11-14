@@ -12,6 +12,43 @@
 //     2. VERTEX + FRAGMENT the seven film panels, on a circle around you
 
 // ---------------------------------------------------------------------------
+// THE ASTROPHAGE RIVER's colour and glow across its width, shared by the
+// background (SMOKE) and the motes (MOTE_VERTEX), so they always agree.
+// a is the place across the river: 0 on its middle line, -1 at its
+// lower-left edge, +1 at its upper-right edge (it runs 32° down to the
+// right; see SMOKE).
+// ---------------------------------------------------------------------------
+const RIVER = /* glsl */ `
+const vec2 RIVER_ALONG = vec2(0.848, -0.530);  // the flow: 32° down to the right
+const vec2 RIVER_ACROSS = vec2(0.530, 0.848);  // across it, towards the upper right
+
+// The colour of the light across the river, as it cools away from the hot
+// core: dark red on the lower-left edge, red-orange, a yellow core (white
+// where it is brightest: the tone curve in SMOKE does that), orange-red,
+// magenta, purple, then indigo out on the upper right. Saturated stops:
+// brightness, not paleness, is what makes the core white-hot.
+vec3 riverColour(float a) {
+  vec3 c = vec3(0.50, 0.04, 0.10);                                   // maroon
+  c = mix(c, vec3(1.00, 0.24, 0.06), smoothstep(-1.00, -0.65, a));  // red-orange
+  c = mix(c, vec3(1.00, 0.58, 0.12), smoothstep(-0.65, -0.35, a));  // yellow-orange core
+  c = mix(c, vec3(1.00, 0.32, 0.10), smoothstep(-0.30, 0.05, a));   // orange-red
+  c = mix(c, vec3(0.95, 0.14, 0.48), smoothstep(0.05, 0.40, a));    // magenta
+  c = mix(c, vec3(0.52, 0.14, 0.92), smoothstep(0.40, 0.80, a));    // purple
+  return mix(c, vec3(0.20, 0.06, 0.46), smoothstep(0.80, 1.30, a)); // indigo
+}
+
+// How bright the river is at a: brightest a little below its middle line
+// (the yellow core), falling off fast towards the lower left (black space)
+// and slowly towards the upper right (a long purple haze).
+float riverGlow(float a) {
+  float d = a + 0.35;
+  float spread = d < 0.0 ? 0.45 : 0.95;
+  d /= spread;
+  return exp(-d * d);
+}
+`;
+
+// ---------------------------------------------------------------------------
 // FILM GRAIN, shared by the smoke and the panels.
 // ---------------------------------------------------------------------------
 const GRAIN = /* glsl */ `
@@ -90,7 +127,12 @@ uniform vec2  uMouse;       // the pointer, -0.5..0.5, eased: the surface leans 
 uniform sampler2D uTrail;   // this canvas's own cursor trail (trail.ts)
 uniform float uRelief;      // how deep the folds look: higher = steeper, glossier
 uniform int   uOctaves;     // layers of noise: 4 on a computer, 3 on a phone
+uniform float uRiver;       // how strongly the river of light shows (smoke.ts LOOK.river)
+uniform float uFlow;        // how far the river has flowed, in screen heights (smoke.ts)
+uniform float uSurge;       // how fast the ring is turning, 0..1: the river surges with it
+uniform int   uLayers;      // layers of streaks: 3 on a computer, 2 on a phone
 ${GRAIN}
+${RIVER}
 
 // Smooth random "value noise": random values on a grid, blended smoothly
 // between the grid's points.
@@ -116,6 +158,35 @@ float fbm(vec2 p) {
     amp *= 0.5;
   }
   return v;
+}
+
+// One layer of the river's streaks: lines of light along the flow, each
+// with its own colour and a soft halo. q is the place in river terms (x
+// along the flow, y across it, in screen heights) and a the place across
+// the river (for its colour). rows: lines per screen height (more = finer,
+// as if further away); len: how many streaks fit in a screen height along a
+// row (more = shorter); speed: how fast this layer flows; width: how thick
+// a line is, as a share of its row.
+vec3 streaks(vec2 q, float a, float rows, float len, float speed, float width, float seed) {
+  float y = q.y * rows;
+  float row = floor(y);
+  float h = hash(mod(vec2(row, seed), 289.0));         // this row's own random number
+  float h2 = hash(mod(vec2(seed + 5.0, row), 289.0));  // and another
+  // Across: a line at a random height in its row, plus a halo about four
+  // times as wide and a fifth as bright (light glows). fwidth(y) is how
+  // many rows one pixel spans: the line is never thinner than about a
+  // pixel, so it cannot flicker.
+  float w = max(width, fwidth(y) * 0.6);
+  float d = (fract(y) - 0.5 - (h2 - 0.5) * 0.5) / w;
+  float line = exp(-d * d) + 0.2 * exp(-d * d / 16.0);
+  // Along: stretches of light where a smooth random wave peaks, moving at
+  // this row's own pace; keeping only the peaks (smoothstep) leaves gaps
+  // between streaks and soft, tapering ends, like motion blur.
+  float x = (q.x - uFlow * speed * (0.7 + 0.6 * h)) * len + h * 113.0;
+  float seg = smoothstep(0.5, 0.95, noise(vec2(x, mod(row * 1.7 + seed, 289.0))));
+  // Its colour: the river's colour here, shifted a little for each row, so
+  // gold, rose and violet streaks run side by side.
+  return riverColour(a + (h - 0.5) * 0.7) * line * seg * (0.35 + 0.65 * h2);
 }
 
 out vec4 colour;
@@ -185,6 +256,58 @@ void main() {
   c *= 1.0 + 0.25 * exp(-dot(uv, uv) * 3.5);
   c *= 1.0 - 0.92 * smoothstep(0.1, 0.9, dot(uv, uv));
 
+  // --- The Astrophage river: light flowing along a diagonal, over the oil.
+  if (uRiver > 0.0) {
+    // River terms: x along the flow, y across it (screen heights); the
+    // cursor's trail bends it. Its place never depends on how far the ring
+    // has turned: on an endless ring that number keeps growing, and any
+    // shift by it would carry the river off the screen. A scroll makes it
+    // surge instead (uSurge, uFlow), its layers at different speeds.
+    vec2 r0 = uv - flow * 0.06;
+    vec2 q = vec2(dot(r0, RIVER_ALONG), dot(r0, RIVER_ACROSS));
+    // Its middle line meanders slowly; a is the place across it, -1..1
+    // over its half-width (half a screen height).
+    float mid = 0.10 * sin(q.x * 0.9 + 0.7)
+              + 0.12 * (noise(vec2(q.x * 0.6 - uTime * 0.03, 5.3)) - 0.5);
+    float a = (q.y - mid) / 0.5;
+    float glow = riverGlow(a);
+
+    // The streaks, nearest first: a few thick, long, bright ones; then
+    // thinner and more of them, then fine and many; the finest only inside
+    // the river, so the dark stays dark. A surge stretches them all.
+    float stretch = 1.0 / (1.0 + uSurge * 2.0);
+    vec3 s = 1.9 * streaks(q, a, 12.0, 0.25 * stretch, 2.4, 0.06, 4.0);
+    s += streaks(q, a, 34.0, 0.5 * stretch, 1.8, 0.08, 3.0);
+    if (uLayers > 1) s += 0.65 * streaks(q, a, 80.0, 1.0 * stretch, 1.0, 0.07, 2.0);
+    if (uLayers > 2) s += 0.4 * glow * streaks(q, a, 160.0, 1.8 * stretch, 0.5, 0.07, 1.0);
+
+    // The haze behind: noise stretched along the flow (long soft clouds),
+    // its brighter half kept, coloured by place, nudged so the colour bands
+    // are not ruler-straight.
+    float haze = smoothstep(0.25, 0.85, fbm(vec2((q.x - uFlow * 0.3) * 0.5, q.y * 2.4 + 7.0)));
+    vec3 tint = riverColour(a + (haze - 0.5) * 0.5);
+    // The hot core: a wide soft bloom along the river's brightest line,
+    // yellow-white, so the light seems to pour from it.
+    float core = (a + 0.45) / 0.25;
+    core = exp(-core * core);
+
+    vec3 light = s * glow * 2.3
+               + tint * haze * glow * 0.8
+               + mix(riverColour(a), vec3(1.0, 0.70, 0.30), 0.35) * core * 0.6;
+    // A soft curve on the brightness only (1 - e^-x on the brightest of the
+    // three colours, the others scaled to match): bright orange stays
+    // orange. Squashing each colour on its own would flatten the red while
+    // the green kept climbing, turning orange to khaki. Only the very
+    // hottest light then burns towards white, as real light does.
+    float peak = max(max(light.r, light.g), light.b);
+    float toned = 1.0 - exp(-peak * 1.6);
+    light *= toned / max(peak, 1e-4);
+    light = mix(light, vec3(1.0, 0.95, 0.86), smoothstep(1.0, 2.6, peak) * 0.7);
+    // Softer corners than the oil's, so the river reaches into them.
+    light *= 1.0 - 0.55 * smoothstep(0.25, 1.1, dot(uv, uv));
+    c += light * uRiver;
+  }
+
   colour = vec4(addGrain(c, uGrainAmount), 1.0);
 }
 `;
@@ -222,8 +345,11 @@ uniform float uVertical;   // 1 when the ring runs up and down (upright screens)
 uniform float uWave;       // seconds since the latest scroll began (99: none)
 uniform vec2 uPanel;       // half the centre panel's size, as shares of the window
 uniform float uPointScale; // canvas pixels per screen (CSS) pixel
+uniform float uFlow;       // how far the river has flowed, in screen heights
 
 out float vAlpha;          // how strongly this mote shows, for the fragment shader
+out vec3 vColour;          // its colour: the river's, where it is
+${RIVER}
 
 // A whole-number hash (pcg): a number in, a jumbled number out, the same
 // every time. Used to decide which glint cycles actually glint.
@@ -238,13 +364,14 @@ void main() {
   float phase = aMote.w;
   float aspect = uRes.x / uRes.y;
 
-  // Drift: slowly up, and a little to the right, at 1% (far) to 3% (near)
-  // of the window's height a second. x counts in widths and y in heights, so
-  // x is divided by the window's shape to keep the slope the same on screen.
-  float speed = mix(0.01, 0.03, (depth - 0.3) / 0.7);
-  vec2 p = aMote.xy + vec2(0.4 / aspect, 1.0) * speed * uTime;
-  // Sway: a gentle side to side, each mote in its own time (its phase).
-  p.x += sin(uTime * 0.3 + phase) * 0.01;
+  // Drift: carried along the river (29° down to the right) as far as it has
+  // flowed, near motes faster than far ones; a scroll's surge carries them
+  // too. x counts in widths and y in heights, so x is divided by the
+  // window's shape to keep the angle the same on screen.
+  float speed = mix(0.6, 1.4, (depth - 0.3) / 0.7);
+  vec2 p = aMote.xy + RIVER_ALONG * vec2(1.0 / aspect, 1.0) * uFlow * speed;
+  // Sway: a gentle drift across the flow, each mote in its own time.
+  p += RIVER_ACROSS * vec2(1.0 / aspect, 1.0) * sin(uTime * 0.3 + phase) * 0.01;
   // Depth as the ring turns: the motes slide the way the panels do, near
   // ones more (2% of the window per panel at depth 1), far ones less: that
   // difference is what makes the room feel deep.
@@ -261,8 +388,13 @@ void main() {
   vec4 trail = textureLod(uTrail, p, 0.0);
   p += (trail.xy * 2.0 - 1.0) * trail.z * 0.04;
 
-  // How strongly it shows. Faint: 6% at most, less for far motes.
-  float alpha = 0.06 * depth;
+  // Where it is across the river (the same terms as the background's, without
+  // the meander), its colour there, and how strongly it shows: faint out in
+  // the dark (6% at most), much brighter inside the river.
+  vec2 fromMiddle = (fract(p) - 0.5) * vec2(aspect, 1.0);
+  float a = dot(fromMiddle, RIVER_ACROSS) / 0.5;
+  vColour = riverColour(a);
+  float alpha = (0.06 + 0.3 * riverGlow(a)) * depth;
 
   // The glint. sin() swings between -1 and 1, once per cycle; max(…, 0)
   // keeps only the top half; raising that to the power 24 flattens almost
@@ -306,6 +438,7 @@ void main() {
 export const MOTE_FRAGMENT = /* glsl */ `#version 300 es
 precision mediump float;
 in float vAlpha;
+in vec3 vColour;
 out vec4 colour;
 
 void main() {
@@ -317,9 +450,10 @@ void main() {
   // as 1 - smoothstep(0, 0.5, d), the same curve as smoothstep(0.5, 0, d),
   // because GLSL leaves smoothstep undefined when its edges are reversed.)
   float soft = 1.0 - smoothstep(0.0, 0.5, length(gl_PointCoord - 0.5));
-  // A warm off-white; the blending (smoke.ts) multiplies it by the alpha
-  // and adds it to the pixel.
-  colour = vec4(vec3(1.0, 0.92, 0.82), vAlpha * soft);
+  // The river's colour where the mote is, lifted towards white at its
+  // centre (a speck of light burns hot); the blending (smoke.ts) multiplies
+  // it by the alpha and adds it to the pixel.
+  colour = vec4(mix(vColour, vec3(1.0, 0.95, 0.88), soft * 0.5), vAlpha * soft);
 }
 `;
 

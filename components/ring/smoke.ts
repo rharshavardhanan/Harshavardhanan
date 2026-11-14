@@ -25,6 +25,11 @@ const LOOK = {
   // and settles over about a second and a half.
   trail: { brushSize: 0.12, brushStrength: 0.9, decay: 0.965 },
   motes: { desktop: 400, phone: 150 }, // how many
+  // The Astrophage river (shaders.ts, SMOKE): a band of streaming light
+  // along a diagonal. strength: 0 off, 1 full. flow: how fast it streams at
+  // rest, in screen heights a second (each layer then goes at its own
+  // pace); surge: how much faster while the ring turns fast.
+  river: { strength: 0.75, flow: 0.12, surge: 1.6 },
 };
 
 export type SmokeFrame = {
@@ -89,8 +94,16 @@ export function createSmoke(
     motes = null;
   }
 
+  // How far the river has flowed, in screen heights: added up a frame at a
+  // time (a surge speeds it up smoothly, where speed × time would jump).
+  let flow = 0;
+  let last = -1;
+
   const draw = (f: SmokeFrame) => {
     if (!canvas.clientWidth) return; // not on screen yet
+    const dt = last < 0 ? 0 : Math.min(Math.max(f.time - last, 0), 0.1);
+    last = f.time;
+    flow += dt * (LOOK.river.flow + f.speed * LOOK.river.surge);
     const ratio = Math.min(window.devicePixelRatio || 1, 1.5) * LOOK.resolution;
     const width = Math.round(canvas.clientWidth * ratio);
     const height = Math.round(canvas.clientHeight * ratio);
@@ -120,6 +133,10 @@ export function createSmoke(
     gl.uniform1f(at("uGrainAmount"), LOOK.grain.amount);
     gl.uniform1f(at("uGrainSize"), LOOK.grain.size);
     gl.uniform1f(at("uGrainFps"), LOOK.grain.fps);
+    gl.uniform1f(at("uRiver"), LOOK.river.strength);
+    gl.uniform1f(at("uFlow"), flow);
+    gl.uniform1f(at("uSurge"), f.speed);
+    gl.uniform1i(at("uLayers"), phone ? 2 : 3);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     if (!motes) return;
@@ -140,6 +157,7 @@ export function createSmoke(
     gl.uniform1f(m("uWave"), Math.min(f.wave, 99));
     gl.uniform2f(m("uPanel"), f.panel[0], f.panel[1]);
     gl.uniform1f(m("uPointScale"), width / canvas.clientWidth);
+    gl.uniform1f(m("uFlow"), flow);
     gl.drawArrays(gl.POINTS, 0, count);
     gl.disable(gl.BLEND);
   };
