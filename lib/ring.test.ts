@@ -29,38 +29,42 @@ describe("ease", () => {
 });
 
 describe("ringLayout", () => {
-  // Where a point at `angle` on the circle lands across the screen, as a
-  // share of half the screen's width (1 = the edge).
-  const onScreen = (l: ReturnType<typeof ringLayout>, angle: number) =>
-    (l.radius * Math.sin(angle)) /
-    (l.camera + l.radius * Math.cos(angle)) /
-    l.tanAlong;
+  // Targets measured from zenobasi.com/work on a 1440 × 900 screen.
+  const l = ringLayout(1440, 900);
 
-  it("on a wide window, the front panel fills about 76% of the width", () => {
-    const l = ringLayout(1440, 900);
+  it("each panel covers 45° of the circle, with a 0.045 rad gap", () => {
     expect(l.vertical).toBe(false);
-    expect(onScreen(l, l.halfAngle)).toBeCloseTo(0.76, 2);
-    expect(l.hit.w / 1440).toBeCloseTo(0.76, 2);
+    expect(l.halfAngle * 2).toBeCloseTo(0.785, 3);
+    expect(l.step).toBeCloseTo(0.83, 3);
+    expect(l.camera).toBe(0); // you stand at the middle of the circle
   });
 
-  it("leaves a gap, and the neighbours peek in at the edges", () => {
-    const l = ringLayout(1440, 900);
-    expect(l.step).toBeCloseTo(2 * l.halfAngle + 0.06);
-    const neighbourInnerEdge = onScreen(l, l.halfAngle + 0.06);
-    expect(neighbourInnerEdge).toBeLessThan(1);
-    expect(neighbourInnerEdge).toBeGreaterThan(0.8);
+  it("the front panel is about 935px wide and 585px tall in the middle", () => {
+    expect(l.hit.w).toBeGreaterThan(900);
+    expect(l.hit.w).toBeLessThan(950);
+    expect(l.middlePx).toBeGreaterThan(575);
+    expect(l.middlePx).toBeLessThan(600);
   });
 
-  it("keeps the panels 16:9 and clear of the frame's top and bottom rows", () => {
-    const l = ringLayout(1440, 900);
-    expect(l.along / l.across).toBeCloseTo(16 / 9);
-    expect(l.hit.h).toBeLessThan(900 - 2 * 88);
+  it("its edges are about 8% taller than its middle (1 / cos 22.5°)", () => {
+    expect(l.hit.h / l.middlePx).toBeCloseTo(1 / Math.cos(Math.PI / 8), 3);
+    expect(l.hit.h).toBeGreaterThan(620);
+    expect(l.hit.h).toBeLessThan(645);
+  });
+
+  it("shows about 190px of each neighbour", () => {
+    // The neighbour's inner edge is half a panel plus the gap round.
+    const inner = Math.tan(l.halfAngle + 0.045) / l.tanAlong;
+    const visible = (1 - inner) * 720;
+    expect(visible).toBeGreaterThan(170);
+    expect(visible).toBeLessThan(215);
   });
 
   it("on a phone the ring runs up and down, one panel per screen", () => {
-    const l = ringLayout(360, 740);
-    expect(l.vertical).toBe(true);
-    expect(onScreen(l, l.halfAngle)).toBeCloseTo(0.62, 2);
-    expect(l.hit.w).toBeLessThan(360);
+    const phone = ringLayout(360, 740);
+    expect(phone.vertical).toBe(true);
+    expect(phone.hit.h / 740).toBeGreaterThan(0.6);
+    expect(phone.hit.h / 740).toBeLessThan(0.72);
+    expect(phone.hit.w).toBeLessThan(360);
   });
 });

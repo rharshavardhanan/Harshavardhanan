@@ -10,6 +10,7 @@ import {
   ViewTransition,
 } from "react";
 import { projects, type Slug } from "@/content/projects";
+import { play } from "@/lib/sound";
 import { Sound } from "./Sound";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -68,6 +69,7 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
     setOpen(true);
     el.showModal();
     lockPage(true);
+    play("menuOpen");
     // Keyboard focus starts on the first project.
     requestAnimationFrame(() =>
       projectLinks()[0]?.focus({ preventScroll: true }),
@@ -86,6 +88,7 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
       trigger.current?.focus({ preventScroll: true });
     };
     if (now) return finish();
+    play("menuClose");
     setClosing(true);
     window.setTimeout(finish, reduced() ? 200 : 450);
   };

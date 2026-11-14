@@ -12,7 +12,7 @@ import {
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
 import { ease, nearest, type RingLayout, ringLayout, wrap } from "@/lib/ring";
-import { tick as soundTick } from "@/lib/sound";
+import { play } from "@/lib/sound";
 import { FILM_TIME } from "../Film";
 import type { RingGL } from "./gl";
 import type { Smoke } from "./smoke";
@@ -122,7 +122,7 @@ export function Ring({
         // smoke's drift after it: both eased, so they lag gently behind.
         look: [0, 0] as [number, number],
         drift: [0, 0] as [number, number],
-        quarter: 0, // the last quarter-panel mark passed, for the tick sound
+        ticked: -1, // the last panel that reached the centre, for the tick
         lastInput: 0,
         dragging: false,
         dragAt: 0,
@@ -153,6 +153,7 @@ export function Ring({
       // Open a project: remember where its film had got to, then grow.
       const leave = (index: number) => {
         if (s.leaving) return;
+        play("click");
         s.anchor = s.target = s.offset + wrap(index - s.offset, n);
         try {
           sessionStorage.setItem(RING_FROM, String(index));
@@ -233,11 +234,12 @@ export function Ring({
           ease(s.drift[1], s.mouse[1] - 0.5, dt, 0.05),
         ];
 
-        // A soft tick every quarter of a panel the ring turns (if sound is on).
-        const quarter = Math.round(s.offset * 4);
-        if (quarter !== s.quarter) {
-          s.quarter = quarter;
-          soundTick();
+        // A tick each time a new panel reaches the centre (if sound is on):
+        // a slow turn ticks once, a fast flick makes a quick run of ticks.
+        const active = nearest(s.offset, n);
+        if (active !== s.ticked) {
+          s.ticked = active;
+          play("tick");
         }
 
         const middle = nearest(s.offset, n);
@@ -423,7 +425,7 @@ export function Ring({
       };
 
       // No tick for where we start.
-      s.quarter = Math.round(s.offset * 4);
+      s.ticked = nearest(s.offset, n);
       setSize(dims);
       setOn(true);
       delete html.dataset.ring;

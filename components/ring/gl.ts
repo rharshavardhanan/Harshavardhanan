@@ -55,13 +55,14 @@ export type RingGL = {
 // The settings. Change these to change the look.
 // ---------------------------------------------------------------------------
 const LOOK = {
-  // At full speed the circle rolls up to 1 / (1 + 0.25) of its radius:
-  // a little more curve while moving, relaxing back when it stops.
-  tighten: 0.25,
+  // At full speed the circle rolls up to 1 / (1 + 0.18) of its radius
+  // (15% smaller): a little more curve while moving, easing back when it
+  // stops. At rest the curve is exactly the room's (lib/ring.ts).
+  tighten: 0.18,
   // How far out the panels start when they fly in, in world units.
   flyIn: 14,
   // Corner radius, as a share of the panel's width on screen.
-  radius: 0.025,
+  radius: 0.015,
   // Film grain (shaders.ts, applyGrain).
   grain: { amount: 0.05, size: 1.5, fps: 24, shadows: 0.6 },
   // The cursor's trail (shaders.ts, TRAIL).
@@ -394,7 +395,7 @@ export function createRing(
     gl.uniform2f(at("uScreenPx"), canvas.width, canvas.height);
     gl.uniform1f(at("uVertical"), l.vertical ? 1 : 0);
     gl.uniform1f(at("uRadius"), l.radius);
-    gl.uniform1f(at("uTighten"), 1 + f.speed * LOOK.tighten);
+    gl.uniform1f(at("uTighten"), 1 + Math.min(f.speed, 1) * LOOK.tighten);
     gl.uniform2f(at("uPanel"), l.along, l.across);
     gl.uniform1f(at("uCamera"), l.camera);
     gl.uniform2f(at("uTan"), l.tanX, l.tanY);

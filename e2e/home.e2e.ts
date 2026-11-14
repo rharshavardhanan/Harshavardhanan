@@ -143,6 +143,11 @@ test("Sound on: scrolling ticks, and no film is ever heard", async ({
       () => [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
     ),
   ).toBe(0);
+  // The choice is remembered.
+  await page.reload();
+  await expect(
+    page.locator(".corners").getByRole("button", { name: /^sound/ }),
+  ).toHaveText("sound on");
 });
 
 test("404: the page says so in the site's voice and offers a way home", async ({

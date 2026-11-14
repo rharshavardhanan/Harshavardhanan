@@ -86,3 +86,28 @@ test.describe("reduced motion", () => {
     await expect(page.locator("#projects a").first()).toBeVisible();
   });
 });
+
+test("with sound on, a tick plays as each new panel reaches the centre", async ({
+  page,
+}) => {
+  // Count the sounds the page makes by wrapping the browser's sound maker.
+  await page.addInitScript(() => {
+    const w = window as unknown as { sounds: number };
+    w.sounds = 0;
+    const make = AudioContext.prototype.createBufferSource;
+    AudioContext.prototype.createBufferSource = function () {
+      w.sounds++;
+      return make.call(this);
+    };
+  });
+  await page.goto("/");
+  await running(page);
+  await page.locator(".corners").getByRole("button", { name: /^sound/ }).click();
+  const sounds = () =>
+    page.evaluate(() => (window as unknown as { sounds: number }).sounds);
+  await expect.poll(sounds).toBeGreaterThan(0); // the "it is on" tick
+  const before = await sounds();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator("html")).toHaveAttribute("data-active", "aftermeet");
+  await expect.poll(sounds).toBeGreaterThan(before);
+});

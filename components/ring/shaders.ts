@@ -193,7 +193,7 @@ uniform float uAngle;    // this panel's middle, as an angle around the circle
                          // (0 = straight ahead; positive = to your right, or
                          // below you on a phone)
 uniform float uRadius;   // the circle's radius, at rest
-uniform float uTighten;  // speed rolls the circle tighter: 1 at rest, up to 1.25
+uniform float uTighten;  // speed rolls the circle tighter: 1 at rest, up to 1.18
 uniform vec2 uPanel;     // the panel's size: along the ring (its arc) and across
 uniform float uVertical; // 0: the ring runs sideways (desktop); 1: up and down (phone)
 uniform float uCamera;   // how far behind the circle's middle the camera stands
@@ -322,8 +322,10 @@ void main() {
 
   // Depth: the further round the room a panel is, the softer, greyer and
   // darker it gets, so the one in front is always the sharpest, brightest
-  // thing. (Blur: six extra readings in a small circle around this pixel.)
-  float d = clamp(uSide, 0.0, 1.0);
+  // thing. It starts only halfway to the next place (uSide 0.5), so the
+  // panel in front, and one turning past, stay at full brightness.
+  // (Blur: six extra readings in a small circle around this pixel.)
+  float d = clamp((uSide - 0.5) * 2.0, 0.0, 1.0);
   float blur = d * 0.008;
   if (blur > 0.0) {
     for (int k = 0; k < 6; k++) {

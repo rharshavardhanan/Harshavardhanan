@@ -33,15 +33,16 @@ export function ease(current: number, target: number, dt: number, rate = 0.08) {
 // ---------------------------------------------------------------------------
 
 const RADIUS = 6; // the circle's radius
-const CAMERA = 0.15; // the camera stands this share of the radius behind the
-// middle: a little back, which softens the wrap at the edges
-const FOV = 55; // the lens: how much it sees up and down, in degrees
-const GAP = 0.06; // the gap between panels, as an angle
-// How much of the screen the front panel fills, along the ring's direction.
-// From inside a circle, 76% leaves each neighbour about 7% of the screen;
-// lower it to show more of the neighbours.
-const FRONT = 0.76;
-const FRONT_PHONE = 0.62;
+const FOV = 44; // the lens: how much it sees up and down, in degrees
+// Each panel covers 45° of the circle (0.785 radians). Seen from the middle,
+// its edges are then 1 / cos(22.5°) = 8% taller than its middle: the curve
+// you notice without it looking like a fishbowl (measured on the reference).
+const PANEL_ANGLE = 0.785;
+const PANEL_HEIGHT = 0.53; // × the radius: about 1.5 wide to 1 tall
+const GAP = 0.045; // between panels, as an angle (about 2.5°)
+// Phones: the ring runs up and down, and a 44° lens sees less than 45° from
+// top to bottom, so each panel covers 30° there (about 65% of the height).
+const PANEL_ANGLE_PHONE = 0.5236;
 const ACROSS_PHONE = 0.84; // on a phone, the panel's share of the width
 
 export type RingLayout = {
@@ -49,7 +50,7 @@ export type RingLayout = {
   vertical: boolean;
   /** The circle's radius, in world units. */
   radius: number;
-  /** How far the camera stands behind the circle's middle. */
+  /** How far the camera stands behind the circle's middle (0: at it). */
   camera: number;
   /** tan of half the lens's view, across and up (tanX and tanY), and
    *  along the ring's direction (tanAlong). */
@@ -64,8 +65,11 @@ export type RingLayout = {
    *  arc) and across it. */
   along: number;
   across: number;
-  /** The front panel's box on screen, in pixels (its click area). */
+  /** The front panel's box on screen, in pixels (its click area): as long
+   *  as it is, and as tall as its tallest part, its edges. */
   hit: { w: number; h: number };
+  /** The front panel's size across the ring at its middle, in pixels. */
+  middlePx: number;
   /** How far, in pixels, the front of the ring moves on screen for each
    *  panel it turns (so a drag can keep the picture under the finger). */
   pxPerPanel: number;
@@ -75,9 +79,9 @@ export type RingLayout = {
 export function ringLayout(vw: number, vh: number): RingLayout {
   const vertical = vw < 768;
   const radius = RADIUS;
-  const camera = CAMERA * RADIUS;
   // tan(half the view) turns "how far off to the side, per unit of
   // distance" into "how far across the screen" (1 = the screen's edge).
+  // The view up and down is fixed; across, it is as wide as the window is.
   const tanY = Math.tan((FOV / 2) * (Math.PI / 180));
   const tanX = tanY * (vw / vh);
   const tanAlong = vertical ? tanY : tanX;
@@ -85,46 +89,32 @@ export function ringLayout(vw: number, vh: number): RingLayout {
   const screenAlong = vertical ? vh : vw;
   const screenAcross = vertical ? vw : vh;
 
-  // Where a point at angle a around the circle lands on screen, as a share
-  // of half the screen (0 = the middle, 1 = the edge). It is radius × sin(a)
-  // to the side and camera + radius × cos(a) away (see the vertex shader).
-  const onScreen = (a: number) =>
-    (radius * Math.sin(a)) / (camera + radius * Math.cos(a)) / tanAlong;
-
-  // The panel's half-angle, so that its edges land at FRONT of the screen.
-  // There is no neat formula, so search: halve the range 50 times.
-  const front = vertical ? FRONT_PHONE : FRONT;
-  let low = 0;
-  let high = 1.5;
-  for (let i = 0; i < 50; i++) {
-    const middle = (low + high) / 2;
-    if (onScreen(middle) < front) low = middle;
-    else high = middle;
-  }
-  const halfAngle = (low + high) / 2;
-
+  const angle = vertical ? PANEL_ANGLE_PHONE : PANEL_ANGLE;
+  const halfAngle = angle / 2;
   // An arc's length is its radius times its angle.
-  const along = 2 * halfAngle * radius;
+  const along = angle * radius;
   const across = vertical
-    ? 2 * ACROSS_PHONE * tanAcross * (camera + radius)
-    : (along * 9) / 16;
+    ? 2 * ACROSS_PHONE * tanAcross * radius
+    : PANEL_HEIGHT * radius;
 
-  // The click area: as long as the panel on screen, and as tall as its
-  // tallest part, its edges (nearest the camera, so drawn biggest).
-  const nearestEdge = camera + radius * Math.cos(halfAngle);
-  const acrossPx = (across / 2 / nearestEdge / tanAcross) * screenAcross;
-  const alongPx = front * screenAlong;
+  // On screen. Standing at the middle, a point at angle a on the rim is
+  // radius × sin(a) to the side and radius × cos(a) ahead; the screen shows
+  // side ÷ ahead = tan(a), scaled by the lens. A panel's middle is a full
+  // radius away; its edges only radius × cos(halfAngle), so they are drawn
+  // bigger by 1 / cos(halfAngle).
+  const alongPx = (Math.tan(halfAngle) / tanAlong) * screenAlong;
+  const middlePx = (across / 2 / radius / tanAcross) * screenAcross;
+  const edgePx = middlePx / Math.cos(halfAngle);
 
-  const step = 2 * halfAngle + GAP;
+  const step = angle + GAP;
   // At the middle of the screen, turning by one radian moves the picture
-  // radius / (camera + radius) / tanAlong half-screens.
-  const pxPerRadian =
-    (radius / (camera + radius) / tanAlong) * (screenAlong / 2);
+  // 1 / tanAlong half-screens.
+  const pxPerRadian = (1 / tanAlong) * (screenAlong / 2);
 
   return {
     vertical,
     radius,
-    camera,
+    camera: 0,
     tanX,
     tanY,
     tanAlong,
@@ -132,7 +122,8 @@ export function ringLayout(vw: number, vh: number): RingLayout {
     step,
     along,
     across,
-    hit: vertical ? { w: acrossPx, h: alongPx } : { w: alongPx, h: acrossPx },
+    hit: vertical ? { w: edgePx, h: alongPx } : { w: alongPx, h: edgePx },
+    middlePx,
     pxPerPanel: pxPerRadian * step,
   };
 }
