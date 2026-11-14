@@ -22,6 +22,15 @@ The frame uses its dark band on the home page everywhere (text over light).
 background, which it is not about). 60 fps with and without the river at
 393×852, CPU slowed 4× (the graphics card is not slowed by this test).
 
+**Follow-up (Harsha: "why can't it keep moving, ever so slowly"):** it was
+moving (flow advanced 0.05/s, ~180 draws/s) but invisibly: a long smooth
+streak sliding along itself looks still. Now knots of light ride along each
+streak (25–100% brightness, carried with it), the rest flow is slower (0.12 →
+0.05), and the river breathes (its middle line waves travel along it, its
+width swells, its haze changes shape). A grain-free difference of two frames
+0.5s apart shows the knots moving along every streak; recording at rest:
+scratchpad river/astrophage-at-rest.mp4.
+
 ## Design
 
 - **Streaks, drawn as streaks.** Three layers of thin rows along the

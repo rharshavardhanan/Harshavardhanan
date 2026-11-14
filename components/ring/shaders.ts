@@ -184,6 +184,10 @@ vec3 streaks(vec2 q, float a, float rows, float len, float speed, float width, f
   // between streaks and soft, tapering ends, like motion blur.
   float x = (q.x - uFlow * speed * (0.7 + 0.6 * h)) * len + h * 113.0;
   float seg = smoothstep(0.5, 0.95, noise(vec2(x, mod(row * 1.7 + seed, 289.0))));
+  // Pulses: brighter and dimmer knots along the streak, carried with it.
+  // A smooth line sliding along itself looks still; the knots give the eye
+  // something to follow, so the flow is always visible, however slow.
+  seg *= 0.25 + 0.75 * noise(vec2(x * 14.0, mod(row * 3.1 + seed * 5.0, 289.0)));
   // Its colour: the river's colour here, shifted a little for each row, so
   // gold, rose and violet streaks run side by side.
   return riverColour(a + (h - 0.5) * 0.7) * line * seg * (0.35 + 0.65 * h2);
@@ -265,11 +269,13 @@ void main() {
     // surge instead (uSurge, uFlow), its layers at different speeds.
     vec2 r0 = uv - flow * 0.06;
     vec2 q = vec2(dot(r0, RIVER_ALONG), dot(r0, RIVER_ACROSS));
-    // Its middle line meanders slowly; a is the place across it, -1..1
-    // over its half-width (half a screen height).
-    float mid = 0.10 * sin(q.x * 0.9 + 0.7)
-              + 0.12 * (noise(vec2(q.x * 0.6 - uTime * 0.03, 5.3)) - 0.5);
-    float a = (q.y - mid) / 0.5;
+    // It breathes: its middle line meanders in slow waves that travel along
+    // it, and its width swells and eases over about fifty seconds. a is the
+    // place across it, -1..1 over its half-width (about half a screen
+    // height).
+    float mid = 0.10 * sin(q.x * 0.9 + 0.7 - uTime * 0.06)
+              + 0.12 * (noise(vec2(q.x * 0.6 - uTime * 0.04, 5.3 + uTime * 0.015)) - 0.5);
+    float a = (q.y - mid) / (0.5 * (1.0 + 0.08 * sin(uTime * 0.12)));
     float glow = riverGlow(a);
 
     // The streaks, nearest first: a few thick, long, bright ones; then
@@ -284,7 +290,8 @@ void main() {
     // The haze behind: noise stretched along the flow (long soft clouds),
     // its brighter half kept, coloured by place, nudged so the colour bands
     // are not ruler-straight.
-    float haze = smoothstep(0.25, 0.85, fbm(vec2((q.x - uFlow * 0.3) * 0.5, q.y * 2.4 + 7.0)));
+    // (Its clouds also change shape slowly, as they drift across.)
+    float haze = smoothstep(0.25, 0.85, fbm(vec2((q.x - uFlow * 0.3) * 0.5, q.y * 2.4 + 7.0 + uTime * 0.02)));
     vec3 tint = riverColour(a + (haze - 0.5) * 0.5);
     // The hot core: a wide soft bloom along the river's brightest line,
     // yellow-white, so the light seems to pour from it.

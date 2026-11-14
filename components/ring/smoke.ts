@@ -28,8 +28,9 @@ const LOOK = {
   // The Astrophage river (shaders.ts, SMOKE): a band of streaming light
   // along a diagonal. strength: 0 off, 1 full. flow: how fast it streams at
   // rest, in screen heights a second (each layer then goes at its own
-  // pace); surge: how much faster while the ring turns fast.
-  river: { strength: 0.75, flow: 0.12, surge: 1.6 },
+  // pace): slow, but always moving; surge: how much faster while the ring
+  // turns fast.
+  river: { strength: 0.75, flow: 0.05, surge: 1.6 },
 };
 
 export type SmokeFrame = {
