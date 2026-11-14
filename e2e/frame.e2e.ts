@@ -35,6 +35,29 @@ for (const [width, height] of [
   });
 }
 
+test("About is one click away: in the corner on wide screens, large in the menu", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/work/cache");
+  const about = page.locator(".corners").getByRole("link", { name: "About" });
+  await expect(about).toBeVisible();
+  await about.click();
+  await expect(page).toHaveURL(/\/about$/);
+
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto("/work/cache");
+  await expect(
+    page.locator(".corners").getByRole("link", { name: "About" }),
+  ).toBeHidden();
+  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
+  const inMenu = page
+    .getByRole("dialog", { name: "Menu" })
+    .getByRole("link", { name: "About" });
+  await expect(inMenu).toBeVisible();
+  expect((await inMenu.boundingBox())!.height).toBeGreaterThanOrEqual(32);
+});
+
 test("labels are Inter Tight, except inside a demo", async ({ page }) => {
   await page.goto("/work/cache");
   await page.evaluate(() => document.fonts.ready);

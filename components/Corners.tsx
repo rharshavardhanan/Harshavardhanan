@@ -35,7 +35,12 @@ export function Corners() {
         <Link href="/" className="inline-block py-2">
           Harshavardhanan
         </Link>
-        <div className="justify-self-end">
+        <div className="flex items-center gap-x-6 justify-self-end">
+          {/* No room beside INQUIRE on a phone: there, About is a large
+              line in the menu. */}
+          <Link href="/about" className="inline-block py-2 max-sm:hidden">
+            About
+          </Link>
           <Inquire />
         </div>
       </header>

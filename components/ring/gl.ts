@@ -1,12 +1,20 @@
-// Draws the ring of film panels with WebGL2, the browser's own access to the
-// graphics card. No 3D library: one flat grid shape, one shader program
-// (components/ring/shaders.ts), and one picture (a texture) per panel.
+// Draws the home ring with WebGL2, the browser's own access to the graphics
+// card. No 3D library: three small shader programs (components/ring/
+// shaders.ts), a grid shape for the panels, one triangle that covers the
+// window, and one picture (a texture) per film.
+//
+// Each frame, in order:
+//   1. the cursor's trail is painted into a small picture, on top of the
+//      faded trail from the frame before (two pictures, swapped each frame:
+//      read one, write the other);
+//   2. the moving background fills the window;
+//   3. the panels are drawn over it, furthest first, reading the trail.
 //
 // It knows nothing about scrolling or clicks; components/ring/Ring.tsx works
 // out where the ring is and calls draw() once per frame.
 
 import { type PanelSize, wrap } from "@/lib/ring";
-import { FRAGMENT, VERTEX } from "./shaders";
+import { BACKGROUND, FRAGMENT, FULLSCREEN, TRAIL, VERTEX } from "./shaders";
 
 export type Film = { src: string; poster: string };
 
@@ -18,10 +26,12 @@ export type RingFrame = {
   speed: number;
   /** Seconds since the ring started. */
   time: number;
-  /** The pointer's place on the middle panel (0 to 1), and how strongly it
-   *  ripples (0 to 1). */
-  pointer: [number, number];
-  ripple: number;
+  /** The pointer, 0..1 across the window from the bottom left. */
+  mouse: [number, number];
+  /** How far the pointer moved since the last frame, in the same units. */
+  move: [number, number];
+  /** The page colour behind the ring, 0..1 per channel. */
+  colour: [number, number, number];
   /** 0 to 1: the middle panel growing to fill the window. */
   expand: number;
   /** 0 to 1 for each panel: how far it has flown in from the depth. */
@@ -40,31 +50,32 @@ export type RingGL = {
   destroy(): void;
 };
 
-const UNIFORMS = [
-  "uScreen",
-  "uSize",
-  "uAlong",
-  "uVertical",
-  "uBend",
-  "uExpand",
-  "uDepth",
-  "uImage",
-  "uCover",
-  "uSpeed",
-  "uFocus",
-  "uPointer",
-  "uRipple",
-  "uTime",
-  "uOpacity",
-] as const;
+// ---------------------------------------------------------------------------
+// The settings. Change these to change the look.
+// ---------------------------------------------------------------------------
+const LOOK = {
+  // How much the ring curves: at rest, and how much more at full speed.
+  bend: { rest: 0.6, restPhone: 0.35, speed: 1.1, speedPhone: 0.6 },
+  // Film grain (shaders.ts, applyGrain).
+  grain: { amount: 0.08, size: 1.5, fps: 24, shadows: 0.6 },
+  // The cursor's trail (shaders.ts, TRAIL).
+  trail: {
+    brushSize: 0.09, // radius, as a share of the window's height
+    brushStrength: 1,
+    decay: 0.95, // 95% survives each frame: gone in about a second
+    fluidShift: 0.05, // how far the trail pushes the picture
+    rgbShift: 0.015, // how far it pulls red and blue apart
+  },
+};
 
 // The grid: how many little squares across and up. More squares bend more
 // smoothly; phones get fewer.
 function grid(across: number, up: number) {
   const points: number[] = [];
   for (let y = 0; y <= up; y++) {
-    for (let x = 0; x <= across; x++)
+    for (let x = 0; x <= across; x++) {
       points.push(x / across - 0.5, y / up - 0.5);
+    }
   }
   const corners: number[] = [];
   for (let y = 0; y < up; y++) {
@@ -82,14 +93,58 @@ function grid(across: number, up: number) {
   };
 }
 
-function compile(gl: WebGL2RenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type)!;
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    throw new Error(gl.getShaderInfoLog(shader) ?? "shader did not compile");
+/** Compiles and links one shader program, and finds its uniforms by name. */
+function build(gl: WebGL2RenderingContext, vertex: string, fragment: string) {
+  const program = gl.createProgram()!;
+  for (const [type, source] of [
+    [gl.VERTEX_SHADER, vertex],
+    [gl.FRAGMENT_SHADER, fragment],
+  ] as const) {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader) ?? "shader did not compile");
+    }
+    gl.attachShader(program, shader);
   }
-  return shader;
+  // Every program reads its corner positions from slot 0, so the shapes
+  // below work with all of them.
+  gl.bindAttribLocation(program, 0, "aPosition");
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(program) ?? "program did not link");
+  }
+  const found = new Map<string, WebGLUniformLocation | null>();
+  const at = (name: string) => {
+    if (!found.has(name)) found.set(name, gl.getUniformLocation(program, name));
+    return found.get(name)!;
+  };
+  return { program, at };
+}
+
+type Program = ReturnType<typeof build>;
+
+/** A shape: corner positions in slot 0, and optionally a list of triangles. */
+function shape(
+  gl: WebGL2RenderingContext,
+  points: Float32Array,
+  corners?: Uint16Array,
+) {
+  const vao = gl.createVertexArray()!;
+  gl.bindVertexArray(vao);
+  const buffers = [gl.createBuffer()!];
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers[0]);
+  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  if (corners) {
+    buffers.push(gl.createBuffer()!);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers[1]);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, corners, gl.STATIC_DRAW);
+  }
+  gl.bindVertexArray(null);
+  return { vao, buffers };
 }
 
 type Panel = {
@@ -114,36 +169,35 @@ export function createRing(
   });
   if (!gl) return null;
 
-  const program = gl.createProgram()!;
-  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX));
-  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT));
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
-  gl.useProgram(program);
+  let panelsProgram: Program;
+  let backgroundProgram: Program;
+  let trailProgram: Program;
+  try {
+    panelsProgram = build(gl, VERTEX, FRAGMENT);
+    backgroundProgram = build(gl, FULLSCREEN, BACKGROUND);
+    trailProgram = build(gl, FULLSCREEN, TRAIL);
+  } catch {
+    return null; // the list of projects stays as the home page
+  }
 
-  const u = Object.fromEntries(
-    UNIFORMS.map((name) => [name, gl.getUniformLocation(program, name)]),
-  ) as Record<(typeof UNIFORMS)[number], WebGLUniformLocation>;
+  const panelShape = phone ? grid(16, 24) : grid(48, 24);
+  const panelVao = shape(gl, panelShape.points, panelShape.corners);
+  // One triangle twice the window's size: the part inside the window covers it.
+  const screenVao = shape(gl, new Float32Array([-1, -1, 3, -1, -1, 3]));
 
-  // The shared grid shape.
-  const shape = phone ? grid(16, 24) : grid(48, 24);
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, shape.points, gl.STATIC_DRAW);
-  const position = gl.getAttribLocation(program, "aPosition");
-  gl.enableVertexAttribArray(position);
-  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-  const indices = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, shape.corners, gl.STATIC_DRAW);
-
-  // Pictures and videos arrive upside down for WebGL unless flipped.
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  const setup = (texture: WebGLTexture) => {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  };
 
   const upload = (panel: Panel, source: TexImageSource) => {
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, panel.texture);
+    // Pictures and videos arrive upside down for WebGL unless flipped.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
   };
 
@@ -151,7 +205,7 @@ export function createRing(
   // film's frames while it plays.
   const panels: Panel[] = films.map((film) => {
     const texture = gl.createTexture()!;
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    setup(texture);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -163,14 +217,6 @@ export function createRing(
       gl.UNSIGNED_BYTE,
       new Uint8Array([20, 20, 20, 255]),
     );
-    for (const [key, value] of [
-      [gl.TEXTURE_MIN_FILTER, gl.LINEAR],
-      [gl.TEXTURE_MAG_FILTER, gl.LINEAR],
-      [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE],
-      [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE],
-    ]) {
-      gl.texParameteri(gl.TEXTURE_2D, key, value);
-    }
     const panel: Panel = { texture, aspect: 16 / 9, fresh: false };
     const image = new Image();
     image.src = film.poster;
@@ -185,13 +231,59 @@ export function createRing(
     return panel;
   });
 
+  // The trail: two small pictures of the window (one pixel per 8 × 8 screen
+  // pixels). Each frame reads one and writes the other, then they swap.
+  const trail = [0, 1].map(() => {
+    const texture = gl.createTexture()!;
+    setup(texture);
+    return { texture, framebuffer: gl.createFramebuffer()! };
+  });
+  let trailSize = [0, 0];
+  let newest = 0;
+  const sizeTrail = (width: number, height: number) => {
+    const size = [Math.ceil(width / 8), Math.ceil(height / 8)];
+    if (size[0] === trailSize[0] && size[1] === trailSize[1]) return;
+    trailSize = size;
+    // Start empty: no direction (128, 128 means zero) and no strength.
+    const empty = new Uint8Array(size[0] * size[1] * 4);
+    for (let i = 0; i < empty.length; i += 4) {
+      empty[i] = 128;
+      empty[i + 1] = 128;
+      empty[i + 3] = 255;
+    }
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    for (const t of trail) {
+      gl.bindTexture(gl.TEXTURE_2D, t.texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        size[0],
+        size[1],
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        empty,
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, t.framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        t.texture,
+        0,
+      );
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  };
+
   // A film's video element is made the first time its panel comes near the
   // middle, and kept. Only "fresh" frames are copied to the graphics card.
   const ensureVideo = (index: number) => {
     const panel = panels[index];
     if (panel.video) return panel.video;
     const video = document.createElement("video");
-    video.muted = true;
+    video.muted = true; // films are never heard
     video.loop = true;
     video.playsInline = true;
     video.preload = "auto";
@@ -225,38 +317,98 @@ export function createRing(
     });
   };
 
+  // Never more than 1.5 device pixels per CSS pixel: sharp enough, and far
+  // less work for the card on high-density screens.
+  let ratio = 1;
   const resize = () => {
-    // Never more than 1.5 device pixels per CSS pixel: sharp enough, and
-    // far less work for the card on high-density screens.
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    ratio = Math.min(window.devicePixelRatio || 1, 1.5);
     const width = Math.round(canvas.clientWidth * ratio);
     const height = Math.round(canvas.clientHeight * ratio);
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
     }
-    gl.viewport(0, 0, width, height);
+    sizeTrail(canvas.clientWidth, canvas.clientHeight);
+  };
+
+  // The grain's settings, for whichever program is in use.
+  const grain = (at: Program["at"]) => {
+    gl.uniform1f(at("uGrainAmount"), LOOK.grain.amount);
+    // gl_FragCoord counts canvas pixels, `ratio` to each CSS pixel: scale the
+    // speck so it looks the same size on any screen.
+    gl.uniform1f(at("uGrainSize"), LOOK.grain.size * ratio);
+    gl.uniform1f(at("uGrainFps"), LOOK.grain.fps);
+    gl.uniform1f(at("uGrainShadows"), LOOK.grain.shadows);
   };
 
   const draw = (f: RingFrame) => {
     resize();
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    const screen = [canvas.clientWidth, canvas.clientHeight];
+
+    // --- 1. The trail ---------------------------------------------------
+    const read = trail[newest];
+    const write = trail[1 - newest];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, write.framebuffer);
+    gl.viewport(0, 0, trailSize[0], trailSize[1]);
+    gl.disable(gl.BLEND);
+    gl.useProgram(trailProgram.program);
+    gl.bindVertexArray(screenVao.vao);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, read.texture);
+    {
+      const at = trailProgram.at;
+      gl.uniform1i(at("uPrevious"), 1);
+      gl.uniform2f(at("uMouse"), f.mouse[0], f.mouse[1]);
+      gl.uniform2f(at("uMove"), f.move[0], f.move[1]);
+      gl.uniform1f(at("uAspect"), screen[0] / screen[1]);
+      gl.uniform1f(at("uBrushSize"), LOOK.trail.brushSize);
+      gl.uniform1f(at("uBrushStrength"), LOOK.trail.brushStrength);
+      gl.uniform1f(at("uDecay"), LOOK.trail.decay);
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    newest = 1 - newest;
+
+    // --- 2. The background ----------------------------------------------
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(backgroundProgram.program);
+    {
+      const at = backgroundProgram.at;
+      gl.uniform3f(at("uColour"), f.colour[0], f.colour[1], f.colour[2]);
+      gl.uniform2f(at("uScreenPx"), canvas.width, canvas.height);
+      gl.uniform1f(at("uTime"), f.time);
+      grain(at);
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // --- 3. The panels --------------------------------------------------
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(panelsProgram.program);
+    gl.bindVertexArray(panelVao.vao);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, trail[newest].texture);
+    const at = panelsProgram.at;
+    gl.uniform1i(at("uTrail"), 1);
+    gl.uniform1i(at("uImage"), 0);
+    gl.uniform2f(at("uScreen"), screen[0], screen[1]);
+    gl.uniform2f(at("uScreenPx"), canvas.width, canvas.height);
+    gl.uniform1f(at("uVertical"), f.size.vertical ? 1 : 0);
+    const bend = LOOK.bend;
+    gl.uniform1f(
+      at("uBend"),
+      phone
+        ? bend.restPhone + f.speed * bend.speedPhone
+        : bend.rest + f.speed * bend.speed,
+    );
+    gl.uniform1f(at("uSpeed"), phone ? f.speed * 0.5 : f.speed);
+    gl.uniform1f(at("uTime"), f.time);
+    gl.uniform1f(at("uFluidShift"), LOOK.trail.fluidShift);
+    gl.uniform1f(at("uRgbShift"), LOOK.trail.rgbShift);
+    grain(at);
 
     const n = films.length;
-    const screen = [canvas.clientWidth, canvas.clientHeight];
-    const { w, h, step, vertical } = f.size;
-    gl.uniform2f(u.uScreen, screen[0], screen[1]);
-    gl.uniform1f(u.uVertical, vertical ? 1 : 0);
-    gl.uniform1f(
-      u.uBend,
-      (phone ? 0.15 : 0.25) + f.speed * (phone ? 0.6 : 1.1),
-    );
-    gl.uniform1f(u.uSpeed, phone ? f.speed * 0.5 : f.speed);
-    gl.uniform1f(u.uTime, f.time);
-    gl.uniform1i(u.uImage, 0);
-    gl.activeTexture(gl.TEXTURE0);
-
+    const { w, h, step } = f.size;
     // Furthest first, so the middle panel is drawn last, on top.
     const order = panels
       .map((_, index) => index)
@@ -282,6 +434,7 @@ export function createRing(
           panel.fresh = false;
         }
       }
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, panel.texture);
 
       // Cover: crop the picture to the panel's current shape.
@@ -289,20 +442,24 @@ export function createRing(
       const height = h + (screen[1] - h) * expand;
       const box = width / height;
       gl.uniform2f(
-        u.uCover,
+        at("uCover"),
         panel.aspect > box ? box / panel.aspect : 1,
         panel.aspect > box ? 1 : panel.aspect / box,
       );
-      gl.uniform2f(u.uSize, w, h);
-      gl.uniform1f(u.uAlong, place * step);
-      gl.uniform1f(u.uExpand, expand);
-      gl.uniform1f(u.uDepth, Math.pow(1 - intro, 3) * 1400);
-      gl.uniform1f(u.uFocus, Math.max(0, 1 - Math.abs(place)));
-      gl.uniform2f(u.uPointer, f.pointer[0], f.pointer[1]);
-      gl.uniform1f(u.uRipple, index === middle ? f.ripple : 0);
-      gl.uniform1f(u.uOpacity, opacity);
-      gl.drawElements(gl.TRIANGLES, shape.corners.length, gl.UNSIGNED_SHORT, 0);
+      gl.uniform2f(at("uSize"), w, h);
+      gl.uniform1f(at("uAlong"), place * step);
+      gl.uniform1f(at("uExpand"), expand);
+      gl.uniform1f(at("uDepth"), Math.pow(1 - intro, 3) * 1400);
+      gl.uniform1f(at("uFocus"), Math.max(0, 1 - Math.abs(place)));
+      gl.uniform1f(at("uOpacity"), opacity);
+      gl.drawElements(
+        gl.TRIANGLES,
+        panelShape.corners.length,
+        gl.UNSIGNED_SHORT,
+        0,
+      );
     }
+    gl.bindVertexArray(null);
   };
 
   return {
@@ -317,12 +474,20 @@ export function createRing(
         panel.video?.load();
         gl.deleteTexture(panel.texture);
       });
+      for (const t of trail) {
+        gl.deleteTexture(t.texture);
+        gl.deleteFramebuffer(t.framebuffer);
+      }
       // Free what this ring made, but keep the canvas's WebGL itself alive:
       // Next.js keeps a page you leave ready for the Back button, and the
       // ring then starts again on the same canvas.
-      gl.deleteBuffer(buffer);
-      gl.deleteBuffer(indices);
-      gl.deleteProgram(program);
+      for (const { vao, buffers } of [panelVao, screenVao]) {
+        gl.deleteVertexArray(vao);
+        buffers.forEach((buffer) => gl.deleteBuffer(buffer));
+      }
+      for (const p of [panelsProgram, backgroundProgram, trailProgram]) {
+        gl.deleteProgram(p.program);
+      }
     },
   };
 }

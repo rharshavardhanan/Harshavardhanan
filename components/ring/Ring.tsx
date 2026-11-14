@@ -12,7 +12,7 @@ import {
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
 import { ease, nearest, type PanelSize, panelSize, wrap } from "@/lib/ring";
-import { onSoundChange, soundOn } from "@/lib/sound";
+import { tick as soundTick } from "@/lib/sound";
 import { FILM_TIME } from "../Film";
 import type { RingGL } from "./gl";
 
@@ -102,9 +102,13 @@ export function Ring({
         target: 0,
         anchor: 0, // the panel the current gesture started from
         speed: 0,
-        ripple: 0,
-        hovering: false,
-        pointer: [0.5, 0.5] as [number, number],
+        // The pointer across the window (0..1 from the bottom left), and how
+        // far it has moved since the last frame: the cursor's trail.
+        mouse: [0.5, 0.5] as [number, number],
+        move: [0, 0] as [number, number],
+        // The page colour behind the ring, fading towards the middle project's.
+        colour: [0, 0, 0] as [number, number, number],
+        quarter: 0, // the last quarter-panel mark passed, for the tick sound
         lastInput: 0,
         dragging: false,
         dragAt: 0,
@@ -136,7 +140,6 @@ export function Ring({
       const leave = (index: number) => {
         if (s.leaving) return;
         s.anchor = s.target = s.offset + wrap(index - s.offset, n);
-        s.hovering = false;
         try {
           sessionStorage.setItem(RING_FROM, String(index));
           sessionStorage.setItem(
@@ -160,13 +163,14 @@ export function Ring({
         s.lastInput = performance.now();
       };
 
-      // Sound on: only the middle film is heard.
-      const listen = () => {
-        items.forEach((_, index) => {
-          const video = gl.video(index);
-          if (video) video.muted = !(soundOn() && index === s.centre);
-        });
-      };
+      // Each project's page colour, read from its link in the list (each
+      // carries its project's theme), as 0..1 numbers for the shader.
+      const colours = links().map((link) => {
+        const [r, g, b] = getComputedStyle(link)
+          .backgroundColor.match(/\d+/g)!
+          .map(Number);
+        return [r / 255, g / 255, b / 255];
+      });
 
       // A new project faces you: name it, colour the page, play its film.
       const show = (index: number) => {
@@ -185,7 +189,6 @@ export function Ring({
           return;
         }
         gl.play([(index + n - 1) % n, index, (index + 1) % n]);
-        listen();
       };
 
       const tick = (now: number) => {
@@ -211,7 +214,20 @@ export function Ring({
         if (Math.abs(s.target - s.offset) < 0.0005) s.offset = s.target;
         const velocity = dt ? Math.abs(s.offset - before) / dt : 0;
         s.speed = ease(s.speed, Math.min(1, velocity / 4), dt, 0.2);
-        s.ripple = ease(s.ripple, s.hovering ? 1 : 0, dt, 0.1);
+        // The background's colour glides towards the middle project's.
+        const goal = colours[nearest(s.offset, n)];
+        s.colour = s.colour.map((c, i) => ease(c, goal[i], dt, 0.06)) as [
+          number,
+          number,
+          number,
+        ];
+
+        // A soft tick every quarter of a panel the ring turns (if sound is on).
+        const quarter = Math.round(s.offset * 4);
+        if (quarter !== s.quarter) {
+          s.quarter = quarter;
+          soundTick();
+        }
 
         const middle = nearest(s.offset, n);
         if (middle !== s.centre) show(middle);
@@ -244,12 +260,14 @@ export function Ring({
           offset: s.offset,
           speed: s.speed,
           time: (now - s.born) / 1000,
-          pointer: s.pointer,
-          ripple: s.ripple,
+          mouse: s.mouse,
+          move: s.move,
+          colour: s.colour,
           expand: s.expand,
           intro,
           size: dims,
         });
+        s.move = [0, 0]; // painted into the trail; start counting again
       };
 
       // --- input ----------------------------------------------------------
@@ -278,13 +296,13 @@ export function Ring({
       };
 
       const onMove = (event: PointerEvent) => {
-        // Over the middle panel? Then it ripples around the pointer.
-        const left = (window.innerWidth - dims.w) / 2;
-        const top = (window.innerHeight - dims.h) / 2;
-        const x = (event.clientX - left) / dims.w;
-        const y = (event.clientY - top) / dims.h;
-        s.hovering = !s.dragging && x > 0 && x < 1 && y > 0 && y < 1;
-        s.pointer = [x, 1 - y];
+        // The cursor's trail: where it is, and how far it went since the
+        // last frame (both as shares of the window, measured from the
+        // bottom left as WebGL counts).
+        const x = event.clientX / window.innerWidth;
+        const y = 1 - event.clientY / window.innerHeight;
+        s.move = [s.move[0] + x - s.mouse[0], s.move[1] + y - s.mouse[1]];
+        s.mouse = [x, y];
         if (!s.dragging) return;
         const moved = along(event) - s.dragAt;
         if (Math.abs(moved) > 6) dragged.current = true;
@@ -367,7 +385,6 @@ export function Ring({
         else gl.play([(s.centre + n - 1) % n, s.centre, (s.centre + 1) % n]);
       };
 
-      const stopListening = onSoundChange(listen);
       el.addEventListener("wheel", onWheel, { passive: false });
       el.addEventListener("pointerdown", onDown);
       el.addEventListener("focusin", onFocus);
@@ -378,7 +395,6 @@ export function Ring({
       window.addEventListener("resize", onResize);
       document.addEventListener("visibilitychange", onVisibility);
       detach = () => {
-        stopListening();
         el.removeEventListener("wheel", onWheel);
         el.removeEventListener("pointerdown", onDown);
         el.removeEventListener("focusin", onFocus);
@@ -390,6 +406,9 @@ export function Ring({
         document.removeEventListener("visibilitychange", onVisibility);
       };
 
+      // Start in the first project's colour, with no tick for where we start.
+      s.colour = [...colours[nearest(s.offset, n)]] as [number, number, number];
+      s.quarter = Math.round(s.offset * 4);
       setSize(dims);
       setOn(true);
       delete html.dataset.ring;

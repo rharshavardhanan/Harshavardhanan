@@ -91,21 +91,22 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
           </ol>
         </nav>
 
-        <div className="label flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
-          <ul className="flex flex-wrap gap-x-8">
+        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          {/* About, Inquire and the résumé: big enough to find at a glance. */}
+          <ul className="text-h3 flex flex-wrap gap-x-10 gap-y-2 font-serif">
             {[
               ["About", "/about"],
               ["Inquire", "/contact"],
-              ["Résumé", "/resume.pdf"],
+              ["Résumé ↗", "/resume.pdf"],
             ].map(([label, href]) => (
               <li key={href} style={{ "--i": i++ } as React.CSSProperties}>
-                <a href={href} className="inline-block py-2">
+                <a href={href} className="inline-block py-1">
                   {label}
                 </a>
               </li>
             ))}
           </ul>
-          <p className="text-muted flex flex-wrap gap-x-8">
+          <p className="label text-muted flex flex-wrap gap-x-8">
             <AnomalyCount />
             <span>© 2026 · designed &amp; built by Harsha</span>
           </p>

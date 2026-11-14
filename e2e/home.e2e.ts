@@ -105,23 +105,40 @@ test("Sound is off until switched on", async ({ page }) => {
   await expect(sound).toHaveText("sound on");
 });
 
-test("Sound on: the project's own film is heard, and only that one", async ({
+test("Sound on: scrolling ticks, and no film is ever heard", async ({
   page,
 }) => {
+  // Count every tick the page plays by wrapping the browser's sound maker.
+  await page.addInitScript(() => {
+    const w = window as unknown as { ticks: number };
+    w.ticks = 0;
+    const make = AudioContext.prototype.createBufferSource;
+    AudioContext.prototype.createBufferSource = function () {
+      w.ticks++;
+      return make.call(this);
+    };
+  });
   await page.goto("/work/road");
-  const film = page.locator("article [data-film] video");
-  await expect(film).toHaveCount(1);
-  expect(await film.evaluate((v: HTMLVideoElement) => v.muted)).toBe(true);
+  await expect(page.locator(".corners time")).toHaveText(/IST$/);
+  const ticks = () =>
+    page.evaluate(() => (window as unknown as { ticks: number }).ticks);
+  // Off by default: scrolling is silent.
+  await page.mouse.wheel(0, 900);
+  await page.waitForTimeout(400);
+  expect(await ticks()).toBe(0);
+
   await page.locator(".corners").getByRole("button", { name: /^sound/ }).click();
-  await expect
-    .poll(() => film.evaluate((v: HTMLVideoElement) => v.muted))
-    .toBe(false);
-  // Every other video on the page (the proof recordings) stays silent.
-  const heard = await page.evaluate(
-    () =>
-      [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
-  );
-  expect(heard).toBe(1);
+  const before = await ticks();
+  for (let i = 0; i < 6; i++) {
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(120);
+  }
+  await expect.poll(ticks).toBeGreaterThan(before + 2);
+  expect(
+    await page.evaluate(
+      () => [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
+    ),
+  ).toBe(0);
 });
 
 test("404: the page says so in the site's voice and offers a way home", async ({

@@ -3,9 +3,8 @@
 import { useSyncExternalStore } from "react";
 import { onSoundChange, setSound, soundOn } from "@/lib/sound";
 
-// The sound switch, off by default. When on, the film you are looking at
-// plays its own soundtrack: the middle film of the home ring, or the film at
-// the top of a project page (components/ring/Ring.tsx, components/Film.tsx).
+// The sound switch, off by default. When on, scrolling makes a soft wooden
+// tick, like a ratchet (lib/sound.ts); the home ring ticks as it turns too.
 // There can be two of these (the frame's and the phone menu's); both read the
 // same setting, so they always agree.
 export function Sound() {

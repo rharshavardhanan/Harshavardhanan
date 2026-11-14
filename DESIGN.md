@@ -92,4 +92,4 @@ A 12px dot that follows the pointer (difference blending). It grows over links, 
 
 ## Sound
 
-Off by default. When on, you hear the film you are looking at: the middle panel on the home page, the project's film on its page. Its own soundtrack, nothing else.
+Off by default. When on, scrolling makes a soft wooden tick every 90px, like a ratchet or a fidget wheel; the home ring ticks every quarter panel it turns. At most one tick per 45ms, each pitched a little differently. Made in the browser (`lib/sound.ts`); the films are never heard.

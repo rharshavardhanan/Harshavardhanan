@@ -130,6 +130,32 @@ test("scrolling to the end grows the next project and opens it", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Aftermeet",
   );
+  // And it starts at the top, not at the old page's height (smooth scrolling
+  // keeps its own record of the position; it is reset on every page change).
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(50);
+});
+
+test("the menu and Back both land at the top of the page", async ({ page }) => {
+  await page.goto("/work/odovox");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "ready");
+  await page.evaluate(() => window.scrollTo(0, 3000));
+  await page.waitForTimeout(600);
+  await page.locator(".corners").getByRole("link", { name: "Menu" }).click();
+  await page
+    .getByRole("dialog", { name: "Menu" })
+    .getByRole("link", { name: /Edge Cache RL/ })
+    .click();
+  await expect(page).toHaveURL(/\/work\/cache$/);
+  await page.waitForTimeout(1500);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(50);
+
+  await page.evaluate(() => window.scrollTo(0, 2500));
+  await page.waitForTimeout(600);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/work\/odovox$/);
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(50);
 });
 
 test.describe("reduced motion", () => {
