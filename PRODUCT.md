@@ -57,8 +57,9 @@ GitHub, LinkedIn and the résumé PDF.
   rounded up or extended.
 - The mood films are AI-generated and always credited as such: "Film · AI-generated, Flow
   (Veo)" in each project's credits. No caption on the films themselves
-  (Harsha, 2026-11-14: the Gemini ✦ in each film's corner shows it). They must not show a
-  product in real use as fact.
+  (Harsha, 2026-11-14). The generator's ✦ mark is cropped out of frame (lib/crop.ts;
+  Harsha chose "crop all, credits only" on 2026-11-14): the credits line is the
+  disclosure. They must not show a product in real use as fact.
 - Odovox: never claim live clinics or users.
 - The phone number never appears on the site.
 - Built in phases; Harsha chose no review stops (v2 and v3). He is learning to code and

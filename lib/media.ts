@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import type { Slug } from "@/content/projects";
+import { type FilmCrop, project, type Slug } from "../content/projects";
 
 // Pictures and recordings, and which of them exist. This runs while the site
 // is being built, so a file added to public/ shows up on the next build.
@@ -24,9 +24,14 @@ export type Film = {
   /** A still of it, shown until the video plays (and instead of it, for
    *  visitors who asked for reduced motion). */
   poster: string;
-  /** True for an AI-generated film, which the page then labels as such. */
+  /** True for an AI-generated film (credited as such on its page). */
   ai: boolean;
+  /** Its framing (lib/crop.ts): a mood film is cropped so the generator's
+   *  mark is out of frame; a particle recording has no mark and is not. */
+  crop: FilmCrop;
 };
+
+const UNCROPPED: FilmCrop = { zoom: 1, shift: [0, 0] };
 
 // What each project's film file is called: mood-<name>.mp4 and
 // poster-<name>.avif. Mostly the project's own name; the robot project's film
@@ -46,12 +51,18 @@ export function film(slug: Slug): Film {
   const name = FILM_NAME[slug];
   const src = `/media/mood/mood-${name}.mp4`;
   if (exists(src)) {
-    return { src, poster: `/media/mood/poster-${name}.avif`, ai: true };
+    return {
+      src,
+      poster: `/media/mood/poster-${name}.avif`,
+      ai: true,
+      crop: project(slug)!.filmCrop,
+    };
   }
   return {
     src: `/media/case-${slug}.mp4`,
     poster: `/media/cover-${slug}.avif`,
     ai: false,
+    crop: UNCROPPED,
   };
 }
 

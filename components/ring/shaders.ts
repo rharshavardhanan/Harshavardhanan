@@ -450,6 +450,9 @@ in vec2 vUv;              // where on the panel this pixel is, 0 to 1
 uniform sampler2D uImage; // the film's current frame (or its poster)
 uniform vec2 uCover;      // shrinks the picture's coordinates so it covers the
                           // panel without being squashed (like object-fit: cover)
+uniform float uCrop;      // the film's zoom (1.15: 15% closer; lib/crop.ts)
+uniform vec2 uCropShift;  // and which way its frame moves (x: minus is left;
+                          // y: plus is up), so its mark falls outside
 uniform float uVertical;  // which way the ring moves (the smear follows it)
 uniform float uSpeed;     // how fast the ring is moving: 0 still, 1 fast
 uniform float uSide;      // how far round this panel is: 0 in front, 1 a
@@ -484,6 +487,14 @@ vec3 split(vec2 uv, vec2 by) {
 
 void main() {
   vec2 uv = (vUv - 0.5) * uCover + 0.5;
+  // The crop: from the middle (- 0.5), every point read 1/uCrop as far out
+  // (the picture looks uCrop times bigger and its edges fall away evenly),
+  // back (+ 0.5), then the part read slides by uCropShift, so what falls
+  // away comes off the side the mark is on. The slide is a share of what
+  // the panel shows (× uCover): the same on a wide panel, smaller on a
+  // phone's narrow one, so a subject off the middle stays in shot.
+  // lib/crop.ts explains it in full.
+  uv = (uv - 0.5) / uCrop + 0.5 + uCropShift * uCover;
 
   // The cursor's trail at this pixel: the direction it went, times how
   // strongly (it fades over about a second). The picture is pushed along it.

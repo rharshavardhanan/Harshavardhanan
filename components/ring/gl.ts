@@ -14,9 +14,10 @@
 import { type RingLayout, wrap } from "@/lib/ring";
 import { FRAGMENT, VERTEX } from "./shaders";
 import { createTrail } from "./trail";
+import type { FilmCrop } from "@/content/projects";
 import { build, dropShape, type Program, shape, smoothTexture } from "./webgl";
 
-export type Film = { src: string; poster: string };
+export type Film = { src: string; poster: string; crop: FilmCrop };
 
 /** Everything that changes from one frame to the next. */
 export type RingFrame = {
@@ -316,6 +317,10 @@ export function createRing(
         panel.aspect > box ? box / panel.aspect : 1,
         panel.aspect > box ? 1 : panel.aspect / box,
       );
+      // The film's framing (lib/crop.ts): its mark out of frame.
+      const { crop } = films[index];
+      gl.uniform1f(at("uCrop"), crop.zoom);
+      gl.uniform2f(at("uCropShift"), crop.shift[0], crop.shift[1]);
       gl.uniform2f(at("uBox"), width, height);
       gl.uniform1f(
         at("uCorner"),

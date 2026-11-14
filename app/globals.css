@@ -1569,6 +1569,29 @@ html[data-ring="wait"] .ring .reel {
   overflow: hidden;
   background: #0b0b0b;
 }
+
+/* --- Film crop (lib/crop.ts) ----------------------------------------------
+   Every film and poster is framed as the ring's shader frames it, so its
+   generator's mark is out of frame and no morph between them jumps. The
+   picture is scaled by the zoom about its middle, then moved by the shift
+   × the zoom, as shares of its box (the shift is a share of what the box
+   shows, as in the shader): x minus (read further left) moves it right; y
+   plus (read higher) moves it down. A box without the variables is left as
+   it is. .shot is a plain clipping box for a picture with no box of its own
+   (the menu, the next-project card). */
+.shot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+}
+:is(.film, .reel-item, .shot) > :is(img, video) {
+  transform: translate(
+      calc(var(--crop-x, 0) * -1 * var(--crop, 1) * 100%),
+      calc(var(--crop-y, 0) * var(--crop, 1) * 100%)
+    )
+    scale(var(--crop, 1));
+}
 .film img,
 .film video {
   position: absolute;

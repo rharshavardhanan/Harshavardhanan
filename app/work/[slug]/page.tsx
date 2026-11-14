@@ -267,6 +267,7 @@ export default async function CaseStudy({ params }: Props) {
         slug={next.slug}
         title={next.title}
         poster={film(next.slug).poster}
+        crop={film(next.slug).crop}
       />
       <Motion />
     </article>

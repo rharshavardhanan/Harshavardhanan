@@ -10,6 +10,7 @@ import {
   ViewTransition,
 } from "react";
 import type { Slug } from "@/content/projects";
+import type { Film } from "@/lib/media";
 import { afterLoad } from "@/lib/after-load";
 import { scrollWave, type Wave } from "@/lib/motes";
 import { ease, nearest, type RingLayout, ringLayout, wrap } from "@/lib/ring";
@@ -22,10 +23,7 @@ export type RingItem = {
   slug: Slug;
   title: string;
   tone: "dark" | "light";
-  src: string;
-  poster: string;
-  ai: boolean;
-};
+} & Film; // its film: src, poster, ai, crop (lib/media.ts)
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 /** Which panel was opened, so coming back can start from it. */

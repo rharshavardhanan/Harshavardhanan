@@ -14,6 +14,7 @@ describe("film", () => {
       src: "/media/mood/mood-odovox.mp4",
       poster: "/media/mood/poster-odovox.avif",
       ai: true,
+      crop: { zoom: 1.15, shift: [-0.06, 0.03] },
     });
     // scp's film is named after what it shows: a robot.
     expect(film("scp").src).toBe("/media/mood/mood-robot.mp4");
@@ -24,6 +25,7 @@ describe("film", () => {
       src: "/media/mood/mood-halluc.mp4",
       poster: "/media/mood/poster-halluc.avif",
       ai: true,
+      crop: { zoom: 1.15, shift: [-0.06, 0.03] },
     });
   });
 
@@ -33,6 +35,7 @@ describe("film", () => {
       src: "/media/case-hallucination.mp4",
       poster: "/media/cover-hallucination.avif",
       ai: false,
+      crop: { zoom: 1, shift: [0, 0] }, // no mark to hide
     });
   });
 });

@@ -25,6 +25,9 @@ export type Stat = {
   label: string;
 };
 
+/** A film's framing: zoom in (1.15 = 15% closer) and shift (see filmCrop). */
+export type FilmCrop = { zoom: number; shift: [number, number] };
+
 export type Project = {
   /** Short id: also the colour theme's name and the page address /work/<slug>. */
   slug: Slug;
@@ -46,6 +49,11 @@ export type Project = {
   tone?: "light";
   /** One line, read out word by word over the film on the project's page. */
   quote: string;
+  /** How the project's film is framed (lib/crop.ts): zoomed in by `zoom`
+   *  and moved by `shift` (shares of the picture: x, minus is left; y, plus
+   *  is up), so the generator's ✦ mark near the bottom-right corner falls
+   *  outside the frame. Tune it per film: each shot's subject differs. */
+  filmCrop: FilmCrop;
   /** Where it stands now, for the credits (only where it is known). */
   status?: string;
   // Case-study page
@@ -62,6 +70,7 @@ export const projects: Project[] = [
   {
     slug: "odovox",
     quote: "Speak once. The records write themselves.",
+    filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     status: "In development",
     title: "Odovox",
     role: "Personal project",
@@ -105,6 +114,7 @@ export const projects: Project[] = [
   {
     slug: "aftermeet",
     quote: "Every meeting ends with someone owning something.",
+    filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     status: "Live",
     title: "Aftermeet",
     role: "Solo project",
@@ -165,6 +175,9 @@ export const projects: Project[] = [
   {
     slug: "scp",
     quote: "Know when to hand over.",
+    // Its film has a dark border baked into both sides: zoomed a little more
+    // and moved less, the frame starts clear of it (lib/crop.test.ts).
+    filmCrop: { zoom: 1.2, shift: [-0.045, 0.03] },
     title: "Sequential Conformal Prediction",
     role: "Final-year project, with Akileshguhan A",
     year: "2026",
@@ -221,6 +234,9 @@ export const projects: Project[] = [
   {
     slug: "road",
     quote: "Measure how it fails, not just when it works.",
+    // Its film has a dark border baked into both sides: zoomed a little more
+    // and moved less, the frame starts clear of it (lib/crop.test.ts).
+    filmCrop: { zoom: 1.2, shift: [-0.045, 0.03] },
     title: "Automated Road Damage Survey",
     role: "Project",
     tags: ["Computer vision", "Calibration", "YOLOv8"],
@@ -264,6 +280,7 @@ export const projects: Project[] = [
   {
     slug: "kattral",
     quote: "Class, from anywhere.",
+    filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     title: "Kattral Academy",
     role: "Software Developer, Zerofence",
     year: "2026",
@@ -307,6 +324,7 @@ export const projects: Project[] = [
   {
     slug: "cache",
     quote: "Teach the cache what to forget.",
+    filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     status: "Live",
     title: "Edge Cache RL",
     role: "Project",
@@ -342,6 +360,7 @@ export const projects: Project[] = [
   {
     slug: "hallucination",
     quote: "Catch the answer that isn’t true.",
+    filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     title: "Hallucination Detection in LLMs",
     role: "Project",
     tags: ["NLP", "Classification", "LLM evaluation"],

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, ViewTransition } from "react";
+import type { FilmCrop } from "@/content/projects";
+import { cropStyle } from "@/lib/crop";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
@@ -18,10 +20,13 @@ export function NextProject({
   slug,
   title,
   poster,
+  crop,
 }: {
   slug: string;
   title: string;
   poster: string;
+  /** Its film's framing (lib/crop.ts), the same as on its page. */
+  crop: FilmCrop;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLAnchorElement>(null);
@@ -103,8 +108,12 @@ export function NextProject({
             share="film-morph"
             default="none"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={poster} alt="" loading="lazy" />
+            {/* The name is on the clipping box, not the picture, so the morph
+                keeps the crop's frame (lib/crop.ts). */}
+            <span className="shot" style={cropStyle(crop)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={poster} alt="" loading="lazy" />
+            </span>
           </ViewTransition>
           <span className="next-caption">
             <span className="label block">Next project</span>

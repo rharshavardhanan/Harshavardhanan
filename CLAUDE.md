@@ -60,5 +60,6 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 - Animate `transform`, `opacity`, `clip-path` and colour only, and honour `prefers-reduced-motion`.
 - Every page works with JavaScript off, with a keyboard, and at 360px wide.
 - Never call Harsha a founder anywhere on the site (Odovox is a personal project). Every AI film is credited as AI-generated in its project's credits;
-  no caption on the film itself (Harsha, 2026-11-14: the Gemini ✦ in its corner shows it).
+  no caption on the film itself, and its ✦ mark is cropped out of frame (lib/crop.ts,
+  `filmCrop` per project; Harsha, 2026-11-14).
 - One local commit per finished piece. Push only when Harsha asks: a push to `main` goes live. `potrait` (the portrait's source PNG) and `videos/` are git-ignored.

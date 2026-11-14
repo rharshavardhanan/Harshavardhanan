@@ -10,7 +10,8 @@ import {
   ViewTransition,
 } from "react";
 import { contact } from "@/content/about";
-import { projects, type Slug } from "@/content/projects";
+import { type FilmCrop, projects, type Slug } from "@/content/projects";
+import { cropStyle } from "@/lib/crop";
 import { play } from "@/lib/sound";
 import { Decode } from "./Decode";
 
@@ -38,7 +39,10 @@ export const lockPage = (on: boolean) => {
 // grows to fill the window and becomes the new page's film (a view
 // transition, like the home ring's). How it all looks is under "Site menu"
 // in app/globals.css.
-export function Menu({ posters }: { posters: Record<Slug, string> }) {
+/** A project's poster and its film's framing (lib/crop.ts). */
+export type Poster = { src: string; crop: FilmCrop };
+
+export function Menu({ posters }: { posters: Record<Slug, Poster> }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLAnchorElement>(null);
   const router = useRouter();
@@ -213,7 +217,7 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
                       // A plain <img>: the posters are already small AVIF stills.
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={posters[project.slug]}
+                        src={posters[project.slug].src}
                         alt=""
                         className="menu-thumb"
                       />
@@ -271,14 +275,21 @@ export function Menu({ posters }: { posters: Record<Slug, string> }) {
               <div className="menu-frame">
                 {primed &&
                   projects.map((project) => {
+                    // Each in its own clipping box with its film's crop
+                    // (lib/crop.ts); the morph's name goes on the box.
                     const poster = (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={posters[project.slug]}
-                        alt=""
-                        className="menu-poster"
-                        data-on={project.slug === shown}
-                      />
+                      <span
+                        className="shot"
+                        style={cropStyle(posters[project.slug].crop)}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={posters[project.slug].src}
+                          alt=""
+                          className="menu-poster"
+                          data-on={project.slug === shown}
+                        />
+                      </span>
                     );
                     // Only the chosen poster carries the film's name, and only
                     // while leaving, so no two things on the page share it.

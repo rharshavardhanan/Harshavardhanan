@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
   ViewTransition,
 } from "react";
+import { cropStyle } from "@/lib/crop";
 import type { Film as FilmFiles } from "@/lib/media";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -70,7 +71,14 @@ export function Film({
 
   return (
     <ViewTransition name={`film-${slug}`} share="film-morph" default="none">
-      <div data-film data-tone="media" className="film">
+      {/* Framed like the ring's panel (lib/crop.ts), so the morph from it
+          does not jump, and the generator's mark stays out of frame. */}
+      <div
+        data-film
+        data-tone="media"
+        className="film"
+        style={cropStyle(film.crop)}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={film.poster} alt="" fetchPriority="high" />
         {play && (

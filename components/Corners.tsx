@@ -5,7 +5,7 @@ import { film } from "@/lib/media";
 import { ArrowUpRight } from "./ArrowUpRight";
 import { CornerStatus } from "./CornerStatus";
 import { Inquire } from "./Inquire";
-import { Menu } from "./Menu";
+import { Menu, type Poster } from "./Menu";
 import { Sounds } from "./Sounds";
 
 // The frame around every page: small capitals pinned to the four corners of
@@ -19,10 +19,13 @@ import { Sounds } from "./Sounds";
 // (see "Corners" in app/globals.css). The frame ignores the pointer except on
 // its links, so it never blocks the page.
 export function Corners() {
-  // Each project's poster, for the menu to show behind its name.
+  // Each project's poster and its framing (lib/crop.ts), for the menu.
   const posters = Object.fromEntries(
-    projects.map((project) => [project.slug, film(project.slug).poster]),
-  ) as Record<Slug, string>;
+    projects.map((project) => {
+      const { poster, crop } = film(project.slug);
+      return [project.slug, { src: poster, crop }];
+    }),
+  ) as Record<Slug, Poster>;
 
   return (
     <div className="corners label">

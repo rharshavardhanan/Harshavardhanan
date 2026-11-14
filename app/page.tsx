@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Ring, type RingItem } from "@/components/ring/Ring";
 import { projects } from "@/content/projects";
+import { cropStyle } from "@/lib/crop";
 import { film } from "@/lib/media";
 
 // The home page: one screen, the seven projects as a ring of films
@@ -27,6 +28,7 @@ export default function Home() {
               data-ring-link={index}
               data-no-wipe
               className="reel-item bg-bg text-fg"
+              style={cropStyle(item.crop)}
             >
               <Image
                 src={item.poster}
