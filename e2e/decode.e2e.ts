@@ -55,7 +55,7 @@ test("the frame decodes the project as the ring turns", async ({ page }) => {
   await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
     timeout: 15000,
   });
-  const name = ".corner-bottom p:first-child .decode";
+  const name = ".corner-project .decode";
   await expect(page.locator(name)).not.toHaveAttribute("data-decoding");
   // The noise is hidden from screen readers; the real text is what they read.
   await expect(page.locator(`${name} .decode-noise`)).toHaveAttribute(
@@ -134,11 +134,7 @@ test.describe("reduced motion", () => {
 
   test("no decode: the text is simply there", async ({ page }) => {
     await page.goto("/work/odovox");
-    const samples = await record(
-      page,
-      ".corner-bottom p:first-child .decode",
-      1200,
-    );
+    const samples = await record(page, ".corner-project .decode", 1200);
     expect(samples.length).toBeGreaterThan(0);
     expect(samples.every((s) => !s.on && s.noise === "")).toBe(true);
     await expect(page.locator(".corner-bottom")).toContainText("Odovox");

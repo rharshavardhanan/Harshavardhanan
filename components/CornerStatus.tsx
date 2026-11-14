@@ -25,16 +25,19 @@ export function CornerStatus() {
   const active = useSyncExternalStore(subscribe, getActive, getServerActive);
   const index = projects.findIndex((project) => project.slug === active);
 
-  // Both decode (components/Decode.tsx) each time they change.
+  // SELECTED WORK · the project's name, in the serif, in the middle · 02 / 07.
+  // The name and the count decode (components/Decode.tsx) each time they
+  // change. On phones SELECTED WORK keeps its place, unseen, so the name
+  // stays in the middle.
   return (
     <footer className="corner-row corner-bottom">
-      <p className="py-2">
+      <p className="py-2 max-sm:invisible">Selected work</p>
+      <p className="corner-project">
         <Decode
           className="block truncate"
           text={index >= 0 ? projects[index].title : ""}
         />
       </p>
-      <p className="py-2 max-sm:hidden">Selected work</p>
       <p className="justify-self-end py-2">
         <Decode
           text={index >= 0 ? `${two(index + 1)} / ${two(projects.length)}` : ""}

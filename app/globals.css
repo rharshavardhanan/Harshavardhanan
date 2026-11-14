@@ -302,8 +302,24 @@
   letter-spacing: -0.01em;
   text-transform: none;
 }
+/* The bottom row: SELECTED WORK · the project's name · 02 / 07. Three
+   columns, the middle one widest, at every width, so the name is always in
+   the middle (and is cut short, not crowded, on a narrow phone). */
 .corner-bottom {
   bottom: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) minmax(0, 1fr);
+}
+/* The project in front, named like a title: the serif, as written (not
+   capitals), 20 to 28px: larger than the labels, smaller than Harsha's
+   name above it. */
+.corner-project {
+  padding-block: 0.375rem;
+  font-family: var(--font-instrument-serif), serif;
+  font-size: clamp(1.25rem, 1.8vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: -0.005em;
+  text-align: center;
+  text-transform: none;
 }
 .corner-row :is(a, button) {
   pointer-events: auto;

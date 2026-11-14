@@ -35,6 +35,42 @@ for (const [width, height] of [
   });
 }
 
+for (const [width, height] of [
+  [1280, 800],
+  [360, 740],
+]) {
+  test(`the project's name is at the bottom centre, in the serif (${width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("/work/scp");
+    const name = corners(page).locator(".corner-project");
+    await expect(name).toContainText("Sequential Conformal Prediction");
+    const style = await name.evaluate((el) => {
+      const s = getComputedStyle(el);
+      const box = el.querySelector(".decode-text")!;
+      const range = document.createRange();
+      range.selectNodeContents(box);
+      const r = range.getBoundingClientRect();
+      return {
+        font: s.fontFamily,
+        transform: s.textTransform,
+        size: parseFloat(s.fontSize),
+        middle: Math.min(r.left + r.width / 2, 1e9),
+        right: r.right,
+      };
+    });
+    expect(style.font).toContain("Instrument Serif");
+    expect(style.transform).toBe("none");
+    expect(style.size).toBeGreaterThanOrEqual(20);
+    // Centred (a long name on a phone is cut short, still centred).
+    expect(Math.abs(style.middle - width / 2)).toBeLessThan(
+      width < 400 ? 40 : 2,
+    );
+    expect(style.right).toBeLessThanOrEqual(width);
+  });
+}
+
 test("About is one click away: in the corner on wide screens, large in the menu", async ({
   page,
 }) => {
