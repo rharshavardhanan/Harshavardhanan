@@ -518,9 +518,10 @@ html[data-loading="in"] .name > span {
 
 /* Beside the work index: smaller, lower right. */
 html[data-active="index"] .stage-box {
-  --x: 30vw;
-  --y: 14svh;
-  --s: 0.6;
+  --x: 36vw;
+  --y: 22svh;
+  --s: 0.42;
+  opacity: 0.6;
 }
 /* In a chapter: a small emblem in the top-right corner. */
 html:is(
@@ -891,4 +892,160 @@ html[data-loading] .stage[data-mode="particles"] video {
 .wipe[data-state="out"] {
   clip-path: inset(0 0 100% 0);
   transition: clip-path 800ms var(--ease-in-out) 250ms;
+}
+
+/* ==========================================================================
+   DEMO PARTS
+   ========================================================================== */
+
+/* One person in the Kattral demo: a soft warm gradient, not a face. --hue
+   varies the tone from tile to tile. It lights up when data-on="true", and a
+   ring pulses around it while that person is speaking. */
+.tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 0.6rem 0.75rem;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  color: var(--muted);
+  transition: color 400ms ease;
+}
+.tile::before {
+  content: "";
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% 0;
+  background: radial-gradient(
+    circle at 35% 30%,
+    hsl(var(--hue) 100% 78%),
+    hsl(var(--hue) 90% 55%) 55%,
+    hsl(var(--hue) 70% 30%)
+  );
+  opacity: 0;
+  scale: 0.8;
+  transition:
+    opacity 600ms ease,
+    scale 800ms var(--ease-out);
+}
+.tile[data-on="true"] {
+  color: var(--fg);
+}
+.tile[data-on="true"]::before {
+  opacity: 1;
+  scale: 1;
+}
+/* The "speaking" ring. */
+.tile::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% 0;
+  box-shadow: 0 0 0 2px var(--accent);
+  opacity: 0;
+}
+.tile[data-speaking="true"]::after {
+  animation: speaking 1.2s ease-out infinite;
+}
+@keyframes speaking {
+  from {
+    opacity: 0.9;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.45;
+  }
+}
+.tile > span {
+  position: relative;
+}
+
+/* The hallucination verdict arrives behind a line that sweeps across it. */
+.scan-reveal {
+  position: relative;
+  animation: scan-clip 900ms var(--ease-in-out) both;
+}
+.scan-reveal::before {
+  content: "";
+  position: absolute;
+  top: -0.5rem;
+  bottom: -0.5rem;
+  left: 0;
+  width: 2px;
+  background: var(--accent);
+  animation: scan-line 900ms var(--ease-in-out) both;
+}
+@keyframes scan-clip {
+  from {
+    clip-path: inset(-1rem 100% -1rem 0);
+  }
+  to {
+    clip-path: inset(-1rem -1rem -1rem 0);
+  }
+}
+@keyframes scan-line {
+  from {
+    left: 0;
+    opacity: 1;
+  }
+  to {
+    left: 100%;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile[data-speaking="true"]::after,
+  .scan-reveal,
+  .scan-reveal::before {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   KATTRAL STRIP (components/chapters/Kattral.tsx)
+   On wide screens, with motion allowed, the chapter is one row of panels that
+   slides sideways while the section stays pinned (data-strip, see
+   components/Motion.tsx). Everywhere else the panels simply stack.
+   ========================================================================== */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .strip-wrap {
+    height: 100svh;
+    overflow: hidden;
+  }
+  .strip {
+    flex-direction: row;
+    align-items: center;
+    width: max-content;
+    height: 100%;
+    gap: 8vw;
+    padding-block: 0;
+  }
+  .strip > * {
+    flex: none;
+  }
+  .strip > :nth-child(1) {
+    width: 40vw;
+  }
+  .strip > :nth-child(2) {
+    width: 58vw;
+  }
+  .strip > :nth-child(3) {
+    width: 38vw;
+  }
+}
+
+/* On the full-bleed Road Damage section the particle object steps aside. */
+html[data-active="road"] .stage-box {
+  opacity: 0;
 }

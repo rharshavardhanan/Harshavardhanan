@@ -1,23 +1,26 @@
 import { useEffect, type RefObject } from "react";
 
-// The box every demo sits in: a title on the left, a short honest note on the
-// right ("scripted", "simulated"), and the demo itself underneath.
+// What every demo sits in: no box, just a caption line above it with the
+// demo's name and an honest note ("Scripted example", "Simulated in your
+// browser"), so nobody mistakes it for the live product.
 export function DemoFrame({
   title,
   note,
   children,
+  className = "",
 }: {
   title: string;
   note: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <figure className="border-line border">
-      <figcaption className="label border-line flex flex-wrap justify-between gap-x-4 border-b px-4 py-2 font-mono">
+    <figure className={className}>
+      <figcaption className="label border-line mb-8 flex flex-wrap justify-between gap-x-6 gap-y-1 border-b pb-3">
         <span className="text-accent">{title}</span>
         <span className="text-muted">{note}</span>
       </figcaption>
-      <div className="p-4 md:p-6">{children}</div>
+      {children}
     </figure>
   );
 }

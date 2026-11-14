@@ -5,10 +5,11 @@ import { DemoFrame, reducedMotion, useStartInView } from "./DemoFrame";
 
 const SEATS = 6; // one teacher and five students
 
-// Chat lines appear once enough people have joined.
+// Chat lines appear once enough people have joined. `speaker` is the seat
+// whose ring pulses while that line is the latest.
 const CHAT = [
-  { after: 3, who: "Teacher", text: "Can everyone see my screen?" },
-  { after: 6, who: "Student", text: "Yes, it’s clear." },
+  { after: 3, who: "Teacher", speaker: 0, text: "Can everyone see my screen?" },
+  { after: 6, who: "Student", speaker: 4, text: "Yes, it’s clear." },
 ];
 
 export function KattralDemo() {
@@ -34,28 +35,38 @@ export function KattralDemo() {
     return () => clearTimeout(next);
   }, [running, joined]);
 
+  const said = CHAT.filter((line) => joined >= line.after);
+  const speaking = said.at(-1)?.speaker;
+
   return (
     <DemoFrame title="A class filling up" note="Scripted example">
       <div ref={box}>
-        <p role="status" className="label font-mono">
-          <span className="status-dot bg-accent mr-2 inline-block" />
+        <p role="status" className="label flex items-center gap-2">
+          <span className="status-dot bg-accent" />
           {joined} in class
         </p>
 
-        <ul aria-hidden className="mt-3 grid grid-cols-3 gap-2">
+        {/* Each person is a soft gradient, not a face; --hue varies the tone. */}
+        <ul aria-hidden className="mt-6 grid grid-cols-3 gap-3">
           {Array.from({ length: SEATS }, (_, seat) => (
-            <li key={seat} data-on={seat < joined} className="tile">
-              <span className="label font-mono">
-                {seat === 0 ? "Teacher · sharing screen" : `Student ${seat}`}
+            <li
+              key={seat}
+              data-on={seat < joined}
+              data-speaking={seat < joined && seat === speaking}
+              className="tile"
+              style={{ "--hue": `${18 + seat * 7}deg` } as React.CSSProperties}
+            >
+              <span className="label">
+                {seat === 0 ? "Teacher · sharing" : `Student ${seat}`}
               </span>
             </li>
           ))}
         </ul>
 
-        <ul className="mt-4 min-h-[4.5rem] space-y-1">
-          {CHAT.filter((line) => joined >= line.after).map((line) => (
-            <li key={line.text} className="demo-in">
-              <span className="label text-muted mr-2 font-mono">
+        <ul className="mt-8 min-h-[5.5rem] space-y-2">
+          {said.map((line) => (
+            <li key={line.text} className="demo-in text-h3 font-serif">
+              <span className="label text-muted mr-3 align-middle">
                 {line.who}
               </span>
               {line.text}
@@ -65,7 +76,7 @@ export function KattralDemo() {
 
         <button
           type="button"
-          className="btn-quiet"
+          className="btn-quiet label"
           onClick={play}
           disabled={running}
         >

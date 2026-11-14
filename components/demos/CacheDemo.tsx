@@ -63,12 +63,12 @@ export function CacheDemo() {
   return (
     <DemoFrame title="Cache Wars" note="Simulated in your browser">
       <fieldset disabled={running}>
-        <legend className="label text-muted font-mono">
+        <legend className="label text-muted mx-auto">
           Pick the policy you think keeps the most hits
         </legend>
-        <div className="label mt-2 flex font-mono">
+        <div className="text-h3 mt-4 flex flex-wrap justify-center gap-x-10 gap-y-2 font-serif">
           {NAMES.map((name) => (
-            <label key={name} className="seg">
+            <label key={name} className="word">
               <input
                 type="radio"
                 name="cache-pick"
@@ -82,31 +82,28 @@ export function CacheDemo() {
         </div>
       </fieldset>
 
-      <dl className="mt-5 grid gap-y-3">
+      {/* The three hit rates, very large, racing as the requests replay. */}
+      <dl className="mt-16 grid gap-y-10 md:grid-cols-3">
         {NAMES.map((name) => (
-          <div
-            key={name}
-            className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-x-3"
-          >
+          <div key={name} className="flex flex-col-reverse items-center">
             <dt
-              className={`label font-mono ${name === pick ? "text-accent" : "text-muted"}`}
+              className={`label mt-3 ${name === pick ? "text-accent" : "text-muted"}`}
             >
               {policyLabels[name]}
             </dt>
-            <dd className="bg-line/50 h-2">
-              <span
-                className={`block h-full origin-left ${name === pick ? "bg-accent" : "bg-muted"}`}
-                style={{ transform: `scaleX(${rate(name) / 100})` }}
-              />
-            </dd>
-            <dd className="label text-right font-mono tabular-nums">
+            <dd
+              className={`text-h2 font-serif tabular-nums ${name === pick ? "text-accent" : ""}`}
+            >
               {rate(name).toFixed(1)}%
             </dd>
           </div>
         ))}
       </dl>
 
-      <p role="status" className="mt-4 min-h-[3lh] sm:min-h-[2lh]">
+      <p
+        role="status"
+        className="mx-auto mt-10 min-h-[3lh] max-w-[40ch] sm:min-h-[2lh]"
+      >
         {finished &&
           `${policyLabels[winner]} kept the most hits, at ${rate(winner).toFixed(1)}%. ${
             winner === pick
@@ -116,10 +113,16 @@ export function CacheDemo() {
         {running && `${done.toLocaleString("en-IN")} of 6,000 requests…`}
       </p>
 
-      <button type="button" className="btn" onClick={start} disabled={running}>
+      {/* A big round button. */}
+      <button
+        type="button"
+        onClick={start}
+        disabled={running}
+        className="label border-accent text-accent hover:bg-accent hover:text-bg mx-auto mt-8 flex size-36 items-center justify-center rounded-full border transition-colors duration-300 disabled:opacity-45"
+      >
         {finished ? "Run again" : "Run"}
       </button>
-      <p className="label text-muted mt-4 max-w-[60ch] font-mono">
+      <p className="label text-muted mx-auto mt-10 max-w-[60ch]">
         A miniature: 6,000 requests, a cache of 24 items, and a simple learning
         agent. These are this simulation’s numbers, not the project’s.
       </p>

@@ -54,11 +54,11 @@ export function OdovoxDemo() {
   return (
     <DemoFrame title="Speak → Verify" note="Scripted example">
       <div ref={box}>
-        <p className="label text-muted font-mono">
-          <span className="status-dot bg-accent mr-2 inline-block" />
+        <p className="label text-muted flex items-center gap-2">
+          <span className="status-dot bg-accent" />
           Dictation
         </p>
-        <p className="text-h3 mt-2 min-h-[4lh] sm:min-h-[3lh]">
+        <p className="text-h3 mt-4 min-h-[5lh] font-serif sm:min-h-[4lh]">
           {/* Screen readers get the whole sentence at once, not letter by letter. */}
           <span className="sr-only">{DICTATION}</span>
           <span aria-hidden>
@@ -68,46 +68,55 @@ export function OdovoxDemo() {
         </p>
 
         {showCard && (
-          <div className="demo-in border-line mt-4 border-t pt-4">
-            <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-              {FIELDS.map(([name, value]) => (
-                <div key={name}>
-                  <dt className="label text-muted font-mono">{name}</dt>
-                  <dd>{value}</dd>
+          <div className="mt-10">
+            <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+              {FIELDS.map(([name, value], index) => (
+                // Each field arrives a moment after the one before it.
+                <div
+                  key={name}
+                  className="demo-in"
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <dt className="label text-muted">{name}</dt>
+                  <dd className="mt-1">{value}</dd>
                 </div>
               ))}
             </dl>
 
             <ol
               aria-label="Lower jaw, tooth 36 marked"
-              className="label mt-5 flex gap-px font-mono"
+              className="label demo-in mt-10 grid grid-cols-8 gap-1 sm:grid-cols-16"
+              style={{ animationDelay: "360ms" }}
             >
               {LOWER_ARCH.map((tooth) => (
                 <li
                   key={tooth}
                   aria-current={tooth === 36 ? "true" : undefined}
-                  className="border-line text-muted aria-[current]:border-accent aria-[current]:bg-accent aria-[current]:text-bg flex-1 border py-1 text-center max-sm:text-[0.625rem]"
+                  className="text-muted aria-[current]:bg-accent aria-[current]:text-bg rounded-b-[40%] bg-[color-mix(in_srgb,var(--fg)_8%,transparent)] py-4 text-center"
                 >
                   {tooth}
                 </li>
               ))}
             </ol>
 
-            <div className="mt-5 flex flex-wrap items-center gap-4">
+            <div
+              className="demo-in mt-10 flex flex-wrap items-center gap-6"
+              style={{ animationDelay: "450ms" }}
+            >
               {step === "card" ? (
                 <button
                   type="button"
-                  className="btn"
+                  className="btn label"
                   onClick={() => setStep("verified")}
                 >
                   Verify record
                 </button>
               ) : (
-                <p role="status" className="label text-accent font-mono">
+                <p role="status" className="label text-accent">
                   Doctor verified ✓ · saved in one transaction
                 </p>
               )}
-              <button type="button" className="btn-quiet" onClick={play}>
+              <button type="button" className="btn-quiet label" onClick={play}>
                 Replay
               </button>
             </div>

@@ -1,5 +1,9 @@
 import { About } from "@/components/About";
-import { Chapter } from "@/components/Chapter";
+import { Cache } from "@/components/chapters/Cache";
+import { Hallucination } from "@/components/chapters/Hallucination";
+import { Kattral } from "@/components/chapters/Kattral";
+import { Odovox } from "@/components/chapters/Odovox";
+import { Road } from "@/components/chapters/Road";
 import { Contact } from "@/components/Contact";
 import { Hero } from "@/components/Hero";
 import { Motion } from "@/components/Motion";
@@ -7,8 +11,18 @@ import { ParticleStage } from "@/components/ParticleStage";
 import { ThemeWatcher } from "@/components/ThemeWatcher";
 import { WorkIndex } from "@/components/WorkIndex";
 import { projects } from "@/content/projects";
+import { previews } from "@/lib/media";
 
 // The home page, top to bottom. Each part is its own file in components/.
+
+const CHAPTERS = {
+  odovox: Odovox,
+  road: Road,
+  kattral: Kattral,
+  cache: Cache,
+  hallucination: Hallucination,
+};
+
 export default function Home() {
   return (
     <>
@@ -19,15 +33,20 @@ export default function Home() {
       <div>
         <ParticleStage />
         <Hero />
-        <WorkIndex />
-        {projects.map((project, index) => (
-          <Chapter
-            key={project.slug}
-            project={project}
-            index={index}
-            prev={index === 0 ? "neutral" : projects[index - 1].slug}
-          />
-        ))}
+        <WorkIndex media={previews()} />
+        {projects.map((project, index) => {
+          // Each project has its own chapter layout, in components/chapters/.
+          const Chapter = CHAPTERS[project.slug];
+          const prev = index === 0 ? "neutral" : projects[index - 1].slug;
+          return (
+            <Chapter
+              key={project.slug}
+              project={project}
+              index={index}
+              prev={prev}
+            />
+          );
+        })}
       </div>
 
       {/* PLACEHOLDER, as the brief asks: other projects go here later. */}

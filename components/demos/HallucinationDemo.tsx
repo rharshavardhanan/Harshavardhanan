@@ -65,43 +65,50 @@ export function HallucinationDemo() {
   if (!item) {
     return (
       <DemoFrame title="Spot the Hallucination" note="5 of 5">
-        <dl className="grid grid-cols-2 gap-4">
-          <div>
-            <dt className="label text-muted font-mono">You</dt>
-            <dd className="text-h2 font-serif">{score} / 5</dd>
+        <dl className="grid grid-cols-2 gap-8 text-center">
+          <div className="flex flex-col-reverse">
+            <dt className="label text-muted mt-3">You</dt>
+            <dd className="text-display font-serif">{score} / 5</dd>
           </div>
-          <div>
-            <dt className="label text-muted font-mono">The model</dt>
-            <dd className="text-h2 text-accent font-serif">94%</dd>
+          <div className="flex flex-col-reverse">
+            <dt className="label text-muted mt-3">The model</dt>
+            <dd className="text-display text-accent font-serif">94%</dd>
           </div>
         </dl>
-        <p className="label text-muted mt-2 font-mono">
+        <p className="label text-muted mt-8 text-center">
           Accuracy on 25,000+ samples; five questions is not a fair fight.
         </p>
-        <button
-          type="button"
-          autoFocus
-          className="btn mt-5"
-          onClick={() => {
-            setResults([]);
-            focusFirstChoice();
-          }}
-        >
-          Try again
-        </button>
+        <p className="mt-10 text-center">
+          <button
+            type="button"
+            autoFocus
+            className="btn label"
+            onClick={() => {
+              setResults([]);
+              focusFirstChoice();
+            }}
+          >
+            Try again
+          </button>
+        </p>
       </DemoFrame>
     );
   }
 
   return (
     <DemoFrame title="Spot the Hallucination" note={`${index + 1} of 5`}>
-      <p className="label text-muted font-mono">{item.question}</p>
-      <p className="text-h3 mt-2 min-h-[4lh] sm:min-h-[3lh]">“{item.answer}”</p>
+      <p className="label text-muted text-center">{item.question}</p>
+      {/* The answer, very large, in the middle of the screen. */}
+      <p className="text-h2 mx-auto mt-8 max-w-[18ch] text-center font-serif">
+        “{item.answer}”
+      </p>
 
       {revealed ? (
-        <div key="verdict" className="demo-in mt-4">
-          <p role="status">
-            <strong className={results[index] ? "text-accent" : undefined}>
+        <div key="verdict" className="scan-reveal mt-12 text-center">
+          <p role="status" className="text-h3 font-serif">
+            <strong
+              className={`font-normal ${results[index] ? "text-accent" : ""}`}
+            >
               {results[index] ? "Correct." : "Not quite."}
             </strong>{" "}
             {item.made ? "Made up." : "Supported."} {item.why}
@@ -109,7 +116,7 @@ export function HallucinationDemo() {
           <button
             type="button"
             autoFocus
-            className="btn mt-4"
+            className="btn label mt-8"
             onClick={() => {
               setRevealed(false);
               focusFirstChoice();
@@ -119,11 +126,16 @@ export function HallucinationDemo() {
           </button>
         </div>
       ) : (
-        <div key="choices" ref={box} className="mt-4 flex flex-wrap gap-3">
-          <button type="button" className="btn" onClick={() => guess(false)}>
+        // Two big words, left and right.
+        <div
+          key="choices"
+          ref={box}
+          className="text-h2 mt-12 flex flex-wrap justify-between gap-x-8 gap-y-4 font-serif"
+        >
+          <button type="button" className="word" onClick={() => guess(false)}>
             Supported
           </button>
-          <button type="button" className="btn" onClick={() => guess(true)}>
+          <button type="button" className="word" onClick={() => guess(true)}>
             Made up
           </button>
         </div>

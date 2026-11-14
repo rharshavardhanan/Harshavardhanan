@@ -26,7 +26,6 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 // after the page's own content has been handed over to React ("hydrated"),
 // or its changes to that content make React throw the content away.
 export function Motion() {
-
   useEffect(() => {
     const media = gsap.matchMedia();
 

@@ -56,7 +56,7 @@ test.describe("desktop", () => {
     await page.goto("/");
     for (const slug of slugs) {
       const chapter = page.locator(`section#${slug}`);
-      await expect(chapter.locator("dl").first().locator("dd")).toHaveCount(3);
+      await expect(chapter.locator("[data-stats] dd")).toHaveCount(3);
       await expect(chapter.locator("figure")).toHaveCount(1);
       await expect(
         chapter.getByRole("link", { name: "Open case study" }),
