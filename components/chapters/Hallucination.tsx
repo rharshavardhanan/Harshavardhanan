@@ -62,9 +62,7 @@ export function Hallucination({
             sizes="(min-width: 1024px) 58vw, 100vw"
             className="aspect-[4/3]"
           />
-          <p className="label text-muted mt-4">
-            ROC curve, held-out test set
-          </p>
+          <p className="label text-muted mt-4">ROC curve, held-out test set</p>
         </div>
       </div>
       <ChapterLinks project={project} className="mt-20" />

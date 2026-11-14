@@ -15,6 +15,8 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 //   data-lines        text: each line slides up from behind a mask
 //   data-scale-in     media: unclips from the bottom while settling from 110%
 //   data-bar          a chart bar: draws from the left
+//   data-bar-y        a vertical line: draws downwards
+//   data-parallax     media: drifts slower than the page
 //   data-tilt         a frame: tips back 12 degrees and straightens on scroll
 //   data-hero-name    the hero name: shrinks up into the header while pinned
 //   data-strip        a wide row: slides sideways while its section is pinned
@@ -97,6 +99,35 @@ export function Motion() {
           ease: "power4.out",
           scrollTrigger: { trigger: bar, start: "top 92%", once: true },
         });
+      }
+
+      // A vertical line that draws downwards (the architecture diagram).
+      for (const line of all("[data-bar-y]")) {
+        gsap.from(line, {
+          scaleY: 0,
+          transformOrigin: "50% 0",
+          duration: 1,
+          ease: "power4.out",
+          scrollTrigger: { trigger: line, start: "top 85%", once: true },
+        });
+      }
+
+      // Media that drifts a little slower than the page (the gallery).
+      for (const item of all("[data-parallax]")) {
+        gsap.fromTo(
+          item,
+          { yPercent: 8 },
+          {
+            yPercent: -8,
+            ease: "none",
+            scrollTrigger: {
+              trigger: item,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+            },
+          },
+        );
       }
 
       for (const frame of all("[data-tilt]")) {

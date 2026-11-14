@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight } from "@/components/ArrowUpRight";
 import { CountUp } from "@/components/CountUp";
 import { demos } from "@/components/demos";
 import { Flow } from "@/components/Flow";
+import { Frame } from "@/components/Frame";
 import { LoopVideo } from "@/components/LoopVideo";
+import { MediaView } from "@/components/MediaView";
 import { Motion } from "@/components/Motion";
 import { ThemeSetter } from "@/components/ThemeSetter";
-import { project, projects } from "@/content/projects";
+import { project, projects, type Stat } from "@/content/projects";
+import { CASE_MEDIA, media } from "@/lib/media";
 
 // One file makes all five case-study pages. The [slug] folder name means the
 // last part of the address (/work/odovox) is handed to this page as `slug`,
-// and everything shown comes from content/projects.ts.
+// and everything shown comes from content/projects.ts and lib/media.ts.
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -34,25 +36,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// One titled part of the page: heading on the left, content on the right.
-function Block({
+function Figure({ stat }: { stat: Stat }) {
+  return stat.n === undefined ? (
+    stat.text
+  ) : (
+    <CountUp
+      n={stat.n}
+      decimals={stat.decimals}
+      prefix={stat.prefix}
+      suffix={stat.suffix}
+    />
+  );
+}
+
+// Problem, What I built, Result: each a statement on the left and one of the
+// project's figures, very large, on the right.
+function Statement({
   id,
   title,
-  children,
+  text,
+  stat,
 }: {
   id: string;
   title: string;
-  children: React.ReactNode;
+  text: string;
+  stat?: Stat;
 }) {
   return (
     <section
       aria-labelledby={id}
-      className="px-gutter border-line grid grid-cols-12 gap-x-4 gap-y-6 border-t py-16 lg:py-24"
+      className="px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-20 lg:py-28"
     >
-      <h2 id={id} data-lines className="text-h2 col-span-12 lg:col-span-4">
-        {title}
-      </h2>
-      <div className="col-span-12 lg:col-span-8">{children}</div>
+      <div className="col-span-12 lg:col-span-7">
+        <h2 id={id} className="label text-muted">
+          {title}
+        </h2>
+        <p data-lines className="text-h3 mt-6 max-w-[32ch] font-serif">
+          {text}
+        </p>
+      </div>
+      {stat && (
+        <p className="col-span-12 lg:col-span-4 lg:col-start-9 lg:self-end">
+          <span className="text-display block font-serif tabular-nums">
+            <Figure stat={stat} />
+          </span>
+          <span className="label text-muted mt-4 block max-w-[28ch]">
+            {stat.label}
+          </span>
+        </p>
+      )}
     </section>
   );
 }
@@ -64,6 +96,7 @@ export default async function CaseStudy({ params }: Props) {
 
   const next = projects[(projects.indexOf(item) + 1) % projects.length];
   const Demo = demos[item.slug];
+  const { wide, gallery } = CASE_MEDIA[item.slug];
   const meta = [
     ["Role", item.role],
     ...(item.year ? [["Year", item.year]] : []),
@@ -76,92 +109,174 @@ export default async function CaseStudy({ params }: Props) {
     <article data-theme={item.slug} className="bg-bg text-fg">
       <ThemeSetter theme={item.slug} />
 
-      <header className="px-gutter relative isolate flex min-h-[calc(100svh-3.625rem)] flex-col justify-end pt-[45svh] pb-12 lg:pt-24">
+      {/* 1. The project's video across the whole screen, title over it. */}
+      <header
+        className="px-gutter relative isolate flex min-h-svh flex-col justify-end pt-32 pb-14"
+        data-cursor="Play"
+      >
         <LoopVideo slug={item.slug} />
-        <h1 className="text-display max-w-[14ch] font-serif">{item.title}</h1>
-        <p className="text-h3 mt-6 max-w-[40ch]">{item.pitch}</p>
-        <dl className="label border-line mt-10 grid gap-x-8 gap-y-3 border-t pt-4 font-mono sm:grid-cols-[auto_auto_1fr]">
+        <div
+          aria-hidden
+          className="from-bg via-bg/60 absolute inset-0 -z-10 bg-linear-to-t to-transparent"
+        />
+        <h1 data-lines className="text-display max-w-[14ch] font-serif">
+          {item.title}
+        </h1>
+        <dl className="label mt-12 grid gap-x-12 gap-y-4 sm:grid-cols-[auto_auto_1fr]">
           {meta.map(([term, detail]) => (
             <div key={term}>
               <dt className="text-muted">{term}</dt>
-              <dd>{detail}</dd>
+              <dd className="mt-1">{detail}</dd>
             </div>
           ))}
         </dl>
       </header>
 
-      <Block id="problem" title="Problem">
-        <p className="text-h3 max-w-[46ch]">{item.problem}</p>
-      </Block>
+      {/* 2. The pitch, large. */}
+      <p
+        data-lines
+        className="px-gutter text-h3 max-w-[30ch] py-32 font-serif lg:py-48"
+      >
+        {item.pitch}
+      </p>
 
-      <Block id="built" title="What I built">
-        <p className="text-h3 max-w-[46ch]">{item.built}</p>
-      </Block>
+      {/* 3. The real product, full width. */}
+      {wide && (
+        <div className="px-gutter">
+          <div className="overflow-hidden" data-cursor="View">
+            <div data-scale-in>
+              <MediaView
+                media={media(wide, item.slug)}
+                alt={`${item.title}: the product`}
+                sizes="100vw"
+                className="aspect-[16/9]"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
-      <Block id="result" title="Result">
-        <p className="text-h3 max-w-[46ch]">{item.result}</p>
-        <dl className="border-line mt-10 grid gap-x-6 border-t sm:grid-cols-3">
-          {item.stats.map((stat) => (
+      {/* 4. Problem, what I built, result, each with a figure. */}
+      <Statement
+        id="problem"
+        title="Problem"
+        text={item.problem}
+        stat={item.stats[0]}
+      />
+      <Statement
+        id="built"
+        title="What I built"
+        text={item.built}
+        stat={item.stats[1]}
+      />
+      <Statement
+        id="result"
+        title="Result"
+        text={item.result}
+        stat={item.stats[2]}
+      />
+      {item.live && (
+        <p className="px-gutter pb-16">
+          <a href={item.live} className="btn label">
+            Open the live dashboard ↗
+          </a>
+        </p>
+      )}
+
+      {/* 5. How it fits together. */}
+      <section
+        aria-labelledby="architecture"
+        className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 py-28"
+      >
+        <h2
+          id="architecture"
+          data-lines
+          className="text-h2 col-span-12 lg:col-span-5"
+        >
+          How it fits together
+        </h2>
+        <div className="col-span-12 lg:col-span-6 lg:col-start-7">
+          <Flow steps={item.flow} />
+        </div>
+      </section>
+
+      {/* 6. More screens, in two offset columns that drift as you scroll. */}
+      {gallery.length > 0 && (
+        <section
+          aria-label="Screens"
+          className="px-gutter grid gap-x-8 gap-y-16 py-28 md:grid-cols-2"
+        >
+          {gallery.map((file, index) => (
             <div
-              key={stat.label}
-              className="flex flex-col-reverse justify-end pt-4 pb-2"
+              key={file}
+              data-parallax={index % 2 ? "" : undefined}
+              className={index % 2 ? "md:mt-40" : ""}
             >
-              <dt className="label text-muted mt-1 font-mono">{stat.label}</dt>
-              <dd className="stat">
-                {stat.n === undefined ? (
-                  stat.text
-                ) : (
-                  <CountUp
-                    n={stat.n}
-                    decimals={stat.decimals}
-                    prefix={stat.prefix}
-                    suffix={stat.suffix}
+              {file.includes("mobile") ? (
+                <Frame kind="phone" cursor="View">
+                  <MediaView
+                    media={media(file, item.slug)}
+                    alt={`${item.title} on a phone`}
+                    sizes="20rem"
+                    className="absolute inset-0"
                   />
-                )}
-              </dd>
+                </Frame>
+              ) : (
+                <Frame kind="browser" cursor="View">
+                  <MediaView
+                    media={media(file, item.slug)}
+                    alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "")} screen`}
+                    sizes="(min-width: 768px) 46vw, 100vw"
+                    className="absolute inset-0"
+                  />
+                </Frame>
+              )}
             </div>
           ))}
-        </dl>
-        {item.live && (
-          <p className="mt-8">
-            <a href={item.live} className="btn">
-              Open the live dashboard
-              <ArrowUpRight />
-            </a>
-          </p>
-        )}
-      </Block>
+        </section>
+      )}
 
-      <Block id="architecture" title="How it fits together">
-        <Flow steps={item.flow} />
-      </Block>
-
-      <Block
-        id="hard"
-        title={item.slug === "road" ? "Where it broke" : "What was hard"}
+      {/* 7. What was hard, on the opposite colours. */}
+      <section
+        aria-labelledby="hard"
+        data-theme="neutral"
+        className="bg-bg text-fg px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-32 lg:py-44"
       >
-        {item.draft && (
-          <p className="label border-accent text-accent mb-4 inline-block border px-2 py-0.5 font-mono">
-            Draft · Harsha to confirm
+        <h2 id="hard" data-lines className="text-h2 col-span-12 lg:col-span-5">
+          {item.slug === "road" ? "Where it broke" : "What was hard"}
+        </h2>
+        <div className="col-span-12 lg:col-span-7">
+          {item.draft && (
+            <p className="label border-fg mb-8 inline-block border px-2 py-1">
+              Draft · Harsha to confirm
+            </p>
+          )}
+          <p data-lines className="text-h3 max-w-[34ch] font-serif">
+            {item.hard}
           </p>
-        )}
-        <p className="text-h3 max-w-[46ch]">{item.hard}</p>
-      </Block>
+        </div>
+      </section>
 
-      <Block id="demo" title="Try it">
-        <Demo />
-      </Block>
+      {/* 8. The demo, full size. */}
+      <section aria-labelledby="demo" className="px-gutter py-32">
+        <h2 id="demo" data-lines className="text-h2">
+          Try it
+        </h2>
+        <div className="mx-auto mt-20 max-w-6xl">
+          <Demo />
+        </div>
+      </section>
 
-      {/* The link to the next project already wears that project's colours. */}
+      {/* 9. The next project, very large, already wearing its colours. */}
       <Link
         href={`/work/${next.slug}`}
         data-theme={next.slug}
-        className="bg-bg text-fg px-gutter group block py-24 no-underline lg:py-32"
+        data-cursor="View"
+        className="bg-bg text-fg px-gutter group flex min-h-[80svh] flex-col justify-end pt-32 pb-20 no-underline"
       >
-        <span className="label text-muted font-mono">Next project</span>
-        <span className="text-display mt-4 block max-w-[16ch] font-serif">
-          {next.title}
-          <ArrowUpRight className="rotate-45 transition-transform duration-300 ease-out group-hover:translate-x-3 motion-reduce:transition-none" />
+        <span className="label text-muted">Next project</span>
+        <span className="text-display mt-6 block max-w-[14ch] font-serif transition-transform duration-700 ease-[var(--ease-out)] group-hover:translate-x-4 motion-reduce:transition-none">
+          {next.title} →
         </span>
       </Link>
       <Motion />
