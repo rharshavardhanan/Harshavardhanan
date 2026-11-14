@@ -1,5 +1,6 @@
 // Makes the link-preview picture, public/media/og.png (1200 x 630): the word
-// "Harsha" in the site's serif italic on paper, with the particle cloud.
+// "Harsha" in the site's serif italic on paper, with the particle cloud
+// (public/media/hero-poster.avif, a still of the old particle object).
 //
 // How to run it:
 //   1. pnpm build && pnpm start --port 3100     (leave it running)
@@ -21,8 +22,8 @@ await page.evaluate(() => {
   card.innerHTML = `
     <div style="flex:1">
       <div style="font:italic 400 230px/0.9 var(--font-instrument-serif),serif;letter-spacing:-0.02em">Harsha</div>
-      <div style="margin-top:36px;font:400 22px var(--font-jetbrains-mono),monospace;color:#66635c">
-        Software engineer &amp; founder · Chennai
+      <div style="margin-top:36px;font:400 22px var(--font-inter-tight),sans-serif;letter-spacing:0.04em;text-transform:uppercase;color:#66635c">
+        Software engineer · AI &amp; ML · Chennai
       </div>
     </div>
     <img src="/media/hero-poster.avif" style="width:400px;height:400px;mix-blend-mode:multiply" />`;

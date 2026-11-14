@@ -3,7 +3,7 @@
 // DRAFT: written for Harsha from the brief's facts. Replace with your own
 // words, then set bioIsDraft to false to remove the "draft" tag on the page.
 export const bio = [
-  "I’m Harsha, a final-year engineering student at VIT Chennai and the founder of Odovox.",
+  "I’m Harsha, a final-year engineering student at VIT Chennai.",
   "I like problems where a model has to become a product someone can trust: the data and the training, the interface people actually touch, and the part most projects skip, measuring exactly how it fails.",
   "I’m looking for a full-time role from 2027.",
 ];
@@ -12,7 +12,7 @@ export const bioIsDraft = true;
 export const spec = [
   ["Based in", "Chennai, India"],
   ["Studying", "B.Tech CSE (AI & Robotics), VIT Chennai, 2023–27"],
-  ["Now", "Founder, Odovox"],
+  ["Now", "Building Odovox"],
   ["Previously", "Software Developer, Zerofence"],
 ];
 

@@ -399,16 +399,10 @@ html[data-loading="out"] .loader {
   opacity: 0;
 }
 
-/* "H.R." is drawn in from the left. */
+/* "H.R." is simply there (the counter is what moves): drawing it in would
+   make the visitor's first full picture wait for the animation. */
 .loader-initials {
-  mix-blend-mode: normal;
   color: var(--fg);
-  animation: loader-draw 900ms var(--ease-out) backwards;
-}
-@keyframes loader-draw {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
 }
 
 /* The counter is a number the browser animates from 0 to 100 and prints
@@ -426,7 +420,7 @@ html[data-loading="out"] .loader {
 .loader-count {
   font-variant-numeric: tabular-nums;
   counter-reset: loader var(--loader-count);
-  animation: loader-count 1200ms var(--ease-out) forwards;
+  animation: loader-count 1000ms var(--ease-out) forwards;
 }
 .loader-count::after {
   content: counter(loader, loader-digits);
@@ -555,57 +549,6 @@ html[data-loading="out"] .loader {
   .demo-in,
   .caret {
     animation: none;
-  }
-}
-
-/* --- Wins strip (components/About.tsx) -------------------------------------
-   Two identical lists side by side, sliding left by exactly one list's width,
-   so the loop has no seam. It pauses while the pointer is over it. */
-.marquee {
-  display: flex;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.marquee ul {
-  display: flex;
-  flex: none;
-  animation: marquee 36s linear infinite;
-}
-.marquee li {
-  padding-inline: 2rem;
-}
-.marquee li::before {
-  content: "";
-  display: inline-block;
-  width: 0.25em;
-  height: 0.25em;
-  margin-right: 4rem;
-  border-radius: 50%;
-  background: var(--fg);
-  vertical-align: 0.25em;
-}
-@media (hover: hover) {
-  .marquee:hover ul {
-    animation-play-state: paused;
-  }
-}
-@keyframes marquee {
-  to {
-    transform: translateX(-100%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .marquee {
-    flex-wrap: wrap;
-    white-space: normal;
-  }
-  .marquee ul {
-    flex-wrap: wrap;
-    animation: none;
-  }
-  .marquee ul[aria-hidden],
-  .marquee li:nth-child(n + 3) {
-    display: none;
   }
 }
 

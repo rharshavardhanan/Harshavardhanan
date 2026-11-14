@@ -6,7 +6,7 @@ import { Motion } from "@/components/Motion";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Harshavardhanan Rajasimhan: software engineer and founder in Chennai, building AI products end to end.",
+    "Harshavardhanan Rajasimhan: software engineer in Chennai, building AI products end to end.",
   alternates: { canonical: "/about" },
 };
 

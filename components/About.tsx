@@ -2,92 +2,86 @@ import Image from "next/image";
 import { bio, bioIsDraft, skills, spec, wins } from "@/content/about";
 import { Anomaly } from "./Anomaly";
 
-// Who Harsha is: a large portrait, a few sentences, the facts, the skills as
-// big lines, and the wins scrolling past. All the words come from
-// content/about.ts.
+// Who Harsha is, on one screen: the portrait large on the left; on the right
+// a few sentences in large type, the facts set like film credits, and the
+// skills, one short line per group. All the words come from content/about.ts.
 export function About() {
-  return (
-    <section id="about" aria-labelledby="about-title" className="pt-32 pb-24">
-      <div className="px-gutter grid grid-cols-12 gap-x-4 gap-y-16">
-        {/* The portrait's paper is warmer than the page's, so it is shown as
-            a print. Hovering it makes its grain shift (see .portrait). */}
-        <figure className="portrait col-span-12 sm:col-span-8 lg:col-span-5">
-          <Image
-            src="/media/portrait.avif"
-            alt="Illustrated portrait of Harsha, arms folded, smiling"
-            width={1122}
-            height={1402}
-            sizes="(min-width: 1024px) 40vw, (min-width: 640px) 66vw, 100vw"
-            className="w-full"
-          />
-        </figure>
+  const credits = [...spec, ["Awards", wins.join(" · ")]];
 
-        <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-          <h1 id="about-title" data-lines className="text-h2">
+  return (
+    <section
+      id="about"
+      aria-labelledby="about-title"
+      className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 pt-24 pb-20 lg:gap-x-8 lg:min-h-svh lg:items-center lg:pt-16 lg:pb-14"
+    >
+      {/* The portrait's paper is warmer than the page's, so it is shown as
+          a print. Hovering it makes its grain shift (see .portrait). */}
+      <figure className="portrait col-span-12 sm:col-span-7 lg:col-span-4">
+        <Image
+          src="/media/portrait.avif"
+          alt="Illustrated portrait of Harsha, arms folded, smiling"
+          width={1122}
+          height={1402}
+          preload
+          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 58vw, 100vw"
+          className="w-full lg:max-h-[78svh] lg:w-auto"
+        />
+      </figure>
+
+      <div className="col-span-12 lg:col-span-8">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <h1 id="about-title" className="label text-muted">
             About
           </h1>
           {bioIsDraft && (
-            <p className="label border-fg mt-8 inline-block border px-2 py-1">
+            <p className="label border-fg border px-2 py-1">
               Draft · Harsha to rewrite
             </p>
           )}
-          <div className="text-h3 mt-8 space-y-6 font-serif">
-            {bio.map((paragraph) => (
-              <p key={paragraph} data-lines>
-                {paragraph}
-              </p>
-            ))}
-          </div>
-
-          <dl className="label border-line mt-16 border-t">
-            {spec.map(([term, detail]) => (
-              <div
-                key={term}
-                className="border-line grid grid-cols-3 gap-x-4 border-b py-4"
-              >
-                <dt className="text-muted">{term}</dt>
-                <dd className="col-span-2">{detail}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
-      </div>
-
-      {/* Skills: one line per group, in large type. */}
-      <div className="px-gutter mt-40">
-        <h2 className="label text-muted flex items-center font-sans">
-          Skills <Anomaly id="about" />
-        </h2>
-        <dl className="mt-10">
-          {skills.map(([group, items]) => (
-            <div
-              key={group}
-              className="border-line grid grid-cols-12 gap-x-4 gap-y-2 border-t py-6 last:border-b"
+        {/* The first and last lines large; anything between them at reading
+            size, so the whole page still fits one screen. */}
+        <div className="mt-5 space-y-4">
+          {bio.map((paragraph, index) => (
+            <p
+              key={paragraph}
+              className={
+                index === 0 || index === bio.length - 1
+                  ? "text-h3 max-w-[30ch] font-serif"
+                  : "text-muted max-w-[72ch]"
+              }
             >
-              <dt className="label text-muted col-span-12 pt-3 lg:col-span-3">
-                {group}
-              </dt>
-              <dd
-                data-lines
-                className="text-h3 col-span-12 font-serif lg:col-span-9"
-              >
-                {items.join(", ")}
-              </dd>
+              {paragraph}
+            </p>
+          ))}
+        </div>
+
+        <dl className="label border-line mt-6 grid gap-x-8 border-t sm:grid-cols-2">
+          {credits.map(([term, detail]) => (
+            <div
+              key={term}
+              className={`border-line grid grid-cols-[8rem_1fr] gap-x-4 border-b py-2.5 ${term === "Awards" ? "sm:col-span-2" : ""}`}
+            >
+              <dt className="text-muted">{term}</dt>
+              <dd>{detail}</dd>
             </div>
           ))}
         </dl>
-      </div>
 
-      {/* The wins scroll sideways for ever. The second copy only exists to
-          make the loop seamless, so it is hidden from screen readers. */}
-      <div className="marquee text-h2 mt-32 py-6 font-serif">
-        {[false, true].map((copy) => (
-          <ul key={String(copy)} aria-hidden={copy || undefined}>
-            {[...wins, ...wins].map((win, index) => (
-              <li key={index}>{win}</li>
-            ))}
-          </ul>
-        ))}
+        <h2 className="label text-muted mt-6 flex items-center">
+          Skills <Anomaly id="about" />
+        </h2>
+        <dl className="mt-3">
+          {skills.map(([group, items]) => (
+            <div
+              key={group}
+              className="grid grid-cols-[8rem_1fr] gap-x-4 py-1 max-sm:grid-cols-1"
+            >
+              <dt className="label text-muted pt-1">{group}</dt>
+              <dd>{items.join(", ")}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );

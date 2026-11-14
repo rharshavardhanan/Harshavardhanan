@@ -10,7 +10,7 @@ export const SITE_URL =
 
 export const SITE_NAME = "Harshavardhanan";
 export const SITE_DESCRIPTION =
-  "Portfolio of Harshavardhanan Rajasimhan, software engineer and founder in Chennai. He builds AI products end to end: Odovox, road-damage detection, live classrooms, RL caching and hallucination detection.";
+  "Portfolio of Harshavardhanan Rajasimhan, software engineer (AI and machine learning) in Chennai. He builds AI products end to end: Odovox, road-damage detection, live classrooms, RL caching and hallucination detection.";
 
 // A description of Harsha in the format search engines read (schema.org).
 export const PERSON = {
@@ -20,7 +20,7 @@ export const PERSON = {
   alternateName: "Harsha",
   url: SITE_URL,
   image: `${SITE_URL}/media/og.png`,
-  jobTitle: "Software engineer and founder",
+  jobTitle: "Software engineer, AI and machine learning",
   description: SITE_DESCRIPTION,
   address: {
     "@type": "PostalAddress",

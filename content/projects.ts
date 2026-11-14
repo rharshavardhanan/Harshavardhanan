@@ -64,7 +64,7 @@ export const projects: Project[] = [
     quote: "Speak once. The records write themselves.",
     status: "In development",
     title: "Odovox",
-    role: "Founder",
+    role: "Personal project",
     year: "2026",
     tags: ["Voice AI", "Healthcare", "Full-stack"],
     pitch:

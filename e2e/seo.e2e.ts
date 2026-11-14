@@ -8,7 +8,7 @@ test("the home page describes itself to search engines and link previews", async
 }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(
-    "Harshavardhanan — Software engineer & founder",
+    "Harshavardhanan — Software engineer · AI & machine learning",
   );
   expect(await meta(page, 'meta[name="description"]')).toContain("Odovox");
   expect(await meta(page, 'meta[property="og:title"]')).toContain(
@@ -73,5 +73,12 @@ test("sitemap, robots, preview image and icons are served", async ({
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
     expect(response.headers()["content-type"], path).toContain(type);
+  }
+});
+
+test("nothing on the site calls Harsha a founder", async ({ page }) => {
+  for (const path of ["/", "/about", "/contact", "/work/odovox"]) {
+    await page.goto(path);
+    expect(await page.content(), path).not.toMatch(/founder/i);
   }
 });

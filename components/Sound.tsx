@@ -1,43 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+import { onSoundChange, setSound, soundOn } from "@/lib/sound";
 
-// A sound switch, off by default. When on, pressing any link or button plays
-// a very short, quiet tick made in the browser (no sound files).
+// The sound switch, off by default. When on, the film you are looking at
+// plays its own soundtrack: the middle film of the home ring, or the film at
+// the top of a project page (components/ring/Ring.tsx, components/Film.tsx).
+// There can be two of these (the frame's and the phone menu's); both read the
+// same setting, so they always agree.
 export function Sound() {
-  const [on, setOn] = useState(false);
-
-  useEffect(() => {
-    if (!on) return;
-    const audio = new AudioContext();
-
-    const tick = (event: MouseEvent) => {
-      if (!(event.target as Element).closest("a, button, label")) return;
-      const tone = audio.createOscillator();
-      const volume = audio.createGain();
-      tone.frequency.value = 660;
-      volume.gain.setValueAtTime(0.04, audio.currentTime);
-      volume.gain.exponentialRampToValueAtTime(
-        0.0001,
-        audio.currentTime + 0.06,
-      );
-      tone.connect(volume).connect(audio.destination);
-      tone.start();
-      tone.stop(audio.currentTime + 0.06);
-    };
-
-    document.addEventListener("click", tick);
-    return () => {
-      document.removeEventListener("click", tick);
-      audio.close();
-    };
-  }, [on]);
-
+  const on = useSyncExternalStore(onSoundChange, soundOn, () => false);
   return (
     <button
       type="button"
       aria-pressed={on}
-      onClick={() => setOn(!on)}
+      onClick={() => setSound(!on)}
       className="py-2 underline underline-offset-4"
     >
       sound {on ? "on" : "off"}

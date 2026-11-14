@@ -71,6 +71,15 @@ export function Motion() {
         // to full strength as you scroll through the quote's track.
         for (const text of all("[data-words]")) {
           const track = text.closest<HTMLElement>("[data-words-track]") ?? text;
+          // Out of sight until its stretch of the page arrives: half-lit
+          // words sitting below the fold would read as faint, unreadable text.
+          gsap.set(text, { visibility: "hidden" });
+          ScrollTrigger.create({
+            trigger: track,
+            start: "top 70%",
+            onEnter: () => gsap.set(text, { visibility: "visible" }),
+            onLeaveBack: () => gsap.set(text, { visibility: "hidden" }),
+          });
           SplitText.create(text, {
             type: "words",
             aria: "none",

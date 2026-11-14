@@ -11,7 +11,7 @@ test.describe("desktop", () => {
         .locator(selector)
         .first()
         .evaluate((el) => getComputedStyle(el).fontFamily);
-    expect(await family("h1")).toContain("Instrument Serif");
+    expect(await family("#about .text-h3")).toContain("Instrument Serif");
     expect(await family(".corners")).toContain("Inter Tight");
     for (const name of ["Instrument Serif", "Inter Tight"]) {
       expect(

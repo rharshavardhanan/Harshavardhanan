@@ -8,6 +8,7 @@ import {
   ViewTransition,
 } from "react";
 import type { Film as FilmFiles } from "@/lib/media";
+import { onSoundChange, soundOn } from "@/lib/sound";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
 function subscribe(onChange: () => void) {
@@ -58,13 +59,22 @@ export function Film({
         else el.addEventListener("loadedmetadata", seek, { once: true });
       }
     } catch {}
-    // A film out of sight does not need to play.
+    // A film out of sight does not need to play, or be heard.
+    let visible = true;
+    const listen = () => (el.muted = !(soundOn() && visible));
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) el.play().catch(() => {});
+      visible = entry.isIntersecting;
+      if (visible) el.play().catch(() => {});
       else el.pause();
+      listen();
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    const stopListening = onSoundChange(listen);
+    listen();
+    return () => {
+      observer.disconnect();
+      stopListening();
+    };
   }, [slug, play]);
 
   return (

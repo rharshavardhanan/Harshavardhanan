@@ -15,7 +15,8 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
     .poll(() => portrait.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0);
   await expect(about.getByText("Draft · Harsha to rewrite")).toBeVisible();
-  await expect(about).toContainText("Founder, Odovox");
+  await expect(about).toContainText("Building Odovox");
+  await expect(page.locator("body")).not.toContainText(/founder/i);
   await expect(about.locator("dl").nth(1).locator("dt")).toHaveText([
     "Languages",
     "ML & CV",
@@ -23,10 +24,10 @@ test("About: portrait, draft bio, spec sheet, five skill groups, wins", async ({
     "Web & Backend",
     "Tools",
   ]);
-  await expect(about.locator(".marquee ul").first()).toContainText(
+  await expect(about.locator("dl").first()).toContainText(
     "Makeathon Winner 2025 — VIT Chennai",
   );
-  await expect(about.locator(".marquee ul").first()).toContainText(
+  await expect(about.locator("dl").first()).toContainText(
     "ML Certification 2025 — SmartBridge × Google",
   );
 });
@@ -104,6 +105,25 @@ test("Sound is off until switched on", async ({ page }) => {
   await expect(sound).toHaveText("sound on");
 });
 
+test("Sound on: the project's own film is heard, and only that one", async ({
+  page,
+}) => {
+  await page.goto("/work/road");
+  const film = page.locator("article [data-film] video");
+  await expect(film).toHaveCount(1);
+  expect(await film.evaluate((v: HTMLVideoElement) => v.muted)).toBe(true);
+  await page.locator(".corners").getByRole("button", { name: /^sound/ }).click();
+  await expect
+    .poll(() => film.evaluate((v: HTMLVideoElement) => v.muted))
+    .toBe(false);
+  // Every other video on the page (the proof recordings) stays silent.
+  const heard = await page.evaluate(
+    () =>
+      [...document.querySelectorAll("video")].filter((v) => !v.muted).length,
+  );
+  expect(heard).toBe(1);
+});
+
 test("404: the page says so in the site's voice and offers a way home", async ({
   page,
 }) => {
@@ -130,5 +150,24 @@ test.describe("reduced motion", () => {
       .click();
     await expect(page).toHaveURL(/\/work\/road$/);
     await expect(page.locator(".wipe")).not.toHaveAttribute("data-state", /.+/);
+  });
+});
+
+test.describe("about on a laptop screen", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test("fits one screen: portrait, bio, credits and skills", async ({
+    page,
+  }) => {
+    await page.goto("/about");
+    await page.evaluate(() => document.fonts.ready);
+    for (const term of ["Based in", "Studying", "Now", "Previously", "Awards"]) {
+      await expect(
+        page.locator("#about dt", { hasText: new RegExp(`^${term}$`) }),
+      ).toBeInViewport();
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight),
+    ).toBeLessThanOrEqual(900);
   });
 });

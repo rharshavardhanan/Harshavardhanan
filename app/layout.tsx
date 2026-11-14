@@ -39,7 +39,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Harshavardhanan — Software engineer & founder",
+    default: "Harshavardhanan — Software engineer · AI & machine learning",
     template: "%s — Harshavardhanan",
   },
   description: SITE_DESCRIPTION,
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: "Harshavardhanan — Software engineer & founder",
+    title: "Harshavardhanan — Software engineer · AI & machine learning",
     description: SITE_DESCRIPTION,
     url: "/",
     images: [{ url: "/media/og.png", width: 1200, height: 630, alt: "Harsha" }],
@@ -63,12 +63,12 @@ export const viewport: Viewport = {
 // checked against it. React cannot write an HTML comment directly, so it
 // travels inside a hidden element.
 const CONTRACT = `<!--
-THESIS: A quiet editorial shell about one engineer; each project takes the whole page over with its own colour world and a working miniature. Refuses the grid of same-size project cards.
-OWN-WORLD: Paper #F4F2EE ground, ink #0E0E0E type, hairlines, film grain. Instrument Serif display, Inter Tight body, JetBrains Mono for labels and numbers. Five dark project worlds, each one background and one accent, reached by scrolling.
-STORY: The visitor reads who he is, scrolls through five projects that each change the room, operates a demo, opens a case study, and writes to him.
-FIRST VIEWPORT: The full name in giant serif at left; subtitle beneath; a calm particle object at right; header with H.R., Chennai clock, Work / About / Contact, Resume; status pill "currently building Odovox".
-FORM: Pinned by the brief (docs/brief.md, v2), no roll. Key: brief-v2-pinned-2026-11-12.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+THESIS: Image-first and almost wordless at the front, every piece of evidence behind it. The home page is one screen, a WebGL ring of seven project films; each project page opens like a film poster, then shows the real product, a working demo and the detail.
+OWN-WORLD: Each project's own colours; paper #F4F2EE and ink #0E0E0E for the shell. Instrument Serif large, Inter Tight for everything else, 14px credit-style capitals in the four corners. Torn paper edges, film grain, laurels. Monospace only inside demos.
+STORY: The visitor turns the ring, opens a film, reads its one line, checks the real screens, operates the demo, reads where it broke, and writes to him through INQUIRE.
+FIRST VIEWPORT: The ring of films, the middle one sharp and playing; the frame: MENU, SOUND, HARSHAVARDHANAN, INQUIRE, the project's name, SELECTED WORK, "01 / 07".
+FORM: Pinned by the brief (docs/brief-v3.md), no roll. Key: brief-v3-pinned-2026-11-14.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the test suite, Lighthouse and DESIGN.md.
 -->`;
 
 export default function RootLayout({

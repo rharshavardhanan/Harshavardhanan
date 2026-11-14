@@ -21,23 +21,25 @@ Secondary: the Awwwards jury (Design 40%, Usability 30%, Creativity 20%, Content
 and the Developer Award jury.
 
 Confirmed 2026-11-12: when the two conflict, the recruiter wins. Spectacle never blocks
-content.
+content. Brief v3 (2026-11-14) made the front image-first and almost wordless, chosen by
+Harsha; the recruiter path is kept by the MENU index (every project by name), INQUIRE
+on every page, a plain list of links under the home ring, and all the detail one
+scroll down each project page.
 
 ## Product Purpose
 
-The personal portfolio of Harshavardhanan Rajasimhan ("Harsha"), software engineer and
-founder (AI/ML and full-stack), Chennai. Success is a recruiter contacting him about a
+The personal portfolio of Harshavardhanan Rajasimhan ("Harsha"), software engineer (AI/ML
+and full-stack), Chennai. Never describe him as a founder (his instruction, 2026-11-14). Success is a recruiter contacting him about a
 full-time role starting in 2027, after he graduates from VIT Chennai (reconfirmed
 2026-11-12 for brief v2; Odovox is the lead proof of what he can build, not the thing
 being sold). An Awwwards submission is a second goal.
 
 ## Positioning
 
-He builds AI products end to end, from model to interface, and has founded one
-(Odovox, a voice-first operating system for dental clinics). The site is a neutral
-editorial shell about him as an engineer; each project then takes the page over with
-its own world, a working miniature of what it does, and an honest account of where it
-broke.
+He builds AI products end to end, from model to interface; Odovox (a voice-first
+operating system for dental clinics) is his personal project and the lead proof. Each
+project opens like a film poster in its own colours, then shows the real product, a
+working miniature of what it does, and an honest account of where it broke.
 
 ## Operating Context
 
@@ -47,14 +49,18 @@ GitHub, LinkedIn and the résumé PDF.
 
 ## Capabilities and Constraints
 
-- Site map, copy and interactions are fixed by `docs/brief.md` (v2).
-- Five projects: Odovox (lead), Automated Road Damage Survey, Kattral Academy
-  (Zerofence), Edge Cache RL, Hallucination Detection in LLMs. All metrics come from
-  the brief and are not to be rounded up or extended.
+- Structure and motion are set by `docs/brief-v3.md`; facts and copy by `docs/brief.md`
+  (v2), the résumé and the project repositories.
+- Seven projects, in this order: Odovox (lead), Aftermeet, Sequential Conformal
+  Prediction (with Akileshguhan A), Automated Road Damage Survey, Kattral Academy
+  (Zerofence), Edge Cache RL, Hallucination Detection in LLMs. Metrics are not to be
+  rounded up or extended.
+- The mood films are AI-generated and always labelled as such; they must not show a
+  product in real use as fact.
 - Odovox: never claim live clinics or users.
 - The phone number never appears on the site.
-- Built in six phases, reviewed after each. Harsha is learning to code and must be able
-  to read and change every file.
+- Built in phases; Harsha chose no review stops (v2 and v3). He is learning to code and
+  must be able to read and change every file.
 - Odovox's eight clinic modules: auth and roles, voice consult, live queue,
   scheduling, lab, inventory, billing, WhatsApp follow-ups.
 - Undecided: bio text; "More work" rows; whether the contact form uses Resend.

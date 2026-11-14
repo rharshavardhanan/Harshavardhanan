@@ -12,6 +12,7 @@ import {
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
 import { ease, nearest, type PanelSize, panelSize, wrap } from "@/lib/ring";
+import { onSoundChange, soundOn } from "@/lib/sound";
 import { FILM_TIME } from "../Film";
 import type { RingGL } from "./gl";
 
@@ -113,6 +114,8 @@ export function Ring({
         last: performance.now(),
         born: performance.now(),
         expand: 0,
+        // When the films may start loading: after the loader and the fly-in.
+        filmsAt: performance.now() + (html.dataset.loading ? 2600 : 1200),
         leaving: null as null | { at: number; href: string },
         closing: -1,
       };
@@ -157,8 +160,17 @@ export function Ring({
         s.lastInput = performance.now();
       };
 
+      // Sound on: only the middle film is heard.
+      const listen = () => {
+        items.forEach((_, index) => {
+          const video = gl.video(index);
+          if (video) video.muted = !(soundOn() && index === s.centre);
+        });
+      };
+
       // A new project faces you: name it, colour the page, play its film.
       const show = (index: number) => {
+        if (cancelled) return; // the page has moved on
         s.centre = index;
         setCentre(index);
         html.dataset.active = items[index].slug;
@@ -166,7 +178,14 @@ export function Ring({
         // corners, so the frame there is paper on a dark band ("media").
         el.dataset.tone = dims.vertical ? "media" : items[index].tone;
         window.dispatchEvent(new Event("tone"));
+        // The very first films wait until the panels have landed (posters
+        // show until then), so they never slow down the first screen.
+        if (s.filmsAt > performance.now()) {
+          window.setTimeout(() => show(s.centre), s.filmsAt - performance.now());
+          return;
+        }
         gl.play([(index + n - 1) % n, index, (index + 1) % n]);
+        listen();
       };
 
       const tick = (now: number) => {
@@ -217,7 +236,7 @@ export function Ring({
           const order = Math.abs(wrap(index - s.target, n));
           return Math.min(
             1,
-            Math.max(0, (now - s.introAt - order * 90) / 1100),
+            Math.max(0, (now - s.introAt - order * 60) / 900),
           );
         });
 
@@ -348,6 +367,7 @@ export function Ring({
         else gl.play([(s.centre + n - 1) % n, s.centre, (s.centre + 1) % n]);
       };
 
+      const stopListening = onSoundChange(listen);
       el.addEventListener("wheel", onWheel, { passive: false });
       el.addEventListener("pointerdown", onDown);
       el.addEventListener("focusin", onFocus);
@@ -358,6 +378,7 @@ export function Ring({
       window.addEventListener("resize", onResize);
       document.addEventListener("visibilitychange", onVisibility);
       detach = () => {
+        stopListening();
         el.removeEventListener("wheel", onWheel);
         el.removeEventListener("pointerdown", onDown);
         el.removeEventListener("focusin", onFocus);

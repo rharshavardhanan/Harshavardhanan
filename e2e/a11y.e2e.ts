@@ -51,6 +51,14 @@ test("home page (the list of films, as reduced motion shows it)", async ({
 test.describe("with motion", () => {
   test.use({ reducedMotion: "no-preference" });
 
+  test("a project page as it first appears, animations ready", async ({
+    page,
+  }) => {
+    await page.goto("/work/scp");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "ready");
+    expect(await audit(page)).toEqual([]);
+  });
+
   test("home page with the ring running", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
@@ -112,4 +120,20 @@ test.describe("phone", () => {
     await expect(page.locator(".corners time")).toHaveText(/IST$/);
     expect(await audit(page)).toEqual([]);
   });
+
+  for (const path of ["/about", "/contact", "/work/odovox", "/work/aftermeet"]) {
+    test(`${path}: clean, and nothing scrolls sideways at 360px`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await page.evaluate(() => document.fonts.ready);
+      expect(await audit(page)).toEqual([]);
+      const overflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  }
 });

@@ -8,6 +8,8 @@ export default defineConfig({
   use: { baseURL: "http://localhost:3100", channel: "chrome" },
   webServer: {
     command: "pnpm build && pnpm start --port 3100",
+    // Its own build folder, so a preview server on .next keeps working.
+    env: { NEXT_DIST_DIR: ".next-test" },
     url: "http://localhost:3100",
     reuseExistingServer: false,
     timeout: 180_000,

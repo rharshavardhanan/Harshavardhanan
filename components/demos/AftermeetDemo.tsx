@@ -11,7 +11,6 @@ const SAMPLE =
 // Transcript in, tasks out: a miniature of Aftermeet's no-AI demo mode, run
 // in the browser by lib/meeting-extract.ts. Nothing is sent anywhere.
 export function AftermeetDemo() {
-  const [text, setText] = useState(SAMPLE);
   const [result, setResult] = useState<Extraction | null>(null);
 
   return (
@@ -22,14 +21,19 @@ export function AftermeetDemo() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          setResult(extract(text));
+          // Read the box itself (it is not held in React state), so text
+          // typed before the page's scripts have started is never lost.
+          const transcript = new FormData(event.currentTarget).get(
+            "transcript",
+          );
+          setResult(extract(String(transcript ?? "")));
         }}
       >
         <label className="label text-muted block">
           Transcript (a made-up meeting; edit it or paste your own)
           <textarea
-            value={text}
-            onChange={(event) => setText(event.target.value)}
+            name="transcript"
+            defaultValue={SAMPLE}
             rows={6}
             className="border-line text-body focus:border-fg mt-3 block w-full resize-y border-0 border-b bg-transparent pb-3 font-sans normal-case tracking-normal outline-none"
           />

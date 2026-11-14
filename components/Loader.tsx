@@ -2,8 +2,8 @@
 // which runs before the page is first drawn and decides whether to show it:
 // only on the first visit in this browser session, and never for visitors who
 // asked for reduced motion. It marks <html data-loading="in">, switches to
-// "out" (the fade) after 1.4s, and removes the mark after 2s. When the mark
-// goes, the particles burst out and the name's letters rise. The styles that
+// "out" (the fade) after 1.1s, and removes the mark after 1.5s. When the mark
+// goes, the home ring's panels fly in. The styles that
 // react to those marks are under "Loader" in app/globals.css.
 const SCRIPT = `(function () {
   try {
@@ -18,8 +18,8 @@ const SCRIPT = `(function () {
     if (sessionStorage.getItem("loaded")) return;
     sessionStorage.setItem("loaded", "1");
     html.dataset.loading = "in";
-    setTimeout(function () { html.dataset.loading = "out"; }, 1400);
-    setTimeout(function () { delete html.dataset.loading; }, 2000);
+    setTimeout(function () { html.dataset.loading = "out"; }, 1100);
+    setTimeout(function () { delete html.dataset.loading; }, 1500);
   } catch (error) {}
 })();`;
 

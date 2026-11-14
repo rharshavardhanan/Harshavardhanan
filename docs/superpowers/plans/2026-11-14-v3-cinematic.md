@@ -238,6 +238,9 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 
 ## Phase 6: About, loader, sound, mobile, reduced motion, quality
 
+> Done 2026-11-14. Also: every "founder" mention removed at Harsha's request; the
+> browser tests now build into `.next-test/` so a preview server keeps working.
+
 ### Task 6.1: /about fits one screen
 
 - **Goal:** On a 1440×900 window, `/about` shows the portrait (with the grain shift on hover), the 3–4 line bio, a credits list (Based in, Studying, Now, Previously, Awards) and one line of skills per group, with no scrolling.
