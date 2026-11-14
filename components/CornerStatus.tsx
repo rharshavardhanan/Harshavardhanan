@@ -2,9 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 import { projects } from "@/content/projects";
+import { Sound } from "./Sound";
 
 // The frame's bottom row: which project you are looking at, and where it sits
-// in the list ("03 / 07"). Pages say which project that is by writing its
+// in the list ("03 / 07"); on phones, the SOUND switch too. Pages say which project that is by writing its
 // name to <html data-active="..."> (the home ring as it turns, a project page
 // when it opens); this re-reads it whenever it changes.
 function subscribe(onChange: () => void) {
@@ -28,6 +29,10 @@ export function CornerStatus() {
     <footer className="corner-row corner-bottom">
       <p className="truncate py-2">{index >= 0 && projects[index].title}</p>
       <p className="py-2 max-sm:hidden">Selected work</p>
+      {/* Phones have no room for SOUND in the top row: it sits here. */}
+      <span className="sm:hidden">
+        <Sound />
+      </span>
       <p className="justify-self-end py-2">
         {index >= 0 && `${two(index + 1)} / ${two(projects.length)}`}
       </p>

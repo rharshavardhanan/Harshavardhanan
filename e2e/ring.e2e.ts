@@ -57,6 +57,21 @@ test("the ring starts, names the middle project and turns with the arrow keys", 
   await expect(page).toHaveURL(/\/work\/aftermeet$/);
 });
 
+test.describe("phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("the SOUND switch is on the home page", async ({ page }) => {
+    await page.goto("/");
+    await running(page);
+    const sound = page
+      .locator(".corners")
+      .getByRole("button", { name: /^sound/ })
+      .filter({ visible: true });
+    await expect(sound).toHaveCount(1);
+    await expect(sound).toBeInViewport();
+  });
+});
+
 test("tabbing to a project's link turns the ring to it", async ({ page }) => {
   await page.goto("/");
   await running(page);
