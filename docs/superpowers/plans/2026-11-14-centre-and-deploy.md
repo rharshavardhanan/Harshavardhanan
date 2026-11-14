@@ -4,6 +4,12 @@ Source: Harsha, 2026-11-14: "harshavardhanan can be little bit more centred,
 push everything, I need to deploy this, free deployment, snappy, in Vercel,
 like reponame.vercel.app".
 
+**Status: done (2026-11-14).** Name centred (loader tests 8/8; `pnpm e2e` 111
+passed, `pnpm test` 62 passed). Pushed: `main` on GitHub. Live:
+https://harshavardhanan.vercel.app, Ready, all smoke pages 200, sitemap on the
+vercel.app address, no console or runtime errors; GitHub connected, so a push
+to `main` deploys.
+
 Which name: the loader's. It starts at the left gutter and stops short of the
 right one (60px to 1268px in a 1440px window, so its middle sits 56px left of
 the window's). The frame's name is already centred (604 to 836px, middle 720).

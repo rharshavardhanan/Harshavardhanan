@@ -32,6 +32,10 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 - `pnpm e2e` — browser tests (Playwright, files named `*.e2e.ts`; builds into `.next-test/` and serves on port 3100, so a preview on `.next` keeps working; needs Google Chrome)
 - `pnpm typecheck` · `pnpm lint` · `pnpm build`
 - `pnpm make:og` — re-make the link-preview image (needs a production server running; pass its URL)
+- Live at https://harshavardhanan.vercel.app (Vercel project `harshavardhanan`, free Hobby plan).
+  The GitHub repo is connected: every push to `main` builds and deploys to production.
+  A manual deploy uploads the folder, git-ignored files included, so deploy a clean export:
+  `git archive HEAD | tar -x -C <dir>`, copy `.vercel/` in, then `vercel deploy --prod --cwd <dir>`.
 
 ## Where things are
 
@@ -44,7 +48,7 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 - `components/Motion.tsx` — every scroll animation, switched on by `data-` attributes (`data-lines`, `data-words`, `data-edge`...). Render it last inside each page.
 - `public/media/mood/` — the AI mood films and posters (see its README; raw files go in `videos/`, which is git-ignored). `public/media/real/` — real screenshots and recordings (README there).
 - `lib/` — small pure functions with tests (`ring.ts`, `torn.ts`, `media.ts`, `cache-sim.ts`, `meeting-extract.ts`, `ist.ts`, `site.ts`).
-- `NEXT_PUBLIC_SITE_URL` — set to the real domain when there is one (see `lib/site.ts`).
+- `NEXT_PUBLIC_SITE_URL` — set to a custom domain if there ever is one (see `lib/site.ts`); on Vercel the vercel.app address is used by itself.
 
 ## Rules
 
@@ -56,4 +60,4 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 - Animate `transform`, `opacity`, `clip-path` and colour only, and honour `prefers-reduced-motion`.
 - Every page works with JavaScript off, with a keyboard, and at 360px wide.
 - Never call Harsha a founder anywhere on the site (Odovox is a personal project). Every AI film is labelled.
-- One local commit per finished phase. Never push. `potrait` (the portrait's source PNG) and `videos/` are git-ignored.
+- One local commit per finished piece. Push only when Harsha asks: a push to `main` goes live. `potrait` (the portrait's source PNG) and `videos/` are git-ignored.
