@@ -317,7 +317,12 @@ export function createRing(
         panel.video?.load();
         gl.deleteTexture(panel.texture);
       });
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      // Free what this ring made, but keep the canvas's WebGL itself alive:
+      // Next.js keeps a page you leave ready for the Back button, and the
+      // ring then starts again on the same canvas.
+      gl.deleteBuffer(buffer);
+      gl.deleteBuffer(indices);
+      gl.deleteProgram(program);
     },
   };
 }

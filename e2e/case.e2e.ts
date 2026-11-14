@@ -87,17 +87,31 @@ test("without JavaScript the page is still themed and readable", async ({
     backgrounds.cache,
   );
   await expect(page.locator("h1")).toHaveText("Edge Cache RL");
-  await expect(page.locator(".case-media img")).toBeVisible();
+  await expect(page.locator("[data-film] img")).toBeVisible();
   await context.close();
 });
 
-test.describe("reduced motion", () => {
-  test.use({ reducedMotion: "reduce" });
+test("each page opens like a film poster: title, credits, quote, laurels", async ({
+  page,
+}) => {
+  await page.goto("/work/scp");
+  const credits = page.locator("article header dl.credits dt");
+  await expect(credits).toContainText(["Role", "Team", "Built with", "Year"]);
+  await expect(page.locator("[data-words]")).toHaveText(
+    "Know when to hand over.",
+  );
+  await expect(page.locator(".laurel")).toHaveCount(3);
+  await expect(page.locator(".laurel").first()).toContainText("7.1");
+});
 
-  test("the hero shows the still, not the video", async ({ page }) => {
-    await page.goto("/work/odovox");
-    await expect(page.locator(".corners time")).toHaveText(/^\d\d:\d\d IST$/);
-    await expect(page.locator(".case-media video")).toHaveCount(0);
-    await expect(page.locator(".case-media img")).toBeVisible();
-  });
+test("AI films are labelled, the particle stand-in is not", async ({
+  page,
+}) => {
+  await page.goto("/work/odovox");
+  await expect(page.locator("[data-film] .film-ai")).toHaveText(
+    "AI-generated film",
+  );
+  await page.goto("/work/hallucination");
+  await expect(page.locator("[data-film]")).toHaveCount(1);
+  await expect(page.locator("[data-film] .film-ai")).toHaveCount(0);
 });

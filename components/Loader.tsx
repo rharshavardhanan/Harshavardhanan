@@ -8,8 +8,14 @@
 const SCRIPT = `(function () {
   try {
     var html = document.documentElement;
-    if (sessionStorage.getItem("loaded")) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // The home ring is on its way: keep its fallback list out of sight
+    // (components/ring/Ring.tsx clears this when it starts, or if it cannot).
+    html.dataset.ring = "wait";
+    setTimeout(function () {
+      if (!document.querySelector('.ring[data-state="on"]')) delete html.dataset.ring;
+    }, 6000);
+    if (sessionStorage.getItem("loaded")) return;
     sessionStorage.setItem("loaded", "1");
     html.dataset.loading = "in";
     setTimeout(function () { html.dataset.loading = "out"; }, 1400);

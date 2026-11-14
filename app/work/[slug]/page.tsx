@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CountUp } from "@/components/CountUp";
+import { Anomaly } from "@/components/Anomaly";
 import { demos } from "@/components/demos";
+import { Film } from "@/components/Film";
 import { Flow } from "@/components/Flow";
-import { LoopVideo } from "@/components/LoopVideo";
+import { Laurel } from "@/components/Laurel";
 import { Motion } from "@/components/Motion";
-import { ThemeSetter } from "@/components/ThemeSetter";
-import { project, projects, type Stat } from "@/content/projects";
 import { proofs } from "@/components/proof";
+import { ThemeSetter } from "@/components/ThemeSetter";
+import { Torn } from "@/components/Torn";
+import { project, projects } from "@/content/projects";
+import { film } from "@/lib/media";
 
-// One file makes all five case-study pages. The [slug] folder name means the
+// One file makes all seven project pages. The [slug] folder name means the
 // last part of the address (/work/odovox) is handed to this page as `slug`,
-// and everything shown comes from content/projects.ts and lib/media.ts.
+// and everything shown comes from content/projects.ts, lib/media.ts and the
+// project's own proof file in components/proof/.
+//
+// It opens like a film poster, then gets down to the evidence:
+//   1. the title and the credits, on the project's colour, torn along the bottom
+//   2. the film, held behind them, revealed as they scroll away
+//   3. the project's one line, word by word, over the film
+//   4. the synopsis, with the figures set like festival laurels
+//   5. the real product   6. the demo   7. the detail   8. the next project
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -34,55 +45,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function Figure({ stat }: { stat: Stat }) {
-  return stat.n === undefined ? (
-    stat.text
-  ) : (
-    <CountUp
-      n={stat.n}
-      decimals={stat.decimals}
-      prefix={stat.prefix}
-      suffix={stat.suffix}
-    />
-  );
-}
-
-// Problem, What I built, Result: each a statement on the left and one of the
-// project's figures, very large, on the right.
-function Statement({
+// Problem, What I built, Result: a label on the left, the words large.
+function Detail({
   id,
   title,
   text,
-  stat,
 }: {
   id: string;
   title: string;
   text: string;
-  stat?: Stat;
 }) {
   return (
     <section
       aria-labelledby={id}
-      className="px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-20 lg:py-28"
+      className="border-line grid grid-cols-12 gap-x-4 gap-y-4 border-b py-12"
     >
-      <div className="col-span-12 lg:col-span-7">
-        <h2 id={id} className="label text-muted">
-          {title}
-        </h2>
-        <p data-lines className="text-h3 mt-6 max-w-[32ch] font-serif">
-          {text}
-        </p>
-      </div>
-      {stat && (
-        <p className="col-span-12 lg:col-span-4 lg:col-start-9 lg:self-end">
-          <span className="text-display block font-serif tabular-nums">
-            <Figure stat={stat} />
-          </span>
-          <span className="label text-muted mt-4 block max-w-[28ch]">
-            {stat.label}
-          </span>
-        </p>
-      )}
+      <h3 id={id} className="label text-muted col-span-12 lg:col-span-3">
+        {title}
+      </h3>
+      <p
+        data-lines
+        className="text-h3 col-span-12 max-w-[36ch] font-serif lg:col-span-8"
+      >
+        {text}
+      </p>
     </section>
   );
 }
@@ -92,14 +78,16 @@ export default async function CaseStudy({ params }: Props) {
   const item = project(slug);
   if (!item) notFound(); // any other address under /work/ is a 404
 
-  const next = projects[(projects.indexOf(item) + 1) % projects.length];
+  const index = projects.indexOf(item);
+  const next = projects[(index + 1) % projects.length];
   const Demo = demos[item.slug];
   const Proof = proofs[item.slug];
-  const meta = [
+  const credits = [
     ["Role", item.role],
     ...(item.team ? [["Team", item.team]] : []),
+    ["Built with", item.stack.join(" · ")],
     ...(item.year ? [["Year", item.year]] : []),
-    ["Stack", item.stack.join(" · ")],
+    ...(item.status ? [["Status", item.status]] : []),
   ];
 
   return (
@@ -112,87 +100,117 @@ export default async function CaseStudy({ params }: Props) {
     >
       <ThemeSetter theme={item.slug} />
 
-      {/* 1. The project's video across the whole screen, title over it. */}
-      <header
-        className="px-gutter relative isolate flex min-h-svh flex-col justify-end pt-32 pb-14"
-        data-cursor="Play"
+      {/* 1–3. The poster. The film is held to the window behind the title,
+          which scrolls away over it; then the quote is read out over the
+          film. */}
+      <div className="poster">
+        <div className="poster-film">
+          <Film slug={item.slug} film={film(item.slug)} title={item.title} />
+        </div>
+
+        <div className="poster-body">
+          <header className="poster-title bg-bg">
+            <p className="label text-muted">
+              0{index + 1} / 0{projects.length}
+            </p>
+            <h1
+              data-lines
+              className="text-display mt-6 max-w-[16ch] font-serif"
+            >
+              {item.title}
+            </h1>
+            <dl className="credits label mt-12">
+              {credits.map(([term, detail]) => (
+                <div key={term}>
+                  <dt className="text-muted">{term}</dt>
+                  <dd className="mt-1">{detail}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="label text-muted mt-10 flex items-center">
+              Scroll
+              <Anomaly id={item.slug} />
+            </p>
+            <Torn seed={index * 7 + 3} side="bottom" />
+          </header>
+
+          <div className="poster-quote" data-words-track data-tone="media">
+            <p data-words className="text-h2 font-serif">
+              {item.quote}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. The synopsis, and the figures as laurels. */}
+      <section
+        aria-label="In short"
+        className="synopsis bg-bg px-gutter grid grid-cols-12 gap-x-4 gap-y-20 pt-24 pb-32"
       >
-        <LoopVideo slug={item.slug} />
-        <div
-          aria-hidden
-          className="from-bg via-bg/60 absolute inset-0 -z-10 bg-linear-to-t to-transparent"
-        />
-        <h1 data-lines className="text-display max-w-[14ch] font-serif">
-          {item.title}
-        </h1>
-        <dl className="label mt-12 grid gap-x-12 gap-y-4 sm:grid-cols-2 lg:grid-cols-[auto_auto_auto_1fr]">
-          {meta.map(([term, detail]) => (
-            <div key={term}>
-              <dt className="text-muted">{term}</dt>
-              <dd className="mt-1">{detail}</dd>
-            </div>
+        <Torn seed={index * 7 + 5} side="top" />
+        <div className="col-span-12 lg:col-span-6">
+          <p data-lines className="text-h3 max-w-[30ch] font-serif">
+            {item.pitch}
+          </p>
+          {(item.live || item.repo) && (
+            <p className="mt-12 flex flex-wrap gap-6">
+              {item.live && (
+                <a href={item.live} className="btn label">
+                  Open the {(item.liveLabel ?? "live").toLowerCase()} ↗
+                </a>
+              )}
+              {item.repo && (
+                <a href={item.repo} className="btn label">
+                  Code on GitHub ↗
+                </a>
+              )}
+            </p>
+          )}
+        </div>
+        <div className="col-span-12 grid gap-x-6 gap-y-12 sm:grid-cols-3 lg:col-span-6">
+          {item.stats.map((stat) => (
+            <Laurel key={stat.label} stat={stat} />
           ))}
-        </dl>
-      </header>
+        </div>
+      </section>
 
-      {/* 2. The pitch, large. */}
-      <p
-        data-lines
-        className="px-gutter text-h3 max-w-[30ch] py-32 font-serif lg:py-48"
-      >
-        {item.pitch}
-      </p>
-
-      {/* 3. The real product: screens, recordings and charts. */}
+      {/* 5. The real product: screens, recordings and charts. */}
       <section
         id="proof"
         aria-labelledby="proof-title"
-        className="px-gutter space-y-32 py-16"
+        className="px-gutter space-y-32 py-24"
       >
-        <h2 id="proof-title" className="sr-only">
-          The real product
+        <h2 id="proof-title" className="text-h2">
+          The real thing
         </h2>
         <Proof />
       </section>
 
-      {/* 4. Problem, what I built, result, each with a figure. */}
-      <Statement
-        id="problem"
-        title="Problem"
-        text={item.problem}
-        stat={item.stats[0]}
-      />
-      <Statement
-        id="built"
-        title="What I built"
-        text={item.built}
-        stat={item.stats[1]}
-      />
-      <Statement
-        id="result"
-        title="Result"
-        text={item.result}
-        stat={item.stats[2]}
-      />
-      {(item.live || item.repo) && (
-        <p className="px-gutter flex flex-wrap gap-6 pb-16">
-          {item.live && (
-            <a href={item.live} className="btn label">
-              Open the {(item.liveLabel ?? "live").toLowerCase()} ↗
-            </a>
-          )}
-          {item.repo && (
-            <a href={item.repo} className="btn label">
-              Code on GitHub ↗
-            </a>
-          )}
-        </p>
-      )}
+      {/* 6. The demo, with room around it and no box. */}
+      <section aria-labelledby="demo" className="px-gutter py-32">
+        <h2 id="demo" data-lines className="text-h2">
+          Try it
+        </h2>
+        <div className="mt-20">
+          <Demo />
+        </div>
+      </section>
 
-      {/* 5. How it fits together. */}
+      {/* 7. The detail, for those who want it. */}
+      <section aria-labelledby="detail" className="px-gutter py-32">
+        <h2 id="detail" data-lines className="text-h2">
+          The detail
+        </h2>
+        <div className="border-line mt-16 border-t">
+          <Detail id="problem" title="Problem" text={item.problem} />
+          <Detail id="built" title="What I built" text={item.built} />
+          <Detail id="result" title="Result" text={item.result} />
+        </div>
+      </section>
+
       <section
         aria-labelledby="architecture"
-        className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 py-28"
+        className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 pt-8 pb-40"
       >
         <h2
           id="architecture"
@@ -206,14 +224,15 @@ export default async function CaseStudy({ params }: Props) {
         </div>
       </section>
 
-      {/* 7. What was hard, on the opposite colours. */}
+      {/* What was hard, on the opposite colours, torn in and out. */}
       <section
         aria-labelledby="hard"
         // Inverted: paper on a dark project, ink on a light one.
         data-theme={item.tone === "light" ? "ink" : "neutral"}
         data-tone={item.tone === "light" ? "dark" : "light"}
-        className="bg-bg text-fg px-gutter grid grid-cols-12 gap-x-4 gap-y-10 py-32 lg:py-44"
+        className="bg-bg text-fg px-gutter relative grid grid-cols-12 gap-x-4 gap-y-10 py-32 lg:py-44"
       >
+        <Torn seed={index * 7 + 9} side="top" />
         <h2 id="hard" data-lines className="text-h2 col-span-12 lg:col-span-5">
           {item.slug === "road" ? "Where it broke" : "What was hard"}
         </h2>
@@ -227,25 +246,16 @@ export default async function CaseStudy({ params }: Props) {
             {item.hard}
           </p>
         </div>
+        <Torn seed={index * 7 + 11} side="bottom" />
       </section>
 
-      {/* 8. The demo, full size. */}
-      <section aria-labelledby="demo" className="px-gutter py-32">
-        <h2 id="demo" data-lines className="text-h2">
-          Try it
-        </h2>
-        <div className="mx-auto mt-20 max-w-6xl">
-          <Demo />
-        </div>
-      </section>
-
-      {/* 9. The next project, very large, already wearing its colours. */}
+      {/* 8. The next project, already wearing its colours. */}
       <Link
         href={`/work/${next.slug}`}
         data-theme={next.slug}
         data-tone={next.tone ?? "dark"}
         data-cursor="View"
-        className="bg-bg text-fg px-gutter group flex min-h-[80svh] flex-col justify-end pt-32 pb-20 no-underline"
+        className="bg-bg text-fg px-gutter group flex min-h-[80svh] flex-col justify-end pt-40 pb-20 no-underline"
       >
         <span className="label text-muted">Next project</span>
         <span className="text-display mt-6 block max-w-[14ch] font-serif transition-transform duration-700 ease-[var(--ease-out)] group-hover:translate-x-4 motion-reduce:transition-none">

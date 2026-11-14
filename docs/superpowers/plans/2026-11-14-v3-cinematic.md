@@ -171,6 +171,9 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 
 ## Phase 3: Home to project shared transition
 
+> Done 2026-11-14, committed together with Phase 4: the interim hero put the
+> title over the film's Play button, and Phase 4's layout was the real fix.
+
 ### Task 3.1: The centre panel grows into the project's film
 
 - **Goal:** Clicking the centre panel (or pressing Enter on it) does four things:
@@ -188,6 +191,9 @@ Each phase ends with `pnpm typecheck && pnpm lint && pnpm test && pnpm e2e` pass
 - **Commit:** "v3 phase 3: shared film transition".
 
 ## Phase 4: Project page template
+
+> Done 2026-11-14 (with Phase 3). The deep-detail rewrite from Task 5.2 landed
+> here too, since the page was rewritten whole.
 
 ### Task 4.1: Each project page opens like a film poster
 

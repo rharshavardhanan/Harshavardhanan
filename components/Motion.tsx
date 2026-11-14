@@ -7,15 +7,15 @@ import { afterLoad } from "@/lib/after-load";
 // animates them as they scroll into view, so the page's own files only have
 // to say WHAT moves, not how:
 //
-//   data-wipe-layer   a section's colour layer: revealed as a growing circle
 //   data-lines        text: each line slides up from behind a mask
+//   data-words        text: each word brightens in turn as you scroll through
+//                     the nearest [data-words-track] (a project's quote)
+//   data-edge         a torn or curved edge: stretches with scrolling speed
 //   data-scale-in     media: unclips from the bottom while settling from 110%
 //   data-bar          a chart bar: draws from the left
 //   data-bar-y        a vertical line: draws downwards
 //   data-parallax     media: drifts slower than the page
 //   data-tilt         a frame: tips back 12 degrees and straightens on scroll
-//   data-hero-name    the hero name: shrinks up into the header while pinned
-//   data-strip        a wide row: slides sideways while its section is pinned
 //
 // Nothing here runs for visitors who asked for reduced motion; they see the
 // finished state of everything.
@@ -48,40 +48,6 @@ export function Motion() {
         const all = (selector: string) =>
           gsap.utils.toArray<HTMLElement>(selector);
 
-        // The colour wipe. The circle grows from the bottom middle of the window.
-        for (const layer of all("[data-wipe-layer]")) {
-          const section = layer.parentElement!;
-          const hidden = "circle(0% at 50% 28svh)";
-          const shown = "circle(150vmax at 50% 28svh)";
-          // Until a section is close, its colour is simply shown, so a page that
-          // has not been scrolled (and anything measuring it) sees the real
-          // colours. Just before it arrives, its colour is hidden, ready to wipe.
-          ScrollTrigger.create({
-            trigger: section,
-            start: "top 180%",
-            end: "top 72%",
-            onEnter: () => gsap.set(layer, { clipPath: hidden }),
-          });
-          gsap.fromTo(
-            layer,
-            { clipPath: hidden },
-            {
-              clipPath: shown,
-              duration: 0.8,
-              ease: "expo.inOut",
-              immediateRender: false,
-              scrollTrigger: {
-                trigger: section,
-                start: "top 72%",
-                toggleActions: "play none none reverse",
-              },
-              // Once open, drop the clip so a very tall section is never cut off.
-              onComplete: () => gsap.set(layer, { clipPath: "none" }),
-              onReverseComplete: () => gsap.set(layer, { clipPath: hidden }),
-            },
-          );
-        }
-
         // Text reveals. SplitText wraps each line; the wrapper hides overflow,
         // so the line appears to rise out of nothing.
         for (const text of all("[data-lines]")) {
@@ -98,6 +64,59 @@ export function Motion() {
                 stagger: 0.07,
                 scrollTrigger: { trigger: text, start: "top 90%", once: true },
               }),
+          });
+        }
+
+        // A quote read out word by word: each word starts faint and comes up
+        // to full strength as you scroll through the quote's track.
+        for (const text of all("[data-words]")) {
+          const track = text.closest<HTMLElement>("[data-words-track]") ?? text;
+          SplitText.create(text, {
+            type: "words",
+            aria: "none",
+            onSplit: (split) =>
+              gsap.fromTo(
+                split.words,
+                { opacity: 0.12 },
+                {
+                  opacity: 1,
+                  ease: "none",
+                  stagger: 0.12,
+                  scrollTrigger: {
+                    trigger: track,
+                    start: "top 45%",
+                    end: "bottom 90%",
+                    scrub: true,
+                  },
+                },
+              ),
+          });
+        }
+
+        // Torn and curved edges stretch a little when the page moves fast,
+        // then settle back.
+        const edges = all("[data-edge]");
+        if (edges.length) {
+          ScrollTrigger.create({
+            onUpdate: (self) => {
+              const stretch = Math.min(
+                Math.abs(self.getVelocity()) / 1500,
+                1.5,
+              );
+              gsap.to(edges, {
+                scaleY: 1 + stretch,
+                duration: 0.3,
+                ease: "power2.out",
+                overwrite: true,
+                onComplete: () => {
+                  gsap.to(edges, {
+                    scaleY: 1,
+                    duration: 0.9,
+                    ease: "power3.out",
+                  });
+                },
+              });
+            },
           });
         }
 
@@ -174,58 +193,8 @@ export function Motion() {
             },
           );
         }
-
-        // The hero name: over the first screen of scrolling it shrinks toward
-        // the top-left corner and fades, as if becoming the header.
-        for (const name of all("[data-hero-name]")) {
-          const hero = name.closest(".hero");
-          gsap.to(name, {
-            scale: 0.12,
-            // Up from the middle of the window to the header's line.
-            y: () => -(window.innerHeight / 2 - name.offsetHeight / 2 - 14),
-            opacity: 0,
-            ease: "power2.in",
-            scrollTrigger: {
-              trigger: hero,
-              start: "top top",
-              end: "bottom bottom",
-              scrub: true,
-            },
-          });
-          gsap.to(hero!.querySelectorAll("[data-hero-fade]"), {
-            opacity: 0,
-            ease: "none",
-            scrollTrigger: {
-              trigger: hero,
-              start: "top top",
-              end: "40% bottom",
-              scrub: true,
-            },
-          });
-        }
       });
 
-      // Sideways strips need room, so wide screens only.
-      media.add(
-        "(prefers-reduced-motion: no-preference) and (min-width: 1024px)",
-        () => {
-          for (const strip of gsap.utils.toArray<HTMLElement>("[data-strip]")) {
-            const distance = () => strip.scrollWidth - window.innerWidth;
-            gsap.to(strip, {
-              x: () => -distance(),
-              ease: "none",
-              scrollTrigger: {
-                trigger: strip.parentElement,
-                start: "top top",
-                end: () => `+=${distance()}`,
-                pin: true,
-                scrub: true,
-                invalidateOnRefresh: true,
-              },
-            });
-          }
-        },
-      );
       // Lets anything that needs to know (the tests) see that it is set up.
       document.documentElement.dataset.motion = "ready";
     };

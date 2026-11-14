@@ -1022,6 +1022,12 @@ html[data-loading="out"] .loader {
   outline: 2px solid var(--accent);
   outline-offset: 8px;
 }
+/* While the ring is on its way, its list stays out of sight, so it does not
+   flash up and vanish (set by the loader's script and by Ring.tsx). Only
+   transparent: its links must stay reachable with the keyboard. */
+html[data-ring="wait"] .ring .reel {
+  opacity: 0;
+}
 .ring-ai {
   position: absolute;
   top: calc(100% + 1.25rem);
@@ -1033,19 +1039,152 @@ html[data-loading="out"] .loader {
    CASE-STUDY PAGES (app/work/[slug]/page.tsx)
    ========================================================================== */
 
-/* The cover picture and looping video filling the first screen. */
-.case-media {
-  position: absolute;
-  inset: 0;
-  z-index: -20;
+/* --- The poster (app/work/[slug]/page.tsx) --------------------------------
+   The film and the page's opening share one grid cell, so they overlap: the
+   film is held to the window (sticky) underneath, and stops where the poster
+   ends. The title scrolls away over it and its torn edge uncovers the film.
+   The quote track is transparent, a long stretch of scrolling during which
+   the quote, held in place, is read out word by word over the film. */
+.poster {
+  display: grid;
 }
-.case-media img,
-.case-media video {
+.poster > * {
+  grid-area: 1 / 1;
+}
+.poster-film {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  align-self: start;
+}
+/* Clicks pass through the transparent quote track to the film underneath
+   (its Play button); only the title block takes them. */
+.poster-body {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+.poster-title {
+  pointer-events: auto;
+}
+.poster-title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 82svh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem var(--spacing-gutter) 4rem;
+  text-align: center;
+}
+.credits {
+  display: flex;
+  max-width: 64rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem 3rem;
+}
+.credits > div {
+  max-width: 28rem;
+}
+.poster-quote {
+  position: relative;
+  z-index: 1;
+  height: 220svh;
+}
+.poster-quote p {
+  position: sticky;
+  top: 30svh;
+  padding-inline: var(--spacing-gutter);
+  text-align: center;
+  color: #f4f2ee;
+  text-shadow: 0 2px 30px rgb(0 0 0 / 0.55);
+}
+.synopsis {
+  position: relative;
+  z-index: 1;
+}
+
+/* Torn paper edges (components/Torn.tsx), hung off the top or bottom of the
+   section they belong to. They stretch from the side that is attached. */
+.torn {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: clamp(1.25rem, 3.5vw, 3.5rem);
+  pointer-events: none;
+}
+.torn-bottom {
+  top: calc(100% - 1px);
+  transform-origin: 50% 0;
+}
+.torn-top {
+  bottom: calc(100% - 1px);
+  transform-origin: 50% 100%;
+}
+
+/* A figure between two laurel branches (components/Laurel.tsx). */
+.laurel-branch {
+  width: 1.5rem;
+  height: 3.75rem;
+  flex: none;
+}
+
+/* A project's film (components/Film.tsx): the poster, and the video over it. */
+.film {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0b0b;
+}
+.film img,
+.film video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.film-dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.28);
+}
+.film-ai,
+.film-play {
+  position: absolute;
+  color: #f4f2ee;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
+}
+.film-ai {
+  right: var(--spacing-gutter);
+  bottom: 4rem;
+}
+.film-play {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  border: 1px solid currentColor;
+  padding: 0.9rem 1.4rem;
+  background: rgb(0 0 0 / 0.35);
+}
+
+/* The ring's middle panel turning into a project's film (a view transition,
+   components/ring/Ring.tsx). Both are already the size of the window, so the
+   morph is a short settle; everything else crossfades. */
+::view-transition-group(.film-morph) {
+  animation-duration: 500ms;
+  animation-timing-function: var(--ease-in-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 /* The architecture diagram: a dot per step, and a line down to the next. */

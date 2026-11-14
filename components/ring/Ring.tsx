@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  ViewTransition,
+} from "react";
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
 import { ease, nearest, type PanelSize, panelSize, wrap } from "@/lib/ring";
+import { FILM_TIME } from "../Film";
 import type { RingGL } from "./gl";
 
 export type RingItem = {
@@ -17,6 +25,12 @@ export type RingItem = {
 };
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
+/** Which panel was opened, so coming back can start from it. */
+const RING_FROM = "ring-from";
+
+/** 0 → 1, slow at both ends (cubic ease-in-out). */
+const inOut = (p: number) =>
+  p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 
 // The home page's ring of films.
 //
@@ -30,6 +44,13 @@ const REDUCE = "(prefers-reduced-motion: reduce)";
 // `target` is where it is heading, `offset` where it is now; every frame the
 // offset glides 8% of the way there (lib/ring.ts), and when input stops the
 // target snaps to the nearest panel.
+//
+// Opening a project: the middle panel unbends and grows until it fills the
+// window (`expand`, 0 → 1), then the page changes. The canvas and the project
+// page's film share a name (film-<slug>), so the browser morphs one into the
+// other (a view transition) and the film carries on from the same moment.
+// Coming back, the ring starts with that panel filling the window and lets it
+// shrink back into place.
 export function Ring({
   items,
   children,
@@ -43,6 +64,16 @@ export function Ring({
   const [on, setOn] = useState(false);
   const [centre, setCentre] = useState(0);
   const [size, setSize] = useState<PanelSize | null>(null);
+  const router = useRouter();
+
+  // Hide the list before the first paint while the ring is on its way, so it
+  // does not flash up and vanish (app/globals.css, "Ring"). The loader's
+  // script does the same on a first visit.
+  useLayoutEffect(() => {
+    if (!window.matchMedia(REDUCE).matches) {
+      document.documentElement.dataset.ring = "wait";
+    }
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia(REDUCE).matches) return;
@@ -59,7 +90,10 @@ export function Ring({
     const start = (createRing: typeof import("./gl").createRing) => {
       let dims = panelSize(window.innerWidth, window.innerHeight);
       ring = createRing(canvas.current!, items, dims.vertical);
-      if (!ring) return; // no WebGL2: the list stays as it is
+      if (!ring) {
+        delete html.dataset.ring; // no WebGL2: the list stays as it is
+        return;
+      }
       const gl = ring;
 
       const s = {
@@ -78,6 +112,42 @@ export function Ring({
         introAt: -1,
         last: performance.now(),
         born: performance.now(),
+        expand: 0,
+        leaving: null as null | { at: number; href: string },
+        closing: -1,
+      };
+
+      // Back from a project: start on its panel, filling the window.
+      try {
+        const from = Number(sessionStorage.getItem(RING_FROM) ?? -1);
+        sessionStorage.removeItem(RING_FROM);
+        if (from >= 0 && from < n) {
+          s.offset = s.target = s.anchor = from;
+          s.expand = 1;
+          s.closing = performance.now();
+          s.introAt = 0; // no fly-in
+        }
+      } catch {}
+
+      // Open a project: remember where its film had got to, then grow.
+      const leave = (index: number) => {
+        if (s.leaving) return;
+        s.anchor = s.target = s.offset + wrap(index - s.offset, n);
+        s.hovering = false;
+        try {
+          sessionStorage.setItem(RING_FROM, String(index));
+          sessionStorage.setItem(
+            FILM_TIME,
+            JSON.stringify({
+              slug: items[index].slug,
+              time: gl.video(index)?.currentTime ?? 0,
+            }),
+          );
+        } catch {}
+        s.leaving = {
+          at: performance.now(),
+          href: `/work/${items[index].slug}`,
+        };
       };
 
       const touched = () => {
@@ -127,6 +197,19 @@ export function Ring({
         const middle = nearest(s.offset, n);
         if (middle !== s.centre) show(middle);
 
+        if (s.leaving) {
+          const p = Math.min(1, (now - s.leaving.at) / 700);
+          s.expand = inOut(p);
+          if (p === 1) {
+            router.push(s.leaving.href);
+            s.leaving.at = Infinity; // asked once; wait for the new page
+          }
+        } else if (s.closing >= 0) {
+          const p = Math.min(1, (now - s.closing) / 800);
+          s.expand = 1 - inOut(p);
+          if (p === 1) s.closing = -1;
+        }
+
         // The fly-in starts when the loader has gone, nearest panels first.
         if (s.introAt < 0 && !html.dataset.loading) s.introAt = now;
         const intro = items.map((_, index) => {
@@ -144,7 +227,7 @@ export function Ring({
           time: (now - s.born) / 1000,
           pointer: s.pointer,
           ripple: s.ripple,
-          expand: 0,
+          expand: s.expand,
           intro,
           size: dims,
         });
@@ -156,6 +239,7 @@ export function Ring({
 
       const onWheel = (event: WheelEvent) => {
         event.preventDefault();
+        if (s.leaving) return;
         const delta =
           Math.abs(event.deltaY) >= Math.abs(event.deltaX)
             ? event.deltaY
@@ -166,7 +250,7 @@ export function Ring({
       };
 
       const onDown = (event: PointerEvent) => {
-        if (event.button !== 0) return;
+        if (event.button !== 0 || s.leaving) return;
         touched();
         s.dragging = true;
         s.dragAt = along(event);
@@ -224,7 +308,7 @@ export function Ring({
           ArrowLeft: -1,
           ArrowUp: -1,
         }[event.key];
-        if (!by) return;
+        if (!by || s.leaving) return;
         event.preventDefault();
         step(by);
       };
@@ -240,6 +324,20 @@ export function Ring({
         s.lastInput = 0;
       };
 
+      // A click on the middle panel, or Enter on a project's link, opens it
+      // with the transition (new-tab clicks are left to the browser).
+      const onClick = (event: MouseEvent) => {
+        const link = (event.target as Element).closest<HTMLElement>(
+          "[data-ring-link], [data-ring-hit]",
+        );
+        if (!link || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+        event.preventDefault();
+        if (dragged.current) return;
+        const index = link.dataset.ringLink;
+        leave(index === undefined ? s.centre : Number(index));
+      };
+
       const onResize = () => {
         dims = panelSize(window.innerWidth, window.innerHeight);
         setSize(dims);
@@ -253,6 +351,7 @@ export function Ring({
       el.addEventListener("wheel", onWheel, { passive: false });
       el.addEventListener("pointerdown", onDown);
       el.addEventListener("focusin", onFocus);
+      el.addEventListener("click", onClick, true);
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerup", onUp);
       window.addEventListener("keydown", onKey);
@@ -262,6 +361,7 @@ export function Ring({
         el.removeEventListener("wheel", onWheel);
         el.removeEventListener("pointerdown", onDown);
         el.removeEventListener("focusin", onFocus);
+        el.removeEventListener("click", onClick, true);
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("keydown", onKey);
@@ -271,13 +371,16 @@ export function Ring({
 
       setSize(dims);
       setOn(true);
+      delete html.dataset.ring;
       frame = requestAnimationFrame(tick);
     };
 
     const cancelIdle = afterLoad(() => {
-      void import("./gl").then(({ createRing }) => {
-        if (!cancelled) start(createRing);
-      });
+      import("./gl")
+        .then(({ createRing }) => {
+          if (!cancelled) start(createRing);
+        })
+        .catch(() => delete html.dataset.ring);
     });
 
     return () => {
@@ -287,8 +390,12 @@ export function Ring({
       detach();
       ring?.destroy();
       delete html.dataset.active;
+      // (Next.js may keep this page alive for the Back button and run this
+      // effect again later, so leave the state ready for a fresh start.)
+      setOn(false);
+      setSize(null);
     };
-  }, [items]);
+  }, [items, router]);
 
   const item = items[centre];
 
@@ -304,7 +411,13 @@ export function Ring({
       data-lenis-prevent
     >
       {children}
-      <canvas ref={canvas} aria-hidden className="ring-canvas" />
+      <ViewTransition
+        name={`film-${item.slug}`}
+        share="film-morph"
+        default="none"
+      >
+        <canvas ref={canvas} aria-hidden className="ring-canvas" />
+      </ViewTransition>
       {on && size && (
         // The middle panel, as something to point at and click. Keyboards
         // and screen readers use the list's links instead, so it is hidden
@@ -312,14 +425,12 @@ export function Ring({
         <Link
           href={`/work/${item.slug}`}
           data-ring-hit
+          data-no-wipe
           aria-hidden
           tabIndex={-1}
           data-cursor="View"
           className="ring-hit"
           style={{ width: size.w, height: size.h }}
-          onClick={(event) => {
-            if (dragged.current) event.preventDefault();
-          }}
         >
           {item.ai && <span className="label ring-ai">AI-generated film</span>}
         </Link>

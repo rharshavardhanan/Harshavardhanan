@@ -25,6 +25,7 @@ export default function Home() {
             <Link
               href={`/work/${item.slug}`}
               data-ring-link={index}
+              data-no-wipe
               className="reel-item bg-bg text-fg"
             >
               <Image

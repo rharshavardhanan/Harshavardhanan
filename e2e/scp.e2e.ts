@@ -95,7 +95,7 @@ test.describe("reduced motion", () => {
     ).toBe(true);
     await page
       .locator("article")
-      .getByRole("button", { name: "Play" })
+      .getByRole("button", { name: "Play", exact: true })
       .click();
     await expect
       .poll(() => clips.first().evaluate((v: HTMLVideoElement) => !v.paused))
