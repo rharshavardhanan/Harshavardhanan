@@ -1,37 +1,39 @@
 @import "tailwindcss";
 
-/* Design tokens. Tailwind turns each one into utility classes:
-   --text-lead gives text-lead; --spacing-gutter gives px-gutter. */
+/* ==========================================================================
+   DESIGN TOKENS
+   Tailwind turns each one into utility classes: --text-h2 gives text-h2,
+   --spacing-gutter gives px-gutter. There are exactly five text sizes.
+   ========================================================================== */
 @theme {
   /* Wipe Tailwind's default palette and type scale, so only ours exist. */
   --color-*: initial;
   --text-*: initial;
 
-  /* Fluid type: clamp(smallest, grows with the window, largest). */
-  --text-display: clamp(2.75rem, 1rem + 7vw, 8rem); /* case-study titles */
-  --text-display--line-height: 0.95;
-  --text-display--letter-spacing: -0.02em;
-  --text-title: clamp(2rem, 1.2rem + 3.5vw, 4.5rem);
-  --text-title--line-height: 1.02;
-  --text-title--letter-spacing: -0.015em;
-  --text-lead: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem);
-  --text-lead--line-height: 1.3;
-  --text-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
-  --text-body--line-height: 1.55;
-  --text-label: 0.75rem;
-  --text-label--line-height: 1.5;
-  --text-label--letter-spacing: 0.02em;
+  /* clamp(smallest, grows with the window, largest) */
+  --text-display: clamp(3.5rem, 14vw, 17.5rem); /* 56 to 280px */
+  --text-display--line-height: 0.88;
+  --text-display--letter-spacing: -0.03em;
+  --text-h2: clamp(3.5rem, 7.5vw, 7.5rem); /* 56 to 120px */
+  --text-h2--line-height: 0.95;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h3: clamp(2rem, 1.4rem + 1.2vw, 2.5rem); /* 32 to 40px */
+  --text-h3--line-height: 1.12;
+  --text-h3--letter-spacing: -0.01em;
+  --text-body: clamp(1.125rem, 1.05rem + 0.25vw, 1.25rem); /* 18 to 20px */
+  --text-body--line-height: 1.5;
 
   /* Side margin of the page. */
   --spacing-gutter: clamp(1rem, 4vw, 4rem);
 
-  /* One strong ease-out for things that enter or respond. */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* The two curves all motion uses ("expo out" and "expo in-out"). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-/* Colours are never used by name. Components use five ROLES, and the active
-   theme decides what each role is: bg-bg, text-fg, text-muted, text-accent,
-   border-line. The font files are loaded in app/layout.tsx. */
+/* Colours are never used by name. Components use five ROLES, and the theme
+   in force decides what each role is: bg-bg, text-fg, text-muted,
+   text-accent, border-line. The font files are loaded in app/layout.tsx. */
 @theme inline {
   --color-bg: var(--bg);
   --color-fg: var(--fg);
@@ -44,50 +46,37 @@
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
-/* Telling the browser these five variables are colours lets it fade them
-   smoothly when the theme changes, with no JavaScript animation. */
-@property --bg {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: #f4f2ee;
+/* The fifth text size: small capitals in the mono face, for labels, numbers
+   and controls. Never smaller than 13px. Use className="label". */
+@utility label {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: clamp(0.8125rem, 0.78rem + 0.1vw, 0.875rem);
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-@property --fg {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: #0e0e0e;
-}
-@property --muted {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: #66635c;
-}
+
+/* Telling the browser --accent is a colour lets it fade smoothly (the
+   particle object uses this when it changes project). */
 @property --accent {
   syntax: "<color>";
   inherits: true;
   initial-value: #0e0e0e;
 }
-@property --line {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: #d9d5cc;
-}
 
-/* --- Themes -----------------------------------------------------------
+/* ==========================================================================
+   THEMES
    A theme assigns the five roles. Put data-theme="road" on any element and
    everything inside it uses the road colours. app/tokens.test.ts reads these
    blocks and fails if any text colour is too faint on its background.
+   ========================================================================== */
 
-   Each project theme has a second selector. It only applies when JavaScript
-   is off: then nothing sets data-theme on <html>, and each chapter colours
-   itself instead. */
-
-/* Neutral shell: ink on paper. Grey #8a877f is too faint on paper, so
-   secondary text here uses the darker #66635c. */
+/* Neutral shell: ink on paper. */
 :root,
 [data-theme="neutral"] {
   --bg: #f4f2ee;
   --fg: #0e0e0e;
-  --muted: #66635c;
+  --muted: #5c5952;
   --accent: #0e0e0e;
   --line: #d9d5cc;
 }
@@ -96,81 +85,58 @@
 [data-theme="ink"] {
   --bg: #0e0e0e;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #f4f2ee;
   --line: #373736;
 }
 
-[data-theme="odovox"],
-html:not([data-theme]) [data-chapter="odovox"] {
+[data-theme="odovox"] {
   --bg: #0f1f1c;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #7ff2c9;
   --line: #384542;
 }
 
-[data-theme="road"],
-html:not([data-theme]) [data-chapter="road"] {
+[data-theme="road"] {
   --bg: #121212;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #ffc93c;
   --line: #3b3a3a;
 }
 
-[data-theme="kattral"],
-html:not([data-theme]) [data-chapter="kattral"] {
+[data-theme="kattral"] {
   --bg: #1c1410;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #ff8a3d;
   --line: #433c38;
 }
 
-[data-theme="cache"],
-html:not([data-theme]) [data-chapter="cache"] {
+[data-theme="cache"] {
   --bg: #0b1020;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #4d8bff;
   --line: #353945;
 }
 
-[data-theme="hallucination"],
-html:not([data-theme]) [data-chapter="hallucination"] {
+[data-theme="hallucination"] {
   --bg: #16111f;
   --fg: #f4f2ee;
-  --muted: #8a877f;
+  --muted: #b0ada5;
   --accent: #b69cff;
   --line: #3e3a44;
 }
 
-/* Without JavaScript, a chapter paints its own background. */
-html:not([data-theme]) [data-chapter] {
-  background: var(--bg);
-  color: var(--fg);
-}
-
+/* ==========================================================================
+   BASE
+   ========================================================================== */
 @layer base {
   html {
     background: var(--bg);
     color: var(--fg);
-    /* The fade between themes. Everything on the page inherits the five
-       roles from <html>, so the whole page changes together.
-       ponytail: restyles the whole page for 0.6s per change; if that ever
-       costs frames, fade only background-color and color instead. */
-    transition:
-      --bg 600ms ease,
-      --fg 600ms ease,
-      --muted 600ms ease,
-      --accent 600ms ease,
-      --line 600ms ease;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      transition-duration: 200ms;
-    }
   }
 
   h1,
@@ -179,34 +145,44 @@ html:not([data-theme]) [data-chapter] {
     @apply font-serif;
     font-weight: 400;
     text-wrap: balance;
+    overflow-wrap: anywhere; /* a long word never pushes the page sideways */
   }
 
   p {
     text-wrap: pretty;
   }
 
-  /* Links show an underline in the accent colour on hover; hover styles only
-     apply on devices that really hover, so a tap on a phone never sticks. */
+  /* Links show an underline on hover; hover styles only apply on devices
+     that really hover, so a tap on a phone never sticks. */
   a {
     text-decoration: underline transparent;
-    text-underline-offset: 0.25em;
-    transition: text-decoration-color 150ms ease;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 200ms ease;
   }
   @media (hover: hover) {
     a:hover {
-      text-decoration-color: var(--accent);
+      text-decoration-color: currentColor;
     }
   }
 
-  /* Keyboard focus is always a clear outline in the accent colour. */
+  /* Keyboard focus is always a clear outline. */
   :focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline-offset: 4px;
   }
 
   ::selection {
     background: var(--fg);
     color: var(--bg);
+  }
+
+  /* Everything in <main> shares one stacking order, so the coloured section
+     layers (below) can sit behind the particle object, and that behind text. */
+  main {
+    isolation: isolate;
+    /* The blended layers (the name, the phone video) blend with what is
+       painted inside <main>, so <main> must paint the page colour itself. */
+    background: var(--bg);
   }
 
   /* Film grain: one small noise tile, repeated over the whole window at 3%
@@ -243,87 +219,125 @@ html:not([data-theme]) [data-chapter] {
   }
 }
 
-/* --- Hero name ----------------------------------------------------------
-   The name always fills the width of its container. "HARSHAVARDHANAN" in
-   Instrument Serif capitals is 6.87 times as wide as its font size, so
-   dividing the container's width (100cqi) by a little more than that gives a
-   font size that fits exactly at any window width. */
-.name {
-  font-size: calc(100cqi / 6.97);
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: clip; /* hides each letter until it rises into view */
+/* ==========================================================================
+   SECTION COLOUR (components/SectionPaint.tsx)
+   Every section paints its own colour, so its text always sits on the colour
+   it was designed for. Two layers lie behind the section's content: the
+   PREVIOUS section's colour, and on top of it this section's own colour.
+   components/Motion.tsx reveals the top layer as a growing circle when the
+   section arrives, so one colour wipes over the other with no grey blend.
+   Without JavaScript, or with reduced motion, the top layer is simply there.
+   ========================================================================== */
+.paint {
+  position: relative;
+  color: var(--fg);
+}
+.paint-prev,
+.paint-own {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+}
+.paint-prev {
+  z-index: -3;
+}
+.paint-own {
+  z-index: -2;
 }
 
-/* Each letter rises from below the line, one after another. --i is the
-   letter's position, set in app/page.tsx. */
-.name > span {
-  display: inline-block;
-  animation: letter-rise 900ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i) * 35ms + 100ms);
+/* ==========================================================================
+   HEADER
+   Fixed to the top. "difference" blending inverts it against whatever is
+   underneath, so it stays readable over paper, ink and every project colour.
+   ========================================================================== */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  color: #fff;
+  mix-blend-mode: difference;
 }
 
-@keyframes letter-rise {
-  from {
-    transform: translateY(105%);
-  }
+/* ==========================================================================
+   CURSOR (components/Cursor.tsx)
+   A 12px dot at the pointer. Over anything marked data-cursor="View" it
+   grows into an 80px circle and shows that word. Both parts use difference
+   blending, so the dot inverts the page and the word inverts the dot.
+   Mouse only; never under reduced motion.
+   ========================================================================== */
+.cursor-dot,
+.cursor-word {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: none;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  color: #fff;
 }
-
-/* While the loader is up, the letters wait. */
-html[data-loading="in"] .name > span {
-  animation-play-state: paused;
+html.has-cursor :is(.cursor-dot, .cursor-word)[data-seen] {
+  display: block;
 }
-
-/* The small dot in "currently building Odovox". */
-.status-dot {
-  width: 0.5em;
-  height: 0.5em;
+html.has-cursor,
+html.has-cursor * {
+  cursor: none;
+}
+html.has-cursor :is(input, textarea) {
+  cursor: text;
+}
+.cursor-dot::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px;
   border-radius: 50%;
-  background: var(--fg);
-  animation: status-pulse 2.4s ease-in-out infinite;
+  background: currentColor;
+  transition: scale 500ms var(--ease-out);
+}
+.cursor-dot[data-over="link"]::before {
+  scale: 3;
+}
+.cursor-dot[data-over="media"]::before {
+  scale: 6.67; /* 80px */
+}
+.cursor-word > span {
+  display: block;
+  translate: -50% -50%;
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.cursor-word[data-over="media"] > span {
+  opacity: 1;
 }
 
-@keyframes status-pulse {
-  50% {
-    opacity: 0.25;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .name > span,
-  .status-dot {
-    animation: none;
-  }
-}
-
-/* --- Loader (components/Loader.tsx) --------------------------------------
-   Hidden unless the inline script has marked <html data-loading>. */
+/* ==========================================================================
+   LOADER (components/Loader.tsx)
+   Hidden unless the inline script has marked <html data-loading>.
+   ========================================================================== */
 .loader {
   display: none;
 }
-
 html[data-loading] .loader {
   position: fixed;
   inset: 0;
   z-index: 80;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background: var(--bg);
   transition: opacity 500ms ease;
 }
-
 html[data-loading="out"] .loader {
   opacity: 0;
 }
 
 /* "H.R." is drawn in from the left. */
 .loader-initials {
+  mix-blend-mode: normal;
+  color: var(--fg);
   animation: loader-draw 900ms var(--ease-out) backwards;
 }
-
 @keyframes loader-draw {
   from {
     clip-path: inset(0 100% 0 0);
@@ -337,74 +351,210 @@ html[data-loading="out"] .loader {
   inherits: false;
   initial-value: 0;
 }
-
 @counter-style loader-digits {
   system: numeric;
   symbols: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9";
   pad: 3 "0";
 }
-
 .loader-count {
   font-variant-numeric: tabular-nums;
   counter-reset: loader var(--loader-count);
   animation: loader-count 1200ms var(--ease-out) forwards;
 }
-
 .loader-count::after {
   content: counter(loader, loader-digits);
 }
-
 @keyframes loader-count {
   to {
     --loader-count: 100;
   }
 }
 
-/* --- Particle stage (components/ParticleStage.tsx) -----------------------
-   The layer that holds the particle object, its still image and its video.
-   On a phone it is an ordinary block above the name. On a desktop it sticks
-   to the window from the hero to the end of the last chapter, behind the
-   text. */
+/* ==========================================================================
+   HERO (components/Hero.tsx)
+   ========================================================================== */
+
+/* The hero is two screens tall and its content sticks to the window for the
+   first of them. While it is stuck, components/Motion.tsx shrinks the name up
+   into the header. With reduced motion it is one ordinary screen. */
+.hero {
+  height: 200svh;
+}
+.hero-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  /* Everything in the hero is white and inverted against what lies behind it
+     ("difference"), like the header: dark on paper, light where it crosses
+     the particles. It has to be the whole pinned layer, because a sticky
+     element is its own layer and the name alone would blend with nothing. */
+  color: #fff;
+  mix-blend-mode: difference;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    height: auto;
+  }
+  .hero-pin {
+    position: static;
+  }
+}
+
+/* The name always fills the width of its container. "HARSHAVARDHANAN" in
+   Instrument Serif capitals is 6.87 times as wide as its font size, so
+   dividing the container's width (100cqi) by a little more than that gives a
+   font size that fits exactly at any window width.
+   "difference" blending makes it invert where it crosses the particles. */
+.name {
+  font-size: calc(100cqi / 6.97);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: clip; /* hides each letter until it rises into view */
+  transform-origin: 0 0;
+}
+
+/* Each letter rises from below the line, one after another. --i is the
+   letter's position, set in components/Hero.tsx. */
+.name > span {
+  display: inline-block;
+  animation: letter-rise 1200ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i) * 45ms + 150ms);
+}
+@keyframes letter-rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+/* While the loader is up, the letters wait. */
+html[data-loading="in"] .name > span {
+  animation-play-state: paused;
+}
+
+/* The small dot in "currently building Odovox". */
+.status-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: currentColor;
+  animation: status-pulse 2.4s ease-in-out infinite;
+}
+@keyframes status-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* "Scroll" with a line that keeps drawing downwards. */
+.scroll-cue::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 3.5rem;
+  margin: 0.75rem auto 0;
+  background: currentColor;
+  transform-origin: top;
+  animation: scroll-cue 2s var(--ease-in-out) infinite;
+}
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .name > span,
+  .status-dot,
+  .scroll-cue::after {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   PARTICLE STAGE (components/ParticleStage.tsx)
+   The layer that holds the particle object (or, on phones, its video). It
+   sticks to the window from the hero to the end of the last chapter, behind
+   the text. Where it sits and how big it is depends on which part of the page
+   is on screen: components/ThemeWatcher.tsx writes that to <html data-active>,
+   and the rules below move the object. It eases between poses by itself.
+   ========================================================================== */
 .stage {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: -1;
-  padding-inline: var(--spacing-gutter);
+  height: 100svh;
   pointer-events: none;
+}
+/* The hero is pulled up over the stage so both start at the top. */
+.stage + .hero {
+  margin-top: -100svh;
 }
 
 .stage-box {
-  position: relative;
-  margin-inline: auto;
-  width: 100%;
-  max-width: 28rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(74svh, 92vw);
   aspect-ratio: 1;
+  translate: calc(-50% + var(--x, 0px)) calc(-50% + var(--y, 0px));
+  scale: var(--s, 1);
+  transition:
+    translate 1.4s var(--ease-in-out),
+    scale 1.4s var(--ease-in-out),
+    opacity 0.6s ease;
 }
 
-@media (min-width: 1024px) {
-  .stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-  }
-  /* The hero is pulled up over the stage so both start at the top. (Pulling
-     the stage's own bottom margin up instead lets it slide out past the last
-     chapter and sit over the About section.) */
-  .stage + [data-hero] {
-    margin-top: -100svh;
-  }
-
+/* Beside the work index: smaller, lower right. */
+html[data-active="index"] .stage-box {
+  --x: 30vw;
+  --y: 14svh;
+  --s: 0.6;
+}
+/* In a chapter: a small emblem in the top-right corner. */
+html:is(
+    [data-active="odovox"],
+    [data-active="road"],
+    [data-active="kattral"],
+    [data-active="cache"],
+    [data-active="hallucination"]
+  )
   .stage-box {
+  --x: 36vw;
+  --y: -27svh;
+  --s: 0.34;
+}
+
+/* On phones the object is a recorded video; it stays in the hero only. */
+@media (max-width: 1023px) {
+  .stage {
     position: absolute;
-    top: 44%;
-    right: var(--spacing-gutter);
-    width: min(34vw, 60svh);
-    max-width: none;
-    translate: 0 -50%;
+    inset: 0 0 auto 0;
+  }
+  .stage + .hero {
+    margin-top: 0;
   }
 }
 
 .stage video {
   transition: opacity 600ms ease;
+}
+
+/* The live object's colour is the accent of whichever theme it is given;
+   this makes that colour fade when the theme changes. */
+.stage [data-shape] {
+  transition: --accent 0.6s ease;
 }
 
 /* During the loader, on desktop, the live object sits above the loader so its
@@ -415,12 +565,19 @@ html[data-loading="out"] .loader {
 html[data-loading] .stage[data-mode="particles"] {
   z-index: 90;
 }
-
 html[data-loading] .stage[data-mode="particles"] video {
   opacity: 0;
 }
 
-/* --- Buttons and small controls ------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .stage-box {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   BUTTONS AND SMALL CONTROLS
+   ========================================================================== */
 @layer components {
   /* The main button: an outline in the accent colour that fills on hover. */
   .btn {
@@ -428,14 +585,12 @@ html[data-loading] .stage[data-mode="particles"] video {
     align-items: center;
     gap: 0.25em;
     border: 1px solid var(--accent);
-    padding: 0.65rem 1rem;
-    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-    font-size: var(--text-label);
-    letter-spacing: 0.02em;
+    padding: 0.9rem 1.4rem;
     text-decoration: none;
     transition:
-      background-color 150ms ease,
-      color 150ms ease;
+      background-color 200ms ease,
+      color 200ms ease,
+      translate 400ms var(--ease-out);
   }
   @media (hover: hover) {
     .btn:hover:not(:disabled) {
@@ -454,64 +609,63 @@ html[data-loading] .stage[data-mode="particles"] video {
   /* A secondary button: just underlined text. */
   .btn-quiet {
     padding: 0.65rem 0;
-    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-    font-size: var(--text-label);
     color: var(--muted);
     text-decoration: underline;
     text-underline-offset: 0.25em;
   }
 
-  /* One option in a row of choices (the label around a hidden radio button).
-     The chosen one is filled in; the focused one gets the usual outline. */
-  .seg {
-    border: 1px solid var(--line);
-    padding: 0.5rem 0.75rem;
+  /* A choice shown as a big word (the label around a hidden radio button).
+     The chosen word is in the accent colour and underlined; the rest are
+     quiet. Used wherever the old design had a boxed toggle. */
+  .word {
     cursor: pointer;
+    color: var(--muted);
+    text-decoration: underline transparent 0.06em;
+    text-underline-offset: 0.18em;
     transition:
-      background-color 150ms ease,
-      color 150ms ease;
+      color 300ms ease,
+      text-decoration-color 300ms ease;
   }
-  .seg + .seg {
-    border-left: 0;
+  .word:has(:checked) {
+    color: var(--accent);
+    text-decoration-color: currentColor;
   }
-  .seg:has(:checked) {
-    background: var(--fg);
-    color: var(--bg);
-  }
-  .seg:has(:focus-visible) {
+  .word:has(:focus-visible) {
     outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline-offset: 6px;
   }
-
-  /* A figure in a chapter: "8", "94%", "AES-256-GCM". */
-  .stat {
-    font-family: var(--font-instrument-serif), serif;
-    font-size: clamp(1.6rem, 1.1rem + 1.4vw, 2.4rem);
-    line-height: 1.1;
-    text-wrap: balance;
+  @media (hover: hover) {
+    .word:hover {
+      color: var(--fg);
+    }
+    .word:has(:checked):hover {
+      color: var(--accent);
+    }
   }
 }
 
-/* --- Demo parts ----------------------------------------------------------- */
+/* ==========================================================================
+   SHARED SMALL PARTS
+   ========================================================================== */
 
-/* Something that has just appeared in a demo eases in. */
+/* Something that has just appeared eases in. */
 .demo-in {
-  animation: demo-in 400ms var(--ease-out) backwards;
+  animation: demo-in 800ms var(--ease-out) backwards;
 }
 @keyframes demo-in {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translateY(1rem);
   }
 }
 
 /* The blinking bar at the end of text being typed. */
 .caret {
   display: inline-block;
-  width: 0.08em;
-  height: 1em;
+  width: 0.06em;
+  height: 0.9em;
   margin-left: 0.08em;
-  vertical-align: -0.12em;
+  vertical-align: -0.08em;
   background: var(--accent);
   animation: caret 0.9s steps(1) infinite;
 }
@@ -521,271 +675,11 @@ html[data-loading] .stage[data-mode="particles"] video {
   }
 }
 
-/* One video-call tile in the Kattral demo. It lights up when data-on="true". */
-.tile {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  padding: 0.4rem 0.5rem;
-  color: var(--muted);
-  transition:
-    border-color 300ms ease,
-    color 300ms ease;
-}
-/* The head and shoulders of whoever is in the tile. */
-.tile[data-on="true"]::before,
-.tile[data-on="true"]::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  background: var(--accent);
-  opacity: 0.35;
-  translate: -50% 0;
-  animation: demo-in 400ms var(--ease-out) backwards;
-}
-.tile::before {
-  top: 22%;
-  width: 18%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-.tile::after {
-  top: 52%;
-  width: 40%;
-  height: 60%;
-  border-radius: 50% 50% 0 0;
-}
-.tile[data-on="true"] {
-  border-color: var(--accent);
-  color: var(--fg);
-}
-.tile > span {
-  position: relative; /* keeps the label above the silhouette... */
-  background: var(--bg); /* ...and readable where it overlaps it */
-  padding-inline: 0.25em;
-}
-
-/* The small preview that follows the pointer over the work index. */
-.work-float {
-  display: none;
-}
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .work-float {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 40;
-    display: block;
-    width: 15rem;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    pointer-events: none;
-    transition: opacity 200ms ease;
+@media (prefers-reduced-motion: reduce) {
+  .demo-in,
+  .caret {
+    animation: none;
   }
-  .work-float:empty {
-    opacity: 0;
-  }
-}
-
-/* --- Reveal on scroll -------------------------------------------------------
-   Anything marked data-reveal rises into place as it scrolls into view. The
-   browser ties the animation to the scroll position itself (animation-timeline),
-   so there is no JavaScript. Browsers without this simply show the text. */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    [data-reveal] {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 70%;
-    }
-  }
-}
-@keyframes reveal {
-  from {
-    opacity: 0;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(0.35em);
-  }
-  to {
-    opacity: 1;
-    clip-path: inset(0 0 -30% 0);
-    transform: none;
-  }
-}
-
-/* --- Project cursors (components/Cursor.tsx) -------------------------------
-   Inside a project's theme the arrow is replaced by that project's cursor.
-   .cursor sits exactly at the pointer; its child <i> is drawn differently for
-   each theme. Everywhere else the normal arrow is used. */
-.cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 60;
-  display: none;
-  pointer-events: none;
-}
-.cursor > i {
-  position: absolute;
-  translate: -50% -50%;
-  background: var(--accent);
-}
-
-html.has-cursor:is(
-    [data-theme="odovox"],
-    [data-theme="road"],
-    [data-theme="kattral"],
-    [data-theme="cache"],
-    [data-theme="hallucination"]
-  ) {
-  &,
-  & * {
-    cursor: none;
-  }
-  .cursor[data-seen] {
-    display: block;
-  }
-}
-
-/* Odovox: a microphone dot with a ring pulsing out of it. */
-[data-theme="odovox"] .cursor > i {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-[data-theme="odovox"] .cursor > i::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--accent);
-  animation: mic-pulse 1.4s ease-out infinite;
-}
-@keyframes mic-pulse {
-  from {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(3.4);
-  }
-}
-
-/* Road Damage: a detection box with a label and confidence score. */
-[data-theme="road"] .cursor > i {
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--accent);
-  background: none;
-}
-[data-theme="road"] .cursor::after {
-  content: attr(data-label);
-  position: absolute;
-  left: -15px;
-  bottom: 15px;
-  padding: 0 5px;
-  background: var(--accent);
-  color: var(--bg);
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 11px;
-  line-height: 16px;
-  white-space: nowrap;
-}
-
-/* Kattral: a dot with a raised hand (the small bar above it). */
-[data-theme="kattral"] .cursor > i {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-[data-theme="kattral"] .cursor > i::after {
-  content: "";
-  position: absolute;
-  left: 9px;
-  bottom: 9px;
-  width: 3px;
-  height: 11px;
-  border-radius: 2px;
-  background: var(--accent);
-  rotate: 24deg;
-}
-
-/* Edge Cache: a blinking terminal block. */
-[data-theme="cache"] .cursor > i {
-  width: 9px;
-  height: 18px;
-  animation: caret 1s steps(1) infinite;
-}
-
-/* Hallucination: a scan line with a dot at the pointer. */
-[data-theme="hallucination"] .cursor > i {
-  width: 64px;
-  height: 1px;
-}
-[data-theme="hallucination"] .cursor > i::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  translate: -50% -50%;
-}
-
-/* --- Case-study pages (app/work/[slug]/page.tsx) --------------------------- */
-
-/* The cover picture and looping video behind a case study's title. The mask
-   fades its edges out, so no rectangle shows against the page. */
-.case-media {
-  position: absolute;
-  inset: 0 0 auto 0;
-  z-index: -1;
-  height: 52%;
-  mask-image: radial-gradient(closest-side, black 55%, transparent);
-}
-@media (min-width: 1024px) {
-  .case-media {
-    inset: 0 0 0 auto;
-    width: 62%;
-    height: auto;
-  }
-}
-.case-media img,
-.case-media video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* The architecture diagram: numbered steps joined by a line down the left. */
-.flow li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 3rem 1fr;
-  align-items: baseline;
-  border-left: 1px solid var(--line);
-  padding: 0.75rem 0 0.75rem 1.5rem;
-}
-.flow li::before {
-  content: "";
-  position: absolute;
-  top: 1.7rem;
-  left: -4px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.flow li:last-child {
-  border-left-color: transparent;
 }
 
 /* --- Wins strip (components/About.tsx) -------------------------------------
@@ -799,20 +693,20 @@ html.has-cursor:is(
 .marquee ul {
   display: flex;
   flex: none;
-  animation: marquee 32s linear infinite;
+  animation: marquee 36s linear infinite;
 }
 .marquee li {
-  padding-inline: 1.5rem;
+  padding-inline: 2rem;
 }
 .marquee li::before {
   content: "";
   display: inline-block;
-  width: 0.3em;
-  height: 0.3em;
-  margin-right: 3rem;
+  width: 0.25em;
+  height: 0.25em;
+  margin-right: 4rem;
   border-radius: 50%;
   background: var(--fg);
-  vertical-align: 0.2em;
+  vertical-align: 0.25em;
 }
 @media (hover: hover) {
   .marquee:hover ul {
@@ -857,7 +751,7 @@ html.has-cursor:is(
   width: 0.625rem;
   height: 0.625rem;
   margin-left: 0.6em;
-  vertical-align: -0.08em;
+  vertical-align: 0.05em;
   cursor: pointer;
 }
 /* A larger invisible area around it, so it is not fiddly to press. */
@@ -938,11 +832,16 @@ html.has-cursor:is(
   overflow-y: auto;
   background: var(--bg);
   color: var(--fg);
+  /* The menu lives inside the header, so undo the header's small capitals. */
+  font-family: var(--font-inter-tight), system-ui, sans-serif;
+  font-size: var(--text-body);
+  letter-spacing: normal;
+  text-transform: none;
 }
 .menu[open] {
   display: flex;
   flex-direction: column;
-  animation: menu-in 500ms var(--ease-out);
+  animation: menu-in 800ms var(--ease-out);
 }
 .menu::backdrop {
   background: none;
@@ -956,13 +855,13 @@ html.has-cursor:is(
   }
 }
 .menu[open] li {
-  animation: menu-link 600ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 45ms + 120ms);
+  animation: menu-link 900ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 50ms + 150ms);
 }
 @keyframes menu-link {
   from {
     opacity: 0;
-    transform: translateY(1.2rem);
+    transform: translateY(1.5rem);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -980,25 +879,16 @@ html.has-cursor:is(
   inset: 0;
   z-index: 75;
   background: var(--bg);
+  color: var(--fg);
   pointer-events: none;
   clip-path: inset(100% 0 0 0);
 }
 .wipe[data-state="in"] {
   clip-path: inset(0);
   pointer-events: auto;
-  transition: clip-path 450ms cubic-bezier(0.77, 0, 0.175, 1);
+  transition: clip-path 800ms var(--ease-in-out);
 }
 .wipe[data-state="out"] {
   clip-path: inset(0 0 100% 0);
-  transition: clip-path 500ms cubic-bezier(0.77, 0, 0.175, 1);
-}
-
-/* Magnetic buttons (components/Magnet.tsx) set `translate`; this eases it. */
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .btn {
-    transition:
-      background-color 150ms ease,
-      color 150ms ease,
-      translate 250ms var(--ease-out);
-  }
+  transition: clip-path 800ms var(--ease-in-out) 250ms;
 }

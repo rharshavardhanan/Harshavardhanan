@@ -63,10 +63,10 @@ export function CacheDemo() {
   return (
     <DemoFrame title="Cache Wars" note="Simulated in your browser">
       <fieldset disabled={running}>
-        <legend className="text-label text-muted font-mono">
+        <legend className="label text-muted font-mono">
           Pick the policy you think keeps the most hits
         </legend>
-        <div className="text-label mt-2 flex font-mono">
+        <div className="label mt-2 flex font-mono">
           {NAMES.map((name) => (
             <label key={name} className="seg">
               <input
@@ -89,7 +89,7 @@ export function CacheDemo() {
             className="grid grid-cols-[6.5rem_1fr_3.5rem] items-center gap-x-3"
           >
             <dt
-              className={`text-label font-mono ${name === pick ? "text-accent" : "text-muted"}`}
+              className={`label font-mono ${name === pick ? "text-accent" : "text-muted"}`}
             >
               {policyLabels[name]}
             </dt>
@@ -99,7 +99,7 @@ export function CacheDemo() {
                 style={{ transform: `scaleX(${rate(name) / 100})` }}
               />
             </dd>
-            <dd className="text-label text-right font-mono tabular-nums">
+            <dd className="label text-right font-mono tabular-nums">
               {rate(name).toFixed(1)}%
             </dd>
           </div>
@@ -119,7 +119,7 @@ export function CacheDemo() {
       <button type="button" className="btn" onClick={start} disabled={running}>
         {finished ? "Run again" : "Run"}
       </button>
-      <p className="text-label text-muted mt-4 max-w-[60ch] font-mono">
+      <p className="label text-muted mt-4 max-w-[60ch] font-mono">
         A miniature: 6,000 requests, a cache of 24 items, and a simple learning
         agent. These are this simulation’s numbers, not the project’s.
       </p>

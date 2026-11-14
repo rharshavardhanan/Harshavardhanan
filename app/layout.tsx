@@ -90,7 +90,7 @@ export default function RootLayout({
         {/* Hidden above the window until a keyboard user tabs to it. */}
         <a
           href="#main"
-          className="bg-fg text-label text-bg left-gutter fixed top-4 z-70 -translate-y-24 px-4 py-2 font-mono transition-transform duration-150 ease-out focus:translate-y-0"
+          className="bg-fg label text-bg left-gutter fixed top-4 z-70 -translate-y-24 px-4 py-2 font-mono transition-transform duration-150 ease-out focus:translate-y-0"
         >
           Skip to content
         </a>

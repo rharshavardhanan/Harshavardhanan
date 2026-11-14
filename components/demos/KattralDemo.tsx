@@ -37,7 +37,7 @@ export function KattralDemo() {
   return (
     <DemoFrame title="A class filling up" note="Scripted example">
       <div ref={box}>
-        <p role="status" className="text-label font-mono">
+        <p role="status" className="label font-mono">
           <span className="status-dot bg-accent mr-2 inline-block" />
           {joined} in class
         </p>
@@ -45,7 +45,7 @@ export function KattralDemo() {
         <ul aria-hidden className="mt-3 grid grid-cols-3 gap-2">
           {Array.from({ length: SEATS }, (_, seat) => (
             <li key={seat} data-on={seat < joined} className="tile">
-              <span className="text-label font-mono">
+              <span className="label font-mono">
                 {seat === 0 ? "Teacher · sharing screen" : `Student ${seat}`}
               </span>
             </li>
@@ -55,7 +55,7 @@ export function KattralDemo() {
         <ul className="mt-4 min-h-[4.5rem] space-y-1">
           {CHAT.filter((line) => joined >= line.after).map((line) => (
             <li key={line.text} className="demo-in">
-              <span className="text-label text-muted mr-2 font-mono">
+              <span className="label text-muted mr-2 font-mono">
                 {line.who}
               </span>
               {line.text}

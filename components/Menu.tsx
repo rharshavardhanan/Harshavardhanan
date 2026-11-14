@@ -37,7 +37,7 @@ export function Menu() {
       >
         <button
           type="button"
-          className="text-label self-end py-2 font-mono"
+          className="label self-end py-2 font-mono"
           onClick={() => dialog.current?.close()}
         >
           Close
@@ -46,11 +46,11 @@ export function Menu() {
         <nav aria-label="Menu" className="my-auto grid grid-cols-12 gap-x-4">
           <ul className="col-span-12 lg:col-span-7">
             <li style={{ "--i": i++ } as React.CSSProperties}>
-              <Link href="/#work" className="text-title font-serif">
+              <Link href="/#work" className="text-h2 font-serif">
                 Work
               </Link>
               <ul
-                className="text-lead mt-2 mb-4 font-serif"
+                className="text-h3 mt-2 mb-4 font-serif"
                 onPointerLeave={() => setHovered(null)}
               >
                 {projects.map((project) => (
@@ -76,7 +76,7 @@ export function Menu() {
               ["Résumé", "/resume.pdf"],
             ].map(([label, href]) => (
               <li key={href} style={{ "--i": i++ } as React.CSSProperties}>
-                <a href={href} className="text-title font-serif">
+                <a href={href} className="text-h2 font-serif">
                   {label}
                 </a>
               </li>

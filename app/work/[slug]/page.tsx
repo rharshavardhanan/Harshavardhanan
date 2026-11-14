@@ -6,6 +6,7 @@ import { CountUp } from "@/components/CountUp";
 import { demos } from "@/components/demos";
 import { Flow } from "@/components/Flow";
 import { LoopVideo } from "@/components/LoopVideo";
+import { Motion } from "@/components/Motion";
 import { ThemeSetter } from "@/components/ThemeSetter";
 import { project, projects } from "@/content/projects";
 
@@ -48,7 +49,7 @@ function Block({
       aria-labelledby={id}
       className="px-gutter border-line grid grid-cols-12 gap-x-4 gap-y-6 border-t py-16 lg:py-24"
     >
-      <h2 id={id} data-reveal className="text-title col-span-12 lg:col-span-4">
+      <h2 id={id} data-lines className="text-h2 col-span-12 lg:col-span-4">
         {title}
       </h2>
       <div className="col-span-12 lg:col-span-8">{children}</div>
@@ -78,8 +79,8 @@ export default async function CaseStudy({ params }: Props) {
       <header className="px-gutter relative isolate flex min-h-[calc(100svh-3.625rem)] flex-col justify-end pt-[45svh] pb-12 lg:pt-24">
         <LoopVideo slug={item.slug} />
         <h1 className="text-display max-w-[14ch] font-serif">{item.title}</h1>
-        <p className="text-lead mt-6 max-w-[40ch]">{item.pitch}</p>
-        <dl className="text-label border-line mt-10 grid gap-x-8 gap-y-3 border-t pt-4 font-mono sm:grid-cols-[auto_auto_1fr]">
+        <p className="text-h3 mt-6 max-w-[40ch]">{item.pitch}</p>
+        <dl className="label border-line mt-10 grid gap-x-8 gap-y-3 border-t pt-4 font-mono sm:grid-cols-[auto_auto_1fr]">
           {meta.map(([term, detail]) => (
             <div key={term}>
               <dt className="text-muted">{term}</dt>
@@ -90,24 +91,22 @@ export default async function CaseStudy({ params }: Props) {
       </header>
 
       <Block id="problem" title="Problem">
-        <p className="text-lead max-w-[46ch]">{item.problem}</p>
+        <p className="text-h3 max-w-[46ch]">{item.problem}</p>
       </Block>
 
       <Block id="built" title="What I built">
-        <p className="text-lead max-w-[46ch]">{item.built}</p>
+        <p className="text-h3 max-w-[46ch]">{item.built}</p>
       </Block>
 
       <Block id="result" title="Result">
-        <p className="text-lead max-w-[46ch]">{item.result}</p>
+        <p className="text-h3 max-w-[46ch]">{item.result}</p>
         <dl className="border-line mt-10 grid gap-x-6 border-t sm:grid-cols-3">
           {item.stats.map((stat) => (
             <div
               key={stat.label}
               className="flex flex-col-reverse justify-end pt-4 pb-2"
             >
-              <dt className="text-label text-muted mt-1 font-mono">
-                {stat.label}
-              </dt>
+              <dt className="label text-muted mt-1 font-mono">{stat.label}</dt>
               <dd className="stat">
                 {stat.n === undefined ? (
                   stat.text
@@ -142,11 +141,11 @@ export default async function CaseStudy({ params }: Props) {
         title={item.slug === "road" ? "Where it broke" : "What was hard"}
       >
         {item.draft && (
-          <p className="text-label border-accent text-accent mb-4 inline-block border px-2 py-0.5 font-mono">
+          <p className="label border-accent text-accent mb-4 inline-block border px-2 py-0.5 font-mono">
             Draft · Harsha to confirm
           </p>
         )}
-        <p className="text-lead max-w-[46ch]">{item.hard}</p>
+        <p className="text-h3 max-w-[46ch]">{item.hard}</p>
       </Block>
 
       <Block id="demo" title="Try it">
@@ -159,12 +158,13 @@ export default async function CaseStudy({ params }: Props) {
         data-theme={next.slug}
         className="bg-bg text-fg px-gutter group block py-24 no-underline lg:py-32"
       >
-        <span className="text-label text-muted font-mono">Next project</span>
+        <span className="label text-muted font-mono">Next project</span>
         <span className="text-display mt-4 block max-w-[16ch] font-serif">
           {next.title}
           <ArrowUpRight className="rotate-45 transition-transform duration-300 ease-out group-hover:translate-x-3 motion-reduce:transition-none" />
         </span>
       </Link>
+      <Motion />
     </article>
   );
 }

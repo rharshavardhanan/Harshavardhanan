@@ -67,15 +67,15 @@ export function HallucinationDemo() {
       <DemoFrame title="Spot the Hallucination" note="5 of 5">
         <dl className="grid grid-cols-2 gap-4">
           <div>
-            <dt className="text-label text-muted font-mono">You</dt>
-            <dd className="text-title font-serif">{score} / 5</dd>
+            <dt className="label text-muted font-mono">You</dt>
+            <dd className="text-h2 font-serif">{score} / 5</dd>
           </div>
           <div>
-            <dt className="text-label text-muted font-mono">The model</dt>
-            <dd className="text-title text-accent font-serif">94%</dd>
+            <dt className="label text-muted font-mono">The model</dt>
+            <dd className="text-h2 text-accent font-serif">94%</dd>
           </div>
         </dl>
-        <p className="text-label text-muted mt-2 font-mono">
+        <p className="label text-muted mt-2 font-mono">
           Accuracy on 25,000+ samples; five questions is not a fair fight.
         </p>
         <button
@@ -95,10 +95,8 @@ export function HallucinationDemo() {
 
   return (
     <DemoFrame title="Spot the Hallucination" note={`${index + 1} of 5`}>
-      <p className="text-label text-muted font-mono">{item.question}</p>
-      <p className="text-lead mt-2 min-h-[4lh] sm:min-h-[3lh]">
-        “{item.answer}”
-      </p>
+      <p className="label text-muted font-mono">{item.question}</p>
+      <p className="text-h3 mt-2 min-h-[4lh] sm:min-h-[3lh]">“{item.answer}”</p>
 
       {revealed ? (
         <div key="verdict" className="demo-in mt-4">

@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const paper = "rgb(244, 242, 238)";
+// Each project section paints its own colour. When it arrives, its colour
+// grows over the previous one as a circle (the "wipe").
 const backgrounds = {
   odovox: "rgb(15, 31, 28)",
   road: "rgb(18, 18, 18)",
@@ -9,54 +10,60 @@ const backgrounds = {
   hallucination: "rgb(22, 17, 31)",
 };
 
-const pageBackground = (page: Page) =>
-  page.evaluate(
-    () => getComputedStyle(document.documentElement).backgroundColor,
-  );
+const ownLayer = (page: Page, name: string) =>
+  page.locator(`section[data-zone="${name}"] .paint-own`);
 
-const scrollToChapter = (page: Page, name: string) =>
+const scrollTo = (page: Page, name: string) =>
   page
-    .locator(`[data-chapter="${name}"]`)
+    .locator(`section[data-zone="${name}"]`)
     .evaluate((el) => el.scrollIntoView({ block: "center" }));
 
-test("the page is paper until a project is reached", async ({ page }) => {
+test("before a project is reached its colour is hidden", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "neutral");
-  expect(await pageBackground(page)).toBe(paper);
+  await expect(page.locator("html")).toHaveAttribute("data-active", "hero");
+  await expect(ownLayer(page, "cache")).toHaveCSS("clip-path", /circle\(0%/);
 });
 
 for (const [name, colour] of Object.entries(backgrounds)) {
-  test(`scrolling into ${name} turns the whole page its colour`, async ({
-    page,
-  }) => {
+  test(`${name}: its colour wipes in when it arrives`, async ({ page }) => {
     await page.goto("/");
-    await scrollToChapter(page, name);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", name);
-    await expect.poll(() => pageBackground(page)).toBe(colour);
+    await scrollTo(page, name);
+    await expect(page.locator("html")).toHaveAttribute("data-active", name);
+    const layer = ownLayer(page, name);
+    await expect(layer).toHaveCSS("background-color", colour);
+    // Fully open: the clip is removed once the circle has grown.
+    await expect(layer).toHaveCSS("clip-path", "none");
   });
 }
 
-test("scrolling back out returns the page to paper", async ({ page }) => {
+test("scrolling back closes the wipe again", async ({ page }) => {
   await page.goto("/");
-  await scrollToChapter(page, "cache");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "cache");
+  await scrollTo(page, "road");
+  await expect(ownLayer(page, "road")).toHaveCSS("clip-path", "none");
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "neutral");
-  await expect.poll(() => pageBackground(page)).toBe(paper);
+  await expect(ownLayer(page, "road")).toHaveCSS("clip-path", /circle\(0%/);
+  await expect(page.locator("html")).toHaveAttribute("data-active", "hero");
 });
 
-test("without JavaScript each chapter paints its own theme", async ({
+test("without JavaScript every section shows its own colour", async ({
   browser,
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto("/");
   for (const [name, colour] of Object.entries(backgrounds)) {
-    await expect(page.locator(`[data-chapter="${name}"]`)).toHaveCSS(
-      "background-color",
-      colour,
-    );
+    await expect(ownLayer(page, name)).toHaveCSS("background-color", colour);
+    await expect(ownLayer(page, name)).toHaveCSS("clip-path", "none");
   }
-  expect(await pageBackground(page)).toBe(paper);
   await context.close();
+});
+
+test.describe("reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("colours are simply there, with no wipe", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("header time")).toHaveText(/^\d\d:\d\d IST$/);
+    await expect(ownLayer(page, "cache")).toHaveCSS("clip-path", "none");
+  });
 });

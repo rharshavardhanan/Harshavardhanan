@@ -7,11 +7,11 @@ export function Footer() {
   return (
     <footer data-theme="ink" className="bg-bg text-fg px-gutter pt-24 pb-8">
       <div className="@container">
-        <p data-reveal className="lets-build font-serif">
+        <p data-lines className="lets-build font-serif">
           Let’s build
         </p>
       </div>
-      <div className="text-label text-muted border-line mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t pt-4 font-mono">
+      <div className="label text-muted border-line mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t pt-4 font-mono">
         <AnomalyCount />
         <Sound />
         <span>© 2026 · designed &amp; built by Harsha</span>

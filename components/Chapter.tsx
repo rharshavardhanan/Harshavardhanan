@@ -5,6 +5,7 @@ import { Anomaly } from "./Anomaly";
 import { ArrowUpRight } from "./ArrowUpRight";
 import { CountUp } from "./CountUp";
 import { demos } from "./demos";
+import { SectionPaint } from "./SectionPaint";
 
 // One project on the home page. Every chapter has the same layout:
 // title, role, pitch, three figures, a demo, and a link to the case study.
@@ -12,9 +13,11 @@ import { demos } from "./demos";
 export function Chapter({
   project,
   index,
+  prev,
 }: {
   project: Project;
   index: number;
+  prev: string;
 }) {
   const Demo = demos[project.slug];
 
@@ -22,12 +25,15 @@ export function Chapter({
     <section
       id={project.slug}
       data-chapter={project.slug}
+      data-zone={project.slug}
+      data-theme={project.slug}
       aria-labelledby={`${project.slug}-title`}
-      className="px-gutter grid scroll-mt-8 grid-cols-12 gap-x-4 py-28 lg:min-h-svh lg:content-center"
+      className="paint px-gutter grid scroll-mt-8 grid-cols-12 gap-x-4 py-28 lg:min-h-svh lg:content-center"
     >
+      <SectionPaint prev={prev} />
       <p
         aria-hidden
-        className="text-label text-accent col-span-12 mb-4 font-mono lg:col-span-1 lg:pt-[1.6em]"
+        className="label text-accent col-span-12 mb-4 font-mono lg:col-span-1 lg:pt-[1.6em]"
       >
         0{index + 1}
       </p>
@@ -45,14 +51,14 @@ export function Chapter({
           className="mb-8 aspect-video w-full object-cover lg:hidden"
         />
 
-        <h2 id={`${project.slug}-title`} data-reveal className="text-title">
+        <h2 id={`${project.slug}-title`} data-lines className="text-h2">
           {project.title}
         </h2>
-        <p className="text-label text-muted mt-3 font-mono">
+        <p className="label text-muted mt-3 font-mono">
           {[project.role, project.year].filter(Boolean).join(" · ")}
           <Anomaly id={project.slug} />
         </p>
-        <p data-reveal className="text-lead mt-8 max-w-[44ch]">
+        <p data-lines className="text-h3 mt-8 max-w-[44ch]">
           {project.pitch}
         </p>
 
@@ -64,9 +70,7 @@ export function Chapter({
               key={stat.label}
               className="flex flex-col-reverse justify-end pt-4 pb-2"
             >
-              <dt className="text-label text-muted mt-1 font-mono">
-                {stat.label}
-              </dt>
+              <dt className="label text-muted mt-1 font-mono">{stat.label}</dt>
               <dd className="stat">
                 {stat.n === undefined ? (
                   stat.text
@@ -93,7 +97,7 @@ export function Chapter({
             <ArrowUpRight className="rotate-45" />
           </Link>
           {project.live && (
-            <a href={project.live} className="text-label py-2 font-mono">
+            <a href={project.live} className="label py-2 font-mono">
               Live dashboard
               <ArrowUpRight />
             </a>

@@ -22,21 +22,21 @@ export function About() {
         </figure>
 
         <div className="col-span-12 lg:col-span-7 lg:col-start-6">
-          <h2 id="about-title" data-reveal className="text-title">
+          <h2 id="about-title" data-lines className="text-h2">
             About
           </h2>
           {bioIsDraft && (
-            <p className="text-label border-fg mt-6 inline-block border px-2 py-0.5 font-mono">
+            <p className="label border-fg mt-6 inline-block border px-2 py-0.5 font-mono">
               Draft · Harsha to rewrite
             </p>
           )}
-          <div className="text-lead mt-6 max-w-[40ch] space-y-4">
+          <div className="text-h3 mt-6 max-w-[40ch] space-y-4">
             {bio.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
 
-          <dl className="text-label border-line mt-12 border-t font-mono">
+          <dl className="label border-line mt-12 border-t font-mono">
             {spec.map(([term, detail]) => (
               <div
                 key={term}
@@ -50,13 +50,13 @@ export function About() {
         </div>
 
         <div className="col-span-12 mt-8">
-          <h3 className="text-lead font-serif">
+          <h3 className="text-h3 font-serif">
             Skills <Anomaly id="about" />
           </h3>
           <dl className="border-line mt-4 grid gap-x-4 border-t sm:grid-cols-2 lg:grid-cols-5">
             {skills.map(([group, items]) => (
               <div key={group} className="pt-4 pb-6">
-                <dt className="text-label text-muted font-mono">{group}</dt>
+                <dt className="label text-muted font-mono">{group}</dt>
                 <dd className="mt-2">
                   <ul>
                     {items.map((item) => (
@@ -72,7 +72,7 @@ export function About() {
 
       {/* The wins scroll sideways for ever. The second copy only exists to
           make the loop seamless, so it is hidden from screen readers. */}
-      <div className="marquee border-line text-lead mt-16 border-y py-4 font-serif">
+      <div className="marquee border-line text-h3 mt-16 border-y py-4 font-serif">
         {[false, true].map((copy) => (
           <ul key={String(copy)} aria-hidden={copy || undefined}>
             {[...wins, ...wins].map((win, index) => (

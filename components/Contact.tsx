@@ -35,10 +35,10 @@ export function Contact() {
       className="px-gutter grid grid-cols-12 gap-x-4 gap-y-12 pt-40 pb-32"
     >
       <div className="col-span-12 lg:col-span-6">
-        <h2 id="contact-title" data-reveal className="text-title max-w-[14ch]">
+        <h2 id="contact-title" data-lines className="text-h2 max-w-[14ch]">
           Have a hard problem? <em>Let’s build it.</em>
         </h2>
-        <ul className="text-label mt-10 flex flex-wrap gap-x-8 gap-y-2 font-mono">
+        <ul className="label mt-10 flex flex-wrap gap-x-8 gap-y-2 font-mono">
           <li>
             <a href={`mailto:${contact.email}`} className="inline-block py-2">
               {contact.email}
@@ -63,7 +63,7 @@ export function Contact() {
         data-mailto={mailto}
         className="col-span-12 lg:col-span-5 lg:col-start-8"
       >
-        <label className="text-label block font-mono">
+        <label className="label block font-mono">
           Name
           <input
             name="name"
@@ -72,7 +72,7 @@ export function Contact() {
             className={`text-body font-sans ${field}`}
           />
         </label>
-        <label className="text-label mt-5 block font-mono">
+        <label className="label mt-5 block font-mono">
           Email
           <input
             name="email"
@@ -82,7 +82,7 @@ export function Contact() {
             className={`text-body font-sans ${field}`}
           />
         </label>
-        <label className="text-label mt-5 block font-mono">
+        <label className="label mt-5 block font-mono">
           Message
           <textarea
             name="message"
@@ -95,7 +95,7 @@ export function Contact() {
           Send
           <ArrowUpRight className="rotate-45" />
         </button>
-        <p role="status" className="text-label mt-4 min-h-[3lh] font-mono">
+        <p role="status" className="label mt-4 min-h-[3lh] font-mono">
           {mailto && (
             <>
               message handed to your mail app · reply in &lt; 24h once it’s

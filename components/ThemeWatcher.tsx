@@ -2,24 +2,23 @@
 
 import { useEffect } from "react";
 
-// Renders nothing. It watches every <section data-chapter="..."> on the page
-// and writes the name of the one crossing the middle of the window to
-// <html data-theme="...">. The colours themselves, and the fade between
-// them, are CSS: see the theme blocks in app/globals.css.
+// Renders nothing. It watches every part of the page marked data-zone="..."
+// (the hero, the work index, each project chapter) and writes the name of the
+// one crossing the middle of the window to <html data-active="...">. The
+// particle object reads that to decide its shape, colour and position.
 export function ThemeWatcher() {
   useEffect(() => {
     const html = document.documentElement;
-    html.dataset.theme = "neutral";
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          const name = (entry.target as HTMLElement).dataset.chapter!;
+          const name = (entry.target as HTMLElement).dataset.zone!;
           if (entry.isIntersecting) {
-            html.dataset.theme = name;
-          } else if (html.dataset.theme === name) {
-            // Only the chapter that is active may hand the page back.
-            html.dataset.theme = "neutral";
+            html.dataset.active = name;
+          } else if (html.dataset.active === name) {
+            // Only the zone that is active may give the page back.
+            delete html.dataset.active;
           }
         }
       },
@@ -28,12 +27,12 @@ export function ThemeWatcher() {
     );
 
     document
-      .querySelectorAll("[data-chapter]")
-      .forEach((chapter) => observer.observe(chapter));
+      .querySelectorAll("[data-zone]")
+      .forEach((zone) => observer.observe(zone));
 
     return () => {
       observer.disconnect();
-      delete html.dataset.theme;
+      delete html.dataset.active;
     };
   }, []);
 

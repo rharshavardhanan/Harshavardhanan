@@ -11,17 +11,19 @@ const sections = [
   { label: "Contact", href: "/#contact" },
 ];
 
+// Fixed to the top of every page. It inverts against whatever is underneath
+// (see .site-header in globals.css), so it needs no colours of its own.
 export function Header() {
   return (
-    <header className="px-gutter text-label flex flex-wrap items-baseline justify-between gap-x-8 py-3 font-mono">
-      <p className="text-muted">
-        <Link href="/" className="text-fg inline-block py-2">
+    <header className="site-header px-gutter label flex items-baseline justify-between gap-x-8 py-3">
+      <p>
+        <Link href="/" className="inline-block py-2">
           H.R.
         </Link>{" "}
         · Chennai · <Clock />
       </p>
       <nav aria-label="Primary">
-        <ul className="flex items-baseline gap-x-6">
+        <ul className="flex items-baseline gap-x-7">
           {sections.map((section) => (
             <li key={section.href} className="max-md:hidden">
               <a href={section.href} className="inline-block py-2">

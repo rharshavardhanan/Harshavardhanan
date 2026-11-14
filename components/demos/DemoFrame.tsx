@@ -13,7 +13,7 @@ export function DemoFrame({
 }) {
   return (
     <figure className="border-line border">
-      <figcaption className="text-label border-line flex flex-wrap justify-between gap-x-4 border-b px-4 py-2 font-mono">
+      <figcaption className="label border-line flex flex-wrap justify-between gap-x-4 border-b px-4 py-2 font-mono">
         <span className="text-accent">{title}</span>
         <span className="text-muted">{note}</span>
       </figcaption>

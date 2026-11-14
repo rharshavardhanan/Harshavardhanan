@@ -51,17 +51,18 @@ export function WorkIndex() {
   return (
     <section
       id="work"
+      data-zone="index"
       aria-labelledby="work-title"
       className="px-gutter grid grid-cols-12 gap-x-4 pt-24 pb-32"
     >
       <div className="col-span-12 flex flex-wrap items-end justify-between gap-4 lg:col-span-8">
-        <h2 id="work-title" data-reveal className="text-title">
+        <h2 id="work-title" data-lines className="text-h2">
           Selected work
         </h2>
         <div
           role="group"
           aria-label="How to show the work"
-          className="text-label flex font-mono"
+          className="label flex font-mono"
         >
           {(["index", "grid"] as const).map((option) => (
             <button
@@ -98,15 +99,15 @@ export function WorkIndex() {
                 onBlur={() => point(null)}
                 className="group grid grid-cols-8 items-baseline gap-x-4 py-5 no-underline"
               >
-                <span className="text-label text-muted col-span-1 font-mono">
+                <span className="label text-muted col-span-1 font-mono">
                   0{index + 1}
                 </span>
                 <span className="col-span-7 md:col-span-4">
-                  <span className="text-title block font-serif transition-transform duration-300 ease-out group-hover:translate-x-2 group-focus-visible:translate-x-2 motion-reduce:transition-none">
+                  <span className="text-h2 block font-serif transition-transform duration-300 ease-out group-hover:translate-x-2 group-focus-visible:translate-x-2 motion-reduce:transition-none">
                     {project.title}
                   </span>
                 </span>
-                <span className="text-label text-muted col-span-7 col-start-2 mt-2 font-mono md:col-span-3 md:col-start-auto md:mt-0">
+                <span className="label text-muted col-span-7 col-start-2 mt-2 font-mono md:col-span-3 md:col-start-auto md:mt-0">
                   {[project.role, project.year].filter(Boolean).join(" · ")}
                   <span className="block">{project.tags.join(" · ")}</span>
                 </span>
@@ -128,10 +129,10 @@ export function WorkIndex() {
                   sizes="(min-width: 1024px) 32vw, (min-width: 640px) 50vw, 100vw"
                   className="aspect-video w-full object-cover"
                 />
-                <span className="text-lead mt-3 block font-serif">
+                <span className="text-h3 mt-3 block font-serif">
                   {project.title}
                 </span>
-                <span className="text-label text-muted block font-mono">
+                <span className="label text-muted block font-mono">
                   {[project.role, project.year].filter(Boolean).join(" · ")}
                 </span>
               </a>

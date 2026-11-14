@@ -317,3 +317,50 @@ filled in, and says so. It does not claim a message was received.
 Inside a project's theme the system arrow is replaced by that project's cursor, drawn
 exactly at the pointer (no lag). Outside project themes, on touch devices and under
 reduced motion the system cursor is untouched.
+
+## 8. Redesign pass (art direction), 2026-11-13
+
+Harsha's second brief, saved verbatim at [`docs/brief-redesign.md`](../../brief-redesign.md):
+the site works but reads as a template. Keep all content, data, project colours, the
+particle object, the demos and the accessibility work; change composition, scale,
+motion and media. Approved 2026-11-13: add GSAP, brighten labels on dark themes, build
+all six phases with no stops.
+
+### 8.1 Decisions from Harsha
+
+- **Real media is not captured yet.** Every media slot is built for the brief's file
+  names in `public/media/real/`. A missing file shows the project's particle cover with
+  a small "placeholder" label and is replaced automatically when the file is added
+  (checked on the server by `lib/media.ts`).
+- **Kattral Academy screenshots are not allowed** by Zerofence. The chapter and case
+  study use the demo and abstract avatars only.
+- **GSAP with ScrollTrigger and SplitText is added**, driven by Lenis.
+
+### 8.2 Where the brief needed a decision
+
+- **Order.** The brief has the hero hand over directly to Odovox, and also lists the
+  work index after the hero. The index stays second (it is the recruiter's table of
+  contents): the hero's pinned scroll shrinks the name into the header and sends the
+  particle object down beside the index; the object becomes the tooth as Odovox arrives.
+- **Type minimums on phones.** "Display 96 to 280px" overflows a 360px screen for long
+  words, so display falls to 56px on the narrowest phones. Nothing is under 13px.
+- **Theme change.** Each section now paints its own colour, so text always sits on the
+  colour it was designed for. A section's colour arrives as a circle growing from the
+  bottom of the window (clip-path, 0.8s, expo.inOut) over the previous section's
+  colour. There is no blended grey. The fixed header uses difference blending so it
+  stays legible over any colour.
+- **One cursor.** The brief's dot-to-circle cursor with a label replaces the five
+  per-project cursors.
+- **"Next project" does not navigate by itself.** The brief asks for the next title to
+  navigate when scrolled into. That would make the footer unreachable on case studies
+  and move people who only meant to scroll, so it is a very large link with the same
+  wipe.
+- **The particle object** is large and centred in the hero, then travels: beside the
+  index, the tooth in Odovox, and a different position (or hidden behind full-bleed
+  media) in each later chapter.
+
+### 8.3 Kept as hard limits
+
+No overflow at 360px; every demo usable by keyboard; `prefers-reduced-motion` removes
+pinning, horizontal scroll, wipes, line reveals and the custom cursor; AA contrast in
+every theme (labels now 7:1 or better on dark themes); Lighthouse mobile 90 or more.

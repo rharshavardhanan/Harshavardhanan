@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <section className="px-gutter grid min-h-[70svh] content-center">
       <h1 className="text-display font-serif">404</h1>
-      <p className="text-lead mt-4">This page is out of distribution.</p>
+      <p className="text-h3 mt-4">This page is out of distribution.</p>
       <p className="mt-10">
         <Link href="/" className="btn">
           Back to the start

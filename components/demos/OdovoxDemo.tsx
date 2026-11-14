@@ -54,11 +54,11 @@ export function OdovoxDemo() {
   return (
     <DemoFrame title="Speak → Verify" note="Scripted example">
       <div ref={box}>
-        <p className="text-label text-muted font-mono">
+        <p className="label text-muted font-mono">
           <span className="status-dot bg-accent mr-2 inline-block" />
           Dictation
         </p>
-        <p className="text-lead mt-2 min-h-[4lh] sm:min-h-[3lh]">
+        <p className="text-h3 mt-2 min-h-[4lh] sm:min-h-[3lh]">
           {/* Screen readers get the whole sentence at once, not letter by letter. */}
           <span className="sr-only">{DICTATION}</span>
           <span aria-hidden>
@@ -72,7 +72,7 @@ export function OdovoxDemo() {
             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
               {FIELDS.map(([name, value]) => (
                 <div key={name}>
-                  <dt className="text-label text-muted font-mono">{name}</dt>
+                  <dt className="label text-muted font-mono">{name}</dt>
                   <dd>{value}</dd>
                 </div>
               ))}
@@ -80,7 +80,7 @@ export function OdovoxDemo() {
 
             <ol
               aria-label="Lower jaw, tooth 36 marked"
-              className="text-label mt-5 flex gap-px font-mono"
+              className="label mt-5 flex gap-px font-mono"
             >
               {LOWER_ARCH.map((tooth) => (
                 <li
@@ -103,7 +103,7 @@ export function OdovoxDemo() {
                   Verify record
                 </button>
               ) : (
-                <p role="status" className="text-label text-accent font-mono">
+                <p role="status" className="label text-accent font-mono">
                   Doctor verified ✓ · saved in one transaction
                 </p>
               )}

@@ -20,42 +20,54 @@ const KERN: Record<number, number> = {
   14: -0.01, // AN
 };
 
-// The first screen: the name, the one-line introduction and the status pill.
-// The particle object beside it is drawn by ParticleStage (see app/page.tsx).
+// The first screen. The name runs across the full width, in the middle, over
+// the particle object (drawn by ParticleStage, see app/page.tsx), and inverts
+// where it crosses the particles. The hero is two screens tall and its content
+// stays put for the first of them, while the name shrinks up into the header
+// (the movement is in components/Motion.tsx, under data-hero-name).
 export function Hero() {
   return (
-    <section
-      data-hero
-      className="px-gutter pt-6 pb-20 lg:flex lg:min-h-[calc(100svh-3.625rem)] lg:flex-col-reverse lg:justify-between lg:pt-[9svh] lg:pb-10"
-    >
-      {/* @container lets the name size itself from this box's width. */}
-      <div className="@container">
-        <h1 className="name" aria-label={NAME}>
-          {[...NAME].map((letter, index) => (
-            <span
-              key={index}
-              aria-hidden
-              style={
-                {
-                  "--i": index,
-                  marginLeft: KERN[index] ? `${KERN[index]}em` : undefined,
-                } as React.CSSProperties
-              }
-            >
-              {letter}
-            </span>
-          ))}
-        </h1>
-      </div>
-      <div className="mt-6 lg:mt-0 lg:max-w-[42%]">
-        <p className="text-lead max-w-[34ch]">
-          Software engineer &amp; founder. I build AI products end to end, from
-          model to interface.
-        </p>
-        <p className="text-label border-line mt-6 inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono">
-          <span className="status-dot" />
-          currently building Odovox
-        </p>
+    <section data-hero data-zone="hero" className="hero">
+      <div className="hero-pin px-gutter flex flex-col justify-center">
+        {/* @container lets the name size itself from this box's width. */}
+        <div className="@container">
+          <h1 className="name" aria-label={NAME} data-hero-name>
+            {[...NAME].map((letter, index) => (
+              <span
+                key={index}
+                aria-hidden
+                style={
+                  {
+                    "--i": index,
+                    marginLeft: KERN[index] ? `${KERN[index]}em` : undefined,
+                  } as React.CSSProperties
+                }
+              >
+                {letter}
+              </span>
+            ))}
+          </h1>
+        </div>
+
+        <div className="px-gutter absolute inset-x-0 bottom-8 flex items-end justify-between gap-8">
+          <div>
+            <p className="max-w-[30ch]">
+              Software engineer &amp; founder. I build AI products end to end,
+              from model to interface.
+            </p>
+            <p className="label mt-4 inline-flex items-center gap-2">
+              <span className="status-dot" />
+              currently building Odovox
+            </p>
+          </div>
+          <p
+            aria-hidden
+            data-hero-fade
+            className="scroll-cue label max-sm:hidden"
+          >
+            Scroll
+          </p>
+        </div>
       </div>
     </section>
   );

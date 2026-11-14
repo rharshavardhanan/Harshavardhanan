@@ -56,7 +56,7 @@ export function RoadDemo() {
             key={label}
             className="grid grid-cols-[1fr_auto] items-center gap-x-4 sm:grid-cols-[14rem_1fr_auto]"
           >
-            <dt className="text-label text-muted font-mono">{label}</dt>
+            <dt className="label text-muted font-mono">{label}</dt>
             <dd className="max-sm:order-3 max-sm:col-span-2">
               {/* The bar's length is the score, measured against 0.6. */}
               <span
@@ -64,19 +64,17 @@ export function RoadDemo() {
                 style={{ width: `${(score / 0.6) * 100}%` }}
               />
             </dd>
-            <dd className="text-label font-mono tabular-nums">
-              {score.toFixed(3)}
-            </dd>
+            <dd className="label font-mono tabular-nums">{score.toFixed(3)}</dd>
           </div>
         ))}
       </dl>
-      <p className="text-label text-muted mt-1 font-mono">mAP50</p>
+      <p className="label text-muted mt-1 font-mono">mAP50</p>
 
       <fieldset className="mt-6">
-        <legend className="text-label text-muted font-mono">
+        <legend className="label text-muted font-mono">
           A scored 60-second dashcam clip, 17 potholes
         </legend>
-        <div className="text-label mt-2 flex font-mono">
+        <div className="label mt-2 flex font-mono">
           {(Object.keys(MODELS) as Model[]).map((key) => (
             <label key={key} className="seg">
               <input
@@ -130,7 +128,7 @@ export function RoadDemo() {
           </g>
         ))}
       </svg>
-      <p role="status" className="text-lead mt-3">
+      <p role="status" className="text-h3 mt-3">
         <span className="text-accent">{found.length}</span> of 17 found
       </p>
     </DemoFrame>

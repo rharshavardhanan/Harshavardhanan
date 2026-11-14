@@ -46,6 +46,15 @@ test("the stylesheet defines all seven themes", () => {
   ]);
 });
 
+// On the dark themes the small grey labels must be easy, not just legal:
+// at least 7:1 (WCAG AAA) instead of 4.5:1.
+test.each(themes.filter((theme) => theme.name !== "neutral"))(
+  "$name theme: label grey is at least 7:1",
+  ({ roles }) => {
+    expect(contrast(roles.muted, roles.bg)).toBeGreaterThanOrEqual(7);
+  },
+);
+
 describe.each(themes)("$name theme", ({ roles }) => {
   test.each(["fg", "muted", "accent"])(
     "%s text on the background meets WCAG AA",

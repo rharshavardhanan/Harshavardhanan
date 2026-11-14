@@ -1,9 +1,10 @@
 "use client";
 
+import gsap from "gsap";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-// The project cursors exist only for a real mouse, and only if the visitor
-// has not asked for reduced motion. Phones and tablets never get them.
+// The custom cursor exists only for a real mouse, and only if the visitor
+// has not asked for reduced motion. Phones and tablets never get it.
 const QUERY =
   "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
 
@@ -15,34 +16,50 @@ function subscribe(onChange: () => void) {
 const matches = () => window.matchMedia(QUERY).matches;
 const never = () => false; // on the server there is no mouse
 
-// What the Road Damage cursor's label says about the thing under it.
-function describe(target: EventTarget | null) {
-  const el =
-    target instanceof Element ? target.closest("a, button, label") : null;
-  if (!el) return "road 0.99";
-  return el.tagName === "A" ? "link 0.94" : "button 0.97";
-}
-
-// One element that sits exactly at the pointer. What it looks like depends on
-// the page's theme and is all CSS: see "Project cursors" in app/globals.css.
-// Outside a project's theme it is hidden and the normal arrow is used.
+// A dot that follows the pointer. Over a link or button it grows a little.
+// Over anything marked data-cursor="View" (or "Play", "Run", "Drag") it grows
+// into a circle with that word in it. The look is under "Cursor" in globals.css.
 export function Cursor() {
   const enabled = useSyncExternalStore(subscribe, matches, never);
-  const ref = useRef<HTMLDivElement>(null);
+  const dot = useRef<HTMLDivElement>(null);
+  const word = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!enabled || !el) return;
+    if (!enabled) return;
+    const parts = [dot.current!, word.current!];
     const html = document.documentElement;
+    // quickTo makes a function that glides a value to wherever you send it.
+    const toX = parts.map((el) =>
+      gsap.quickTo(el, "x", { duration: 0.15, ease: "power3.out" }),
+    );
+    const toY = parts.map((el) =>
+      gsap.quickTo(el, "y", { duration: 0.15, ease: "power3.out" }),
+    );
+    let seen = false;
 
     const onMove = (event: PointerEvent) => {
-      el.style.transform = `translate(${event.clientX}px, ${event.clientY}px)`;
-      el.dataset.seen = "";
+      if (!seen) {
+        // First sighting: start at the pointer instead of gliding in from the corner.
+        seen = true;
+        gsap.set(parts, { x: event.clientX, y: event.clientY });
+        parts.forEach((el) => (el.dataset.seen = ""));
+      }
+      toX.forEach((to) => to(event.clientX));
+      toY.forEach((to) => to(event.clientY));
     };
     const onOver = (event: PointerEvent) => {
-      el.dataset.label = describe(event.target);
+      const target = event.target instanceof Element ? event.target : null;
+      const media = target?.closest<HTMLElement>("[data-cursor]");
+      const link = target?.closest("a, button, label");
+      const over = media ? "media" : link ? "link" : "";
+      parts.forEach((el) => (el.dataset.over = over));
+      if (media)
+        word.current!.firstElementChild!.textContent = media.dataset.cursor!;
     };
-    const onLeave = () => delete el.dataset.seen;
+    const onLeave = () => {
+      seen = false;
+      parts.forEach((el) => delete el.dataset.seen);
+    };
 
     html.classList.add("has-cursor");
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -58,8 +75,11 @@ export function Cursor() {
 
   if (!enabled) return null;
   return (
-    <div ref={ref} aria-hidden className="cursor" data-label="road 0.99">
-      <i />
-    </div>
+    <>
+      <div ref={dot} aria-hidden className="cursor-dot" />
+      <div ref={word} aria-hidden className="cursor-word label">
+        <span />
+      </div>
+    </>
   );
 }

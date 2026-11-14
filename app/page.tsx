@@ -2,6 +2,7 @@ import { About } from "@/components/About";
 import { Chapter } from "@/components/Chapter";
 import { Contact } from "@/components/Contact";
 import { Hero } from "@/components/Hero";
+import { Motion } from "@/components/Motion";
 import { ParticleStage } from "@/components/ParticleStage";
 import { ThemeWatcher } from "@/components/ThemeWatcher";
 import { WorkIndex } from "@/components/WorkIndex";
@@ -20,7 +21,12 @@ export default function Home() {
         <Hero />
         <WorkIndex />
         {projects.map((project, index) => (
-          <Chapter key={project.slug} project={project} index={index} />
+          <Chapter
+            key={project.slug}
+            project={project}
+            index={index}
+            prev={index === 0 ? "neutral" : projects[index - 1].slug}
+          />
         ))}
       </div>
 
@@ -31,17 +37,18 @@ export default function Home() {
       >
         <h2
           id="more-title"
-          className="text-lead col-span-12 font-serif lg:col-span-4"
+          className="text-h3 col-span-12 font-serif lg:col-span-4"
         >
           More work
         </h2>
-        <p className="text-label text-muted col-span-12 font-mono lg:col-span-8">
+        <p className="label text-muted col-span-12 font-mono lg:col-span-8">
           Other projects will be listed here.
         </p>
       </section>
 
       <About />
       <Contact />
+      <Motion />
     </>
   );
 }
