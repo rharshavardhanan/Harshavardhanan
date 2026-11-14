@@ -130,7 +130,7 @@ export default async function CaseStudy({ params }: Props) {
             >
               {item.title}
             </h1>
-            <dl className="credits label mt-12">
+            <dl className="credits label mt-8 sm:mt-12">
               {credits.map(([term, detail]) => (
                 <div key={term}>
                   <dt className="text-muted">{term}</dt>
@@ -140,7 +140,7 @@ export default async function CaseStudy({ params }: Props) {
                 </div>
               ))}
             </dl>
-            <p className="label text-muted mt-10 flex items-center">
+            <p className="label text-muted mt-6 flex items-center sm:mt-10">
               Scroll
               <Anomaly id={item.slug} />
             </p>

@@ -3,6 +3,7 @@ import {
   Instrument_Serif,
   Inter_Tight,
   JetBrains_Mono,
+  Space_Mono,
 } from "next/font/google";
 import { Cursor } from "@/components/Cursor";
 import { Corners } from "@/components/Corners";
@@ -32,6 +33,13 @@ const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   preload: false,
+});
+// The project's name at the bottom of the frame (components/CornerStatus.tsx),
+// on every page, so it is preloaded. Space Mono comes in 400 and 700 only.
+const spaceMono = Space_Mono({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-space-mono",
 });
 
 // What search engines and link previews are told about the site. Pages can
@@ -80,7 +88,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${serif.variable} ${sans.variable} ${mono.variable}`}
+      className={`${serif.variable} ${sans.variable} ${mono.variable} ${spaceMono.variable}`}
     >
       <body className="text-body font-sans antialiased">
         <Loader />

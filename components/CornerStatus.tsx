@@ -1,6 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useSyncExternalStore } from "react";
 import { projects } from "@/content/projects";
 import { Decode } from "./Decode";
 
@@ -24,17 +25,46 @@ const two = (n: number) => String(n).padStart(2, "0");
 export function CornerStatus() {
   const active = useSyncExternalStore(subscribe, getActive, getServerActive);
   const index = projects.findIndex((project) => project.slug === active);
+  const pathname = usePathname();
 
-  // SELECTED WORK · the project's name, in the serif, in the middle · 02 / 07.
+  // On a project page the big title names the project, so the name down
+  // here steps aside while that title is on screen (it would only repeat it,
+  // and on a short screen the credits reach down to this row); it comes back
+  // once you scroll past, as a reminder. <html data-title-shown> says so
+  // (app/globals.css). Every title block is watched: the page you left stays
+  // in the document, hidden, for the Back button, and a hidden one is never
+  // on screen.
+  useEffect(() => {
+    const html = document.documentElement;
+    const titles = document.querySelectorAll(".poster-title");
+    if (!titles.length) return;
+    const showing = new Set<Element>();
+    const seen = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) showing.add(entry.target);
+        else showing.delete(entry.target);
+      }
+      if (showing.size) html.dataset.titleShown = "";
+      else delete html.dataset.titleShown;
+    });
+    titles.forEach((title) => seen.observe(title));
+    return () => {
+      seen.disconnect();
+      delete html.dataset.titleShown;
+    };
+  }, [pathname]);
+
+  // SELECTED WORK · THE PROJECT'S NAME, in Space Mono, in the middle · 02 / 07.
   // The name and the count decode (components/Decode.tsx) each time they
   // change. On phones SELECTED WORK keeps its place, unseen, so the name
-  // stays in the middle.
+  // stays in the middle. A long name wraps to two lines rather than being
+  // cut short (on a laptop or larger it fits on one).
   return (
     <footer className="corner-row corner-bottom">
       <p className="py-2 max-sm:invisible">Selected work</p>
       <p className="corner-project">
         <Decode
-          className="block truncate"
+          className="block"
           text={index >= 0 ? projects[index].title : ""}
         />
       </p>

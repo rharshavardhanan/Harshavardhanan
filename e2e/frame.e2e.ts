@@ -35,41 +35,87 @@ for (const [width, height] of [
   });
 }
 
+// The project in front, named at the bottom centre in Space Mono capitals
+// (Harsha chose it: technical, legible); on a phone a long name wraps to two
+// centred lines rather than being cut short.
 for (const [width, height] of [
   [1280, 800],
   [360, 740],
 ]) {
-  test(`the project's name is at the bottom centre, in the serif (${width}px)`, async ({
+  test(`the project's name is at the bottom centre, in Space Mono (${width}px)`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height });
     await page.goto("/work/scp");
+    await page.evaluate(() => document.fonts.ready);
     const name = corners(page).locator(".corner-project");
     await expect(name).toContainText("Sequential Conformal Prediction");
-    const style = await name.evaluate((el) => {
+    const got = await name.evaluate((el) => {
       const s = getComputedStyle(el);
-      const box = el.querySelector(".decode-text")!;
+      const text = el.querySelector<HTMLElement>(".decode-text")!;
       const range = document.createRange();
-      range.selectNodeContents(box);
+      range.selectNodeContents(text);
       const r = range.getBoundingClientRect();
+      const box = el.querySelector<HTMLElement>(".decode")!;
       return {
         font: s.fontFamily,
         transform: s.textTransform,
         size: parseFloat(s.fontSize),
-        middle: Math.min(r.left + r.width / 2, 1e9),
-        right: r.right,
+        lineHeight: parseFloat(s.lineHeight),
+        middle: r.left + r.width / 2,
+        height: r.height,
+        cut: box.scrollWidth > box.clientWidth + 1,
       };
     });
-    expect(style.font).toContain("Instrument Serif");
-    expect(style.transform).toBe("none");
-    expect(style.size).toBeGreaterThanOrEqual(20);
-    // Centred (a long name on a phone is cut short, still centred).
-    expect(Math.abs(style.middle - width / 2)).toBeLessThan(
-      width < 400 ? 40 : 2,
-    );
-    expect(style.right).toBeLessThanOrEqual(width);
+    expect(got.font).toContain("Space Mono");
+    expect(got.transform).toBe("uppercase");
+    expect(got.size).toBeGreaterThanOrEqual(width < 640 ? 15 : 20);
+    expect(Math.abs(got.middle - width / 2)).toBeLessThan(3);
+    // All of it shows: never cut short, and at most two lines.
+    expect(got.cut).toBe(false);
+    // (Two lines measure a touch over 2 × the line height, as glyphs
+    // overhang their lines; three would be 3 ×.)
+    expect(got.height).toBeLessThan(got.lineHeight * 2.5);
   });
 }
+
+test("on a project page the bottom name steps aside while the big title is on screen", async ({
+  page,
+}) => {
+  // A short laptop screen: Sequential Conformal Prediction's credits reach
+  // the bottom row, and the big title already names the project.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/work/scp");
+  const name = corners(page).locator(".corner-project");
+  await expect(name).toHaveCSS("opacity", "0");
+  // Scrolled past the title block, it comes back as a reminder.
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.6));
+  await expect(name).toHaveCSS("opacity", "1");
+  // After opening the next page, it follows that page's title, not the old
+  // (hidden) one's.
+  await page.goto("/");
+  await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
+    timeout: 15000,
+  });
+  await expect(name).toHaveCSS("opacity", "1");
+});
+
+test("on a small phone, a project's title block clears the frame's bottom row", async ({
+  page,
+}) => {
+  // Sequential Conformal Prediction has the tallest credits.
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto("/work/scp");
+  await page.evaluate(() => document.fonts.ready);
+  const gap = await page.evaluate(() => {
+    const cue = [...document.querySelectorAll(".poster-title p")].find((p) =>
+      /scroll/i.test(p.textContent ?? ""),
+    )!;
+    const row = document.querySelector(".corner-bottom")!;
+    return row.getBoundingClientRect().top - cue.getBoundingClientRect().bottom;
+  });
+  expect(gap).toBeGreaterThan(0);
+});
 
 test("About is one click away: in the corner on wide screens, large in the menu", async ({
   page,
