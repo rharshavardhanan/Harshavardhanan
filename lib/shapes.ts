@@ -14,7 +14,8 @@ export type ShapeName =
   | "road"
   | "tiles"
   | "blocks"
-  | "bubble";
+  | "bubble"
+  | "arm";
 
 type Point = [number, number, number];
 type Random = () => number;
@@ -89,6 +90,22 @@ function inRegion(
     if (band && !nearEdge) continue;
     return [x, y];
   }
+}
+
+/** A random point on a thick line from a to b (a 2D tube of radius r). */
+function onSegment(
+  rand: Random,
+  a: [number, number],
+  b: [number, number],
+  r: number,
+): [number, number] {
+  const t = rand();
+  const angle = rand() * Math.PI * 2;
+  const d = r * Math.sqrt(rand());
+  return [
+    a[0] + (b[0] - a[0]) * t + Math.cos(angle) * d,
+    a[1] + (b[1] - a[1]) * t + Math.sin(angle) * d,
+  ];
 }
 
 /** Is the point (x, y) inside the molar's silhouette? */
@@ -282,6 +299,53 @@ const makers: Record<ShapeName, (rand: Random) => Point> = {
       y + drift * (rand() - 0.3),
       drift * (rand() - 0.5) * 1.2,
     ];
+  },
+
+  // Sequential Conformal Prediction: a robot arm reaching for a cube.
+  arm: (rand) => {
+    // Joints of the arm, base to gripper, in the flat picture.
+    const base: [number, number] = [-0.5, -0.72];
+    const shoulder: [number, number] = [-0.5, -0.12];
+    const elbow: [number, number] = [0.22, 0.38];
+    const wrist: [number, number] = [0.42, -0.12];
+    const part = rand();
+    let p: [number, number];
+    if (part < 0.12) {
+      // The base: a flat oval plate.
+      const angle = rand() * Math.PI * 2;
+      const r = Math.sqrt(rand());
+      p = [
+        base[0] + Math.cos(angle) * 0.3 * r,
+        base[1] + Math.sin(angle) * 0.06 * r,
+      ];
+    } else if (part < 0.34) {
+      p = onSegment(rand, base, shoulder, 0.07);
+    } else if (part < 0.58) {
+      p = onSegment(rand, shoulder, elbow, 0.065);
+    } else if (part < 0.76) {
+      p = onSegment(rand, elbow, wrist, 0.055);
+    } else if (part < 0.86) {
+      // Two gripper fingers.
+      const side = rand() < 0.5 ? -1 : 1;
+      p = onSegment(
+        rand,
+        [wrist[0] + side * 0.06, wrist[1]],
+        [wrist[0] + side * 0.07, wrist[1] - 0.16],
+        0.02,
+      );
+    } else {
+      // The cube under the gripper: its outline.
+      const s = 0.15;
+      const edge = Math.floor(rand() * 4);
+      const along = rand() * 2 - 1;
+      const cx = wrist[0] + 0.01;
+      const cy = -0.55;
+      p = [
+        cx + (edge < 2 ? along * s : (edge === 2 ? -1 : 1) * s),
+        cy + (edge < 2 ? (edge === 0 ? -1 : 1) * s : along * s),
+      ];
+    }
+    return turn([p[0], p[1] + 0.1, (rand() - 0.5) * 0.12], 0.15, -0.45);
   },
 };
 

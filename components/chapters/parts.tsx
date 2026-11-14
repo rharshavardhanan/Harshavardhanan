@@ -89,6 +89,12 @@ export function ChapterLinks({
           <ArrowUpRight />
         </a>
       )}
+      {project.repo && (
+        <a href={project.repo} className="label py-2">
+          Code on GitHub
+          <ArrowUpRight />
+        </a>
+      )}
     </p>
   );
 }

@@ -364,3 +364,23 @@ all six phases with no stops.
 No overflow at 360px; every demo usable by keyboard; `prefers-reduced-motion` removes
 pinning, horizontal scroll, wipes, line reveals and the custom cursor; AA contrast in
 every theme (labels now 7:1 or better on dark themes); Lighthouse mobile 90 or more.
+
+## 9. Sixth project: Sequential Conformal Prediction (2026-11-14)
+
+Added at Harsha's request from
+github.com/rharshavardhanan/sequential-conformal-prediction-for-long-robotic-tasks.
+
+- **Facts only from the repo's own reports** (`README.md`, `docs/ablation-result.md`,
+  `composed/results_push/REPORT_reach_push.md`) and the project report PDF.
+- **A two-person final-year project** (with Akileshguhan A, guided by Dr. Sankari M).
+  The site says so and does not describe who did which part.
+- **Position 02**, after Odovox: the strongest research project, beside the other
+  conformal-prediction project (Road Damage).
+- **Theme `scp`:** lab steel `#10171B`, alarm coral `#FF6A4D` (6.4:1), labels 8.1:1.
+- **Videos are the repo's own**, re-encoded; the 2 to 3 second clips are slowed 4x.
+  They play in the browser: the same-seed comparison in sync with one control, the
+  monitor clips with native controls. No autoplay under reduced motion.
+- **The demo** reproduces the ablation's central point: compared at the same α the
+  stage-aware monitor looks worse; at the same false-alarm rate it is better.
+- **The honest results stay in:** the arbiter did not beat matched-cost random
+  escalation (p = 0.24), and the effective sample size is three tasks.

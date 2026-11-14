@@ -60,7 +60,7 @@ test("sitemap, robots, preview image and icons are served", async ({
   request,
 }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap.match(/<loc>/g)).toHaveLength(6);
+  expect(sitemap.match(/<loc>/g)).toHaveLength(7);
   expect(sitemap).toContain("/work/odovox");
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).toMatch(/Sitemap: https?:\/\/.+\/sitemap\.xml/);

@@ -26,7 +26,8 @@ email (`.email-fit`); so does the footer line (`.lets-build`).
 ## Colour
 
 Components use five roles (`bg`, `fg`, `muted`, `accent`, `line`); a theme assigns
-them (`app/globals.css`, "Themes"). Project backgrounds and accents are as in the brief.
+them (`app/globals.css`, "Themes"). Project backgrounds and accents are as in the brief, plus the sixth project
+(`scp`, Sequential Conformal Prediction): lab steel `#10171B`, alarm coral `#FF6A4D`.
 Secondary text is `#5C5952` on paper and `#B0ADA5` on every dark theme, at least 7:1
 there. `app/tokens.test.ts` enforces 4.5:1 for all text and 7:1 for dark-theme labels.
 
@@ -49,7 +50,8 @@ composition:
 | Hero | name across the full width, centred over a 74svh particle sphere; pinned while it shrinks away |
 | Work index | full-width serif rows; the others dim on hover; a preview trails the pointer; grid view 7/5, 5/7, 12 |
 | Odovox | giant title; pitch beside a tilting browser frame; demo beside a sticky laptop recording; three giant figures |
-| Road Damage | full-bleed video under the title; a full-width bar chart; two big choice words |
+| Sequential CP | a lab notebook: title, three synced recordings of one start, two monitor clips with controls, the matched-α / matched-FAR toggle |
+| Road Damage | full-bleed photo under the title; a full-width bar chart; two big choice words |
 | Kattral | a pinned sideways strip of three panels; gradient avatars with a speaking ring |
 | Edge Cache | centred; three racing percentages and a round Run button; laptop recording |
 | Hallucination | one giant answer in the middle; Supported and Made up left and right; scan-line verdict |

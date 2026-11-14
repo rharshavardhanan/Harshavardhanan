@@ -8,4 +8,7 @@ Edge Cache RL   cache-dashboard.mp4
 Road Damage     road-detections.png  road-map.png
 Hallucination   halluc-roc.png
 
+Sequential CP    scp-*.mp4 (from the project's GitHub repo, re-encoded; the
+                 2-3 s clips slowed to quarter speed)
+
 Kattral Academy: none (Zerofence has not allowed screenshots).

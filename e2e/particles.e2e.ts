@@ -27,6 +27,7 @@ test.describe("desktop", () => {
   });
 
   for (const [chapter, symbol] of [
+    ["scp", "arm"],
     ["road", "road"],
     ["kattral", "tiles"],
     ["cache", "blocks"],

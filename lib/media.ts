@@ -53,6 +53,7 @@ export function media(file: string, slug: Slug): Media {
 // Kattral has no real media (not allowed), so it always uses its cover.
 export const PREVIEW: Record<Slug, string> = {
   odovox: "odovox-queue.png",
+  scp: "scp-arbitrated.mp4",
   road: "road-detections.png",
   kattral: "kattral-none",
   cache: "cache-dashboard.mp4",
@@ -74,6 +75,10 @@ export const CASE_MEDIA: Record<Slug, { wide?: string; gallery: string[] }> = {
   odovox: {
     wide: "odovox-queue.png",
     gallery: ["odovox-verify.png", "odovox-bill.png", "odovox-mobile.png"],
+  },
+  scp: {
+    wide: "scp-monitor-fail.mp4",
+    gallery: ["scp-arena.mp4", "scp-monitor-safe.mp4"],
   },
   road: { wide: "road-detections.png", gallery: ["road-map.png"] },
   kattral: { gallery: [] },

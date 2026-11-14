@@ -43,6 +43,7 @@ test("the stylesheet defines all seven themes", () => {
     "neutral",
     "odovox",
     "road",
+    "scp",
   ]);
 });
 

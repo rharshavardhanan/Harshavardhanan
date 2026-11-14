@@ -1,16 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-const slugs = ["odovox", "road", "kattral", "cache", "hallucination"];
+const slugs = ["odovox", "scp", "road", "kattral", "cache", "hallucination"];
 
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test("the index lists five projects, each linking to its chapter", async ({
+  test("the index lists six projects, each linking to its chapter", async ({
     page,
   }) => {
     await page.goto("/");
     const rows = page.locator("#work ol a");
-    await expect(rows).toHaveCount(5);
+    await expect(rows).toHaveCount(6);
     for (const [i, slug] of slugs.entries()) {
       await expect(rows.nth(i)).toHaveAttribute("href", `#${slug}`);
       await expect(page.locator(`section#${slug}`)).toHaveCount(1);
@@ -25,7 +25,11 @@ test.describe("desktop", () => {
     await expect(grid).toHaveAttribute("aria-pressed", "false");
     await grid.click();
     await expect(grid).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator("#work ul img")).toHaveCount(5);
+    // Six covers: a picture or a recording each.
+    await expect(page.locator("#work ul > li")).toHaveCount(6);
+    for (const item of await page.locator("#work ul > li").all()) {
+      await expect(item.locator("img, video").first()).toBeAttached();
+    }
     await page.reload();
     await expect(page.getByRole("button", { name: "grid" })).toHaveAttribute(
       "aria-pressed",
@@ -38,7 +42,7 @@ test.describe("desktop", () => {
   }) => {
     await page.goto("/");
     await expect(page.locator("[data-shape]")).toHaveCount(1);
-    await page.locator("#work ol a").nth(3).hover();
+    await page.locator("#work ol a").nth(4).hover(); // Edge Cache RL
     await expect(page.locator("[data-shape]")).toHaveAttribute(
       "data-shape",
       "blocks",
@@ -78,7 +82,11 @@ test.describe("phone", () => {
       "aria-pressed",
       "true",
     );
-    await expect(page.locator("#work ul img")).toHaveCount(5);
+    // Six covers: a picture or a recording each.
+    await expect(page.locator("#work ul > li")).toHaveCount(6);
+    for (const item of await page.locator("#work ul > li").all()) {
+      await expect(item.locator("img, video").first()).toBeAttached();
+    }
   });
 });
 

@@ -4,6 +4,7 @@ import { Hallucination } from "@/components/chapters/Hallucination";
 import { Kattral } from "@/components/chapters/Kattral";
 import { Odovox } from "@/components/chapters/Odovox";
 import { Road } from "@/components/chapters/Road";
+import { Scp } from "@/components/chapters/Scp";
 import { Contact } from "@/components/Contact";
 import { Hero } from "@/components/Hero";
 import { Motion } from "@/components/Motion";
@@ -17,6 +18,7 @@ import { previews } from "@/lib/media";
 
 const CHAPTERS = {
   odovox: Odovox,
+  scp: Scp,
   road: Road,
   kattral: Kattral,
   cache: Cache,

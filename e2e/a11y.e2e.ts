@@ -46,7 +46,14 @@ test("home page, neutral", async ({ page }) => {
   expect(await audit(page)).toEqual([]);
 });
 
-for (const theme of ["odovox", "road", "kattral", "cache", "hallucination"]) {
+for (const theme of [
+  "odovox",
+  "scp",
+  "road",
+  "kattral",
+  "cache",
+  "hallucination",
+]) {
   test(`home page in the ${theme} theme`, async ({ page }) => {
     await page.goto("/");
     await page

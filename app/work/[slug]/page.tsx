@@ -99,6 +99,7 @@ export default async function CaseStudy({ params }: Props) {
   const { wide, gallery } = CASE_MEDIA[item.slug];
   const meta = [
     ["Role", item.role],
+    ...(item.team ? [["Team", item.team]] : []),
     ...(item.year ? [["Year", item.year]] : []),
     ["Stack", item.stack.join(" · ")],
   ];
@@ -122,7 +123,7 @@ export default async function CaseStudy({ params }: Props) {
         <h1 data-lines className="text-display max-w-[14ch] font-serif">
           {item.title}
         </h1>
-        <dl className="label mt-12 grid gap-x-12 gap-y-4 sm:grid-cols-[auto_auto_1fr]">
+        <dl className="label mt-12 grid gap-x-12 gap-y-4 sm:grid-cols-2 lg:grid-cols-[auto_auto_auto_1fr]">
           {meta.map(([term, detail]) => (
             <div key={term}>
               <dt className="text-muted">{term}</dt>
@@ -175,11 +176,18 @@ export default async function CaseStudy({ params }: Props) {
         text={item.result}
         stat={item.stats[2]}
       />
-      {item.live && (
-        <p className="px-gutter pb-16">
-          <a href={item.live} className="btn label">
-            Open the live dashboard ↗
-          </a>
+      {(item.live || item.repo) && (
+        <p className="px-gutter flex flex-wrap gap-6 pb-16">
+          {item.live && (
+            <a href={item.live} className="btn label">
+              Open the live dashboard ↗
+            </a>
+          )}
+          {item.repo && (
+            <a href={item.repo} className="btn label">
+              Code on GitHub ↗
+            </a>
+          )}
         </p>
       )}
 
@@ -232,7 +240,7 @@ export default async function CaseStudy({ params }: Props) {
                       media={shot}
                       alt={`${item.title}: ${file.replace(/^\w+-|\.\w+$/g, "").replace("-", " ")}`}
                       sizes="(min-width: 768px) 46vw, 100vw"
-                      className="aspect-[11/8]"
+                      className={shot.video ? "aspect-[5/3]" : "aspect-[11/8]"}
                     />
                   </div>
                 )}

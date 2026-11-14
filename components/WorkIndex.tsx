@@ -37,10 +37,12 @@ function preview(slug: Slug | null) {
 }
 
 // The grid's layout: how many of the 12 columns each cover takes, in order.
-// Two side by side (7 + 5), two the other way round (5 + 7), then one across.
+// Two side by side (7 + 5), one across, two the other way round (5 + 7), one
+// across.
 const SPANS = [
   "lg:col-span-7",
   "lg:col-span-5",
+  "lg:col-span-12",
   "lg:col-span-5",
   "lg:col-span-7",
   "lg:col-span-12",
@@ -169,11 +171,15 @@ export function WorkIndex({ media }: { media: Record<Slug, Media> }) {
                       media={media[project.slug]}
                       alt={`${project.title}: screenshot`}
                       sizes={
-                        index === 4
+                        SPANS[index].endsWith("12")
                           ? "100vw"
                           : "(min-width: 1024px) 58vw, 100vw"
                       }
-                      className={index === 4 ? "aspect-[21/9]" : "aspect-[4/3]"}
+                      className={
+                        SPANS[index].endsWith("12")
+                          ? "aspect-[21/9]"
+                          : "aspect-[4/3]"
+                      }
                     />
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Media } from "@/lib/media";
+import { LazyVideo } from "./LazyVideo";
 
 // Shows one picture or recording, filling its box. While the real file is
 // missing it shows the particle cover and says so in a small label.
@@ -58,17 +59,11 @@ export function MediaView({
   return (
     <div className={box}>
       {media.video ? (
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label={alt}
+        <LazyVideo
+          src={media.src}
+          label={alt}
           className="absolute inset-0 size-full object-cover"
-        >
-          <source src={media.src} type="video/mp4" />
-        </video>
+        />
       ) : (
         <Image
           src={media.src}

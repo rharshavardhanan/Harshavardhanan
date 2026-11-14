@@ -98,6 +98,15 @@
   --line: #384542;
 }
 
+/* Sequential Conformal Prediction: lab steel and an alarm colour. */
+[data-theme="scp"] {
+  --bg: #10171b;
+  --fg: #f4f2ee;
+  --muted: #b0ada5;
+  --accent: #ff6a4d;
+  --line: #393e41;
+}
+
 [data-theme="road"] {
   --bg: #121212;
   --fg: #f4f2ee;
@@ -564,6 +573,7 @@ html[data-active="index"] .stage-box {
 /* In a chapter: a small emblem in the top-right corner. */
 html:is(
     [data-active="odovox"],
+    [data-active="scp"],
     [data-active="road"],
     [data-active="kattral"],
     [data-active="cache"],

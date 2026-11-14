@@ -77,24 +77,24 @@ test("Footer: closing line, credit and anomaly count on every page", async ({
     const footer = page.getByRole("contentinfo");
     await expect(footer.locator(".lets-build")).toHaveText("Let’s build");
     await expect(footer).toContainText("© 2026 · designed & built by Harsha");
-    await expect(footer).toContainText("anomalies resolved 0 / 6");
+    await expect(footer).toContainText("anomalies resolved 0 / 7");
   }
 });
 
 test("Anomaly hunt: fixing one is counted and remembered", async ({ page }) => {
   await page.goto("/");
   const anomalies = page.getByRole("button", { name: "Anomaly: fix it" });
-  await expect(anomalies).toHaveCount(6);
+  await expect(anomalies).toHaveCount(7);
   await page
     .locator("section#road")
     .getByRole("button", { name: "Anomaly: fix it" })
     .click();
   await expect(page.getByRole("contentinfo")).toContainText(
-    "anomalies resolved 1 / 6",
+    "anomalies resolved 1 / 7",
   );
   await page.reload();
   await expect(page.getByRole("contentinfo")).toContainText(
-    "anomalies resolved 1 / 6",
+    "anomalies resolved 1 / 7",
   );
   await expect(page.getByRole("button", { name: "Anomaly fixed" })).toHaveCount(
     1,

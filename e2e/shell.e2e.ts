@@ -31,6 +31,7 @@ test.describe("desktop", () => {
     await page.goto("/");
     await expect(page.locator("[data-chapter] h2")).toHaveText([
       "Odovox",
+      "Sequential Conformal Prediction",
       "Automated Road Damage Survey",
       "Kattral Academy",
       "Edge Cache RL",

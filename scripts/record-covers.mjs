@@ -16,6 +16,8 @@ import { join } from "node:path";
 import { chromium } from "@playwright/test";
 
 const URL = process.argv[2] ?? "http://localhost:3100/";
+// Sequential Conformal Prediction ("scp") is not recorded here: its cover and
+// case video are cut from the project's own simulator recordings instead.
 const SLUGS = ["odovox", "road", "kattral", "cache", "hallucination"];
 const FPS = 24;
 const SECONDS = 8;

@@ -5,6 +5,7 @@
 
 export const ANOMALIES = [
   "odovox",
+  "scp",
   "road",
   "kattral",
   "cache",

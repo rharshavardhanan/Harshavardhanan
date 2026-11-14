@@ -22,6 +22,7 @@ const PUSH = 0.42; // how hard it pushes
 // Which shapes each part of the page shows, in order. Anything else: the cloud.
 const SEQUENCE: Record<string, ShapeName[]> = {
   odovox: ["waveform", "tooth"],
+  scp: ["arm"],
   road: ["road"],
   kattral: ["tiles"],
   cache: ["blocks"],
