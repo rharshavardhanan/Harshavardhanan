@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { Slug } from "@/content/projects";
 import { afterLoad } from "@/lib/after-load";
+import { scrollWave, type Wave } from "@/lib/motes";
 import { ease, nearest, type RingLayout, ringLayout, wrap } from "@/lib/ring";
 import { play } from "@/lib/sound";
 import { FILM_TIME } from "../Film";
@@ -127,6 +128,8 @@ export function Ring({
         look: [0, 0] as [number, number],
         drift: [0, 0] as [number, number],
         ticked: -1, // the last panel that reached the centre, for the tick
+        // When the latest scroll began, for the background's shimmer wave.
+        wave: { at: -Infinity, moving: false } as Wave,
         lastInput: 0,
         dragging: false,
         dragAt: 0,
@@ -283,11 +286,20 @@ export function Ring({
           intro,
           layout: dims,
         });
+        const time = (now - s.born) / 1000;
+        s.wave = scrollWave(s.wave, s.speed, time);
         smoke?.draw({
-          time: (now - s.born) / 1000,
+          time,
           speed: s.speed,
           lean: s.drift,
           trail: { mouse: s.mouse, move: s.move },
+          turn: s.offset,
+          wave: time - s.wave.at,
+          panel: [
+            dims.hit.w / 2 / window.innerWidth,
+            dims.hit.h / 2 / window.innerHeight,
+          ],
+          vertical: dims.vertical,
         });
         s.move = [0, 0]; // painted into the trail; start counting again
       };

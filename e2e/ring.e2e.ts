@@ -89,6 +89,16 @@ test("the mouse wheel turns the ring, and the middle panel opens its project", a
   await expect(page).toHaveURL(/\/work\/aftermeet$/);
 });
 
+test("the background has its light motes", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await expect(page.locator(".ring")).toHaveAttribute("data-state", "on", {
+    timeout: 15000,
+  });
+  // Set once the motes' shaders are built (they fail quietly otherwise).
+  await expect(page.locator(".bg-canvas")).toHaveAttribute("data-motes", "400");
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
@@ -157,6 +167,15 @@ test.describe("on a touch phone", () => {
       return { left, right: img.width - 1 - right };
     }, `data:image/png;base64,${shot}`);
   };
+
+  test("a phone draws fewer motes", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".bg-canvas")).toHaveAttribute(
+      "data-motes",
+      "150",
+      { timeout: 15000 },
+    );
+  });
 
   test("a swipe on a phone leaves the ring centred", async ({ page }) => {
     await page.goto("/");

@@ -5,7 +5,8 @@
 // components/ring/smoke.ts.
 //
 // Two canvases, one behind the other:
-//   SMOKE (its own canvas, smoke.ts)  a dark glossy oil surface over the window
+//   SMOKE (its own canvas, smoke.ts)  a dark glossy oil surface over the window,
+//     then MOTE_VERTEX + MOTE_FRAGMENT: faint motes of light drifting over it
 //   the ring (gl.ts), drawn in two passes each frame:
 //     1. TRAIL             the cursor's fading trail, painted into a small picture
 //     2. VERTEX + FRAGMENT the seven film panels, on a circle around you
@@ -195,6 +196,133 @@ void main() {
 // (uDecay) and fresh movement is painted on top. In each pixel it keeps the
 // direction the cursor was going (red, green) and how strongly (blue).
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// MOTES ("Astrophage shimmer"), on the background canvas after the oil.
+// Hundreds of tiny, faint dots of warm light drifting in the dark, drawn as
+// "points": one call draws them all, each as a small square the size of
+// gl_PointSize, which the fragment shader rounds off into a soft dot. Where
+// each mote starts is worked out once (lib/motes.ts); everything else here
+// is worked out from the time, so the processor does nothing per frame.
+//
+// They are added on top of what is already there ("additive blending",
+// smoke.ts): a mote can only make a pixel lighter, never hide it, so
+// overlapping motes glow brighter, like light, and on the near-black oil a
+// faint mote is a faint speck. The background's grain is added too, so the
+// order of the two makes no difference to the result.
+// ---------------------------------------------------------------------------
+export const MOTE_VERTEX = /* glsl */ `#version 300 es
+layout(location = 0) in vec4 aMote; // x, y (0..1 of the window), depth, phase
+layout(location = 1) in float aRate; // glints a second, 0.2 to 0.6
+
+uniform float uTime;       // seconds since the ring started
+uniform vec2 uRes;         // the canvas, in its own pixels
+uniform sampler2D uTrail;  // the background's cursor trail (smoke.ts)
+uniform float uTurn;       // how far the ring has turned, in panels
+uniform float uVertical;   // 1 when the ring runs up and down (upright screens)
+uniform float uWave;       // seconds since the latest scroll began (99: none)
+uniform vec2 uPanel;       // half the centre panel's size, as shares of the window
+uniform float uPointScale; // canvas pixels per screen (CSS) pixel
+
+out float vAlpha;          // how strongly this mote shows, for the fragment shader
+
+// A whole-number hash (pcg): a number in, a jumbled number out, the same
+// every time. Used to decide which glint cycles actually glint.
+uint pcg(uint v) {
+  uint state = v * 747796405u + 2891336453u;
+  uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+  return (word >> 22u) ^ word;
+}
+
+void main() {
+  float depth = aMote.z;   // 0.3 far .. 1 near
+  float phase = aMote.w;
+  float aspect = uRes.x / uRes.y;
+
+  // Drift: slowly up, and a little to the right, at 1% (far) to 3% (near)
+  // of the window's height a second. x counts in widths and y in heights, so
+  // x is divided by the window's shape to keep the slope the same on screen.
+  float speed = mix(0.01, 0.03, (depth - 0.3) / 0.7);
+  vec2 p = aMote.xy + vec2(0.4 / aspect, 1.0) * speed * uTime;
+  // Sway: a gentle side to side, each mote in its own time (its phase).
+  p.x += sin(uTime * 0.3 + phase) * 0.01;
+  // Depth as the ring turns: the motes slide the way the panels do, near
+  // ones more (2% of the window per panel at depth 1), far ones less: that
+  // difference is what makes the room feel deep.
+  vec2 along = mix(vec2(-1.0, 0.0), vec2(0.0, 1.0), uVertical);
+  p += along * uTurn * depth * 0.02;
+  // Round the edges: fract() keeps what is after the decimal point, so a
+  // mote that drifts off the top (y 1.03) comes back in at the bottom (0.03).
+  p = fract(p);
+  // The cursor: the trail says which way the pointer went here and how
+  // strongly (it fades over a second and a half); the mote is pushed along
+  // it, so a passing cursor parts the motes like dust, and they drift back as
+  // the trail fades. (textureLod: a vertex shader must say which size of the
+  // picture to read; 0 is the full one.)
+  vec4 trail = textureLod(uTrail, p, 0.0);
+  p += (trail.xy * 2.0 - 1.0) * trail.z * 0.04;
+
+  // How strongly it shows. Faint: 6% at most, less for far motes.
+  float alpha = 0.06 * depth;
+
+  // The glint. sin() swings between -1 and 1, once per cycle; max(…, 0)
+  // keeps only the top half; raising that to the power 24 flattens almost
+  // all of it to nothing and leaves a short, sharp spike at the very top:
+  // a number below 1 multiplied by itself 24 times shrinks fast (0.9 → 0.08)
+  // while 1 stays 1. So the glint is above half strength for only 7.6% of
+  // each cycle. With hundreds of motes that is still many at once, so each
+  // cycle glints only if the hash of (this mote, this cycle) lands in the
+  // top eighth: about one cycle in eight.
+  float angle = uTime * aRate * 6.2831853 + phase;
+  float glint = pow(max(sin(angle), 0.0), 24.0);
+  uint cycle = uint(floor(angle / 6.2831853));
+  uint h = pcg(uint(gl_VertexID) * 7919u + cycle);
+  glint *= step(0.875, float(h & 1023u) / 1023.0);
+  alpha += glint * 0.35 * depth;
+
+  // The scroll wave: a ring of light spreading from the middle of the
+  // window when a scroll begins, 0.8 window heights a second, gone after
+  // 1.2 seconds. r is this mote's distance from the middle (in window
+  // heights); the wave lights motes within about 0.05 of its edge.
+  float r = length((p - 0.5) * vec2(aspect, 1.0));
+  float gap = (r - 0.8 * uWave) / 0.05; // how far from the wave's edge
+  float edge = exp(-gap * gap); // (gap * gap, not pow: pow is undefined below 0)
+  alpha += 0.15 * edge * (1.0 - clamp(uWave / 1.2, 0.0, 1.0));
+
+  // None on the centre panel: off is how far outside the panel's box the
+  // mote is (negative inside); it fades in over 3% of the window's height
+  // beyond the edge, so no mote seems to sit on the film.
+  vec2 off = abs(p - 0.5) - uPanel;
+  alpha *= smoothstep(0.0, 0.03, max(off.x * aspect, off.y));
+
+  vAlpha = alpha;
+  // From 0..1 of the window to the -1..1 the graphics card draws in.
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+  // 1 to 2.5 screen pixels across, bigger for near motes, sharp on any
+  // screen (uPointScale turns screen pixels into the canvas's own).
+  gl_PointSize = (1.0 + depth * 1.5) * uPointScale;
+}
+`;
+
+export const MOTE_FRAGMENT = /* glsl */ `#version 300 es
+precision mediump float;
+in float vAlpha;
+out vec4 colour;
+
+void main() {
+  // gl_PointCoord: where this pixel sits inside the mote's own little
+  // square, (0, 0) at one corner to (1, 1) at the opposite one, so (0.5,
+  // 0.5) is its middle. The distance from the middle is 0 there and 0.5 at
+  // the middle of each side; the curve turns that into 1 at the centre,
+  // easing to 0 at the edge: a soft round dot instead of a square. (Written
+  // as 1 - smoothstep(0, 0.5, d), the same curve as smoothstep(0.5, 0, d),
+  // because GLSL leaves smoothstep undefined when its edges are reversed.)
+  float soft = 1.0 - smoothstep(0.0, 0.5, length(gl_PointCoord - 0.5));
+  // A warm off-white; the blending (smoke.ts) multiplies it by the alpha
+  // and adds it to the pixel.
+  colour = vec4(vec3(1.0, 0.92, 0.82), vAlpha * soft);
+}
+`;
+
 export const TRAIL = /* glsl */ `#version 300 es
 precision highp float;
 in vec2 vUv;
