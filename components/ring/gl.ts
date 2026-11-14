@@ -4,17 +4,17 @@
 // window, and one picture (a texture) per film.
 //
 // Each frame, in order:
-//   1. the cursor's trail is painted into a small picture, on top of the
-//      faded trail from the frame before (two pictures, swapped each frame:
-//      read one, write the other);
-//   2. the moving background fills the window;
-//   3. the panels are drawn over it, furthest first, reading the trail.
+//   1. the cursor's trail is painted (trail.ts);
+//   2. the panels are drawn on a clear canvas (the background shows through
+//      from its own canvas, smoke.ts), furthest first, reading the trail.
 //
 // It knows nothing about scrolling or clicks; components/ring/Ring.tsx works
 // out where the ring is and calls draw() once per frame.
 
 import { type RingLayout, wrap } from "@/lib/ring";
-import { FRAGMENT, FULLSCREEN, TRAIL, VERTEX } from "./shaders";
+import { FRAGMENT, VERTEX } from "./shaders";
+import { createTrail } from "./trail";
+import { build, dropShape, type Program, shape, smoothTexture } from "./webgl";
 
 export type Film = { src: string; poster: string };
 
@@ -102,60 +102,6 @@ function grid(across: number, up: number) {
   };
 }
 
-/** Compiles and links one shader program, and finds its uniforms by name. */
-function build(gl: WebGL2RenderingContext, vertex: string, fragment: string) {
-  const program = gl.createProgram()!;
-  for (const [type, source] of [
-    [gl.VERTEX_SHADER, vertex],
-    [gl.FRAGMENT_SHADER, fragment],
-  ] as const) {
-    const shader = gl.createShader(type)!;
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(shader) ?? "shader did not compile");
-    }
-    gl.attachShader(program, shader);
-  }
-  // Every program reads its corner positions from slot 0, so the shapes
-  // below work with all of them.
-  gl.bindAttribLocation(program, 0, "aPosition");
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    throw new Error(gl.getProgramInfoLog(program) ?? "program did not link");
-  }
-  const found = new Map<string, WebGLUniformLocation | null>();
-  const at = (name: string) => {
-    if (!found.has(name)) found.set(name, gl.getUniformLocation(program, name));
-    return found.get(name)!;
-  };
-  return { program, at };
-}
-
-type Program = ReturnType<typeof build>;
-
-/** A shape: corner positions in slot 0, and optionally a list of triangles. */
-function shape(
-  gl: WebGL2RenderingContext,
-  points: Float32Array,
-  corners?: Uint16Array,
-) {
-  const vao = gl.createVertexArray()!;
-  gl.bindVertexArray(vao);
-  const buffers = [gl.createBuffer()!];
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers[0]);
-  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  if (corners) {
-    buffers.push(gl.createBuffer()!);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers[1]);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, corners, gl.STATIC_DRAW);
-  }
-  gl.bindVertexArray(null);
-  return { vao, buffers };
-}
-
 type Panel = {
   texture: WebGLTexture;
   /** The picture's own width ÷ height, once known. */
@@ -166,9 +112,6 @@ type Panel = {
 };
 
 /** Sets up WebGL on the canvas. Returns null if the browser cannot. */
-/** The compile and shape helpers, shared with the smoke (smoke.ts). */
-export { build, shape };
-
 export function createRing(
   canvas: HTMLCanvasElement,
   films: Film[],
@@ -182,26 +125,16 @@ export function createRing(
   if (!gl) return null;
 
   let panelsProgram: Program;
-  let trailProgram: Program;
+  let trail: ReturnType<typeof createTrail>;
   try {
     panelsProgram = build(gl, VERTEX, FRAGMENT);
-    trailProgram = build(gl, FULLSCREEN, TRAIL);
+    trail = createTrail(gl, LOOK.trail);
   } catch {
     return null; // the list of projects stays as the home page
   }
 
   const panelShape = phone ? grid(16, 24) : grid(48, 24);
   const panelVao = shape(gl, panelShape.points, panelShape.corners);
-  // One triangle twice the window's size: the part inside the window covers it.
-  const screenVao = shape(gl, new Float32Array([-1, -1, 3, -1, -1, 3]));
-
-  const setup = (texture: WebGLTexture) => {
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  };
 
   const upload = (panel: Panel, source: TexImageSource) => {
     gl.activeTexture(gl.TEXTURE0);
@@ -214,8 +147,7 @@ export function createRing(
   // One texture per panel: a dark pixel at first, then the poster, then the
   // film's frames while it plays.
   const panels: Panel[] = films.map((film) => {
-    const texture = gl.createTexture()!;
-    setup(texture);
+    const texture = smoothTexture(gl);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -240,52 +172,6 @@ export function createRing(
       .catch(() => {});
     return panel;
   });
-
-  // The trail: two small pictures of the window (one pixel per 8 × 8 screen
-  // pixels). Each frame reads one and writes the other, then they swap.
-  const trail = [0, 1].map(() => {
-    const texture = gl.createTexture()!;
-    setup(texture);
-    return { texture, framebuffer: gl.createFramebuffer()! };
-  });
-  let trailSize = [0, 0];
-  let newest = 0;
-  const sizeTrail = (width: number, height: number) => {
-    const size = [Math.ceil(width / 8), Math.ceil(height / 8)];
-    if (size[0] === trailSize[0] && size[1] === trailSize[1]) return;
-    trailSize = size;
-    // Start empty: no direction (128, 128 means zero) and no strength.
-    const empty = new Uint8Array(size[0] * size[1] * 4);
-    for (let i = 0; i < empty.length; i += 4) {
-      empty[i] = 128;
-      empty[i + 1] = 128;
-      empty[i + 3] = 255;
-    }
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    for (const t of trail) {
-      gl.bindTexture(gl.TEXTURE_2D, t.texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        size[0],
-        size[1],
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        empty,
-      );
-      gl.bindFramebuffer(gl.FRAMEBUFFER, t.framebuffer);
-      gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        t.texture,
-        0,
-      );
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  };
 
   // A film's video element is made the first time its panel comes near the
   // middle, and kept. Only "fresh" frames are copied to the graphics card.
@@ -338,7 +224,6 @@ export function createRing(
       canvas.width = width;
       canvas.height = height;
     }
-    sizeTrail(canvas.clientWidth, canvas.clientHeight);
   };
 
   // The grain's size and pace (its strength is set per panel).
@@ -354,28 +239,8 @@ export function createRing(
     resize();
     const screen = [canvas.clientWidth, canvas.clientHeight];
 
-    // --- 1. The trail ---------------------------------------------------
-    const read = trail[newest];
-    const write = trail[1 - newest];
-    gl.bindFramebuffer(gl.FRAMEBUFFER, write.framebuffer);
-    gl.viewport(0, 0, trailSize[0], trailSize[1]);
-    gl.disable(gl.BLEND);
-    gl.useProgram(trailProgram.program);
-    gl.bindVertexArray(screenVao.vao);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, read.texture);
-    {
-      const at = trailProgram.at;
-      gl.uniform1i(at("uPrevious"), 1);
-      gl.uniform2f(at("uMouse"), f.mouse[0], f.mouse[1]);
-      gl.uniform2f(at("uMove"), f.move[0], f.move[1]);
-      gl.uniform1f(at("uAspect"), screen[0] / screen[1]);
-      gl.uniform1f(at("uBrushSize"), LOOK.trail.brushSize);
-      gl.uniform1f(at("uBrushStrength"), LOOK.trail.brushStrength);
-      gl.uniform1f(at("uDecay"), LOOK.trail.decay);
-    }
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    newest = 1 - newest;
+    // --- 1. The trail (trail.ts) ---------------------------------------
+    trail.step(screen[0], screen[1], { mouse: f.mouse, move: f.move });
 
     // --- 2. The panels (over a clear canvas: the smoke shows through) ---
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -387,7 +252,7 @@ export function createRing(
     gl.useProgram(panelsProgram.program);
     gl.bindVertexArray(panelVao.vao);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, trail[newest].texture);
+    gl.bindTexture(gl.TEXTURE_2D, trail.texture());
     const at = panelsProgram.at;
     gl.uniform1i(at("uTrail"), 1);
     gl.uniform1i(at("uImage"), 0);
@@ -490,20 +355,12 @@ export function createRing(
         panel.video?.load();
         gl.deleteTexture(panel.texture);
       });
-      for (const t of trail) {
-        gl.deleteTexture(t.texture);
-        gl.deleteFramebuffer(t.framebuffer);
-      }
+      trail.destroy();
       // Free what this ring made, but keep the canvas's WebGL itself alive:
       // Next.js keeps a page you leave ready for the Back button, and the
       // ring then starts again on the same canvas.
-      for (const { vao, buffers } of [panelVao, screenVao]) {
-        gl.deleteVertexArray(vao);
-        buffers.forEach((buffer) => gl.deleteBuffer(buffer));
-      }
-      for (const p of [panelsProgram, trailProgram]) {
-        gl.deleteProgram(p.program);
-      }
+      dropShape(gl, panelVao);
+      gl.deleteProgram(panelsProgram.program);
     },
   };
 }

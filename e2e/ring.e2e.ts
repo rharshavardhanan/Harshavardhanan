@@ -52,6 +52,13 @@ test("the ring starts, names the middle project and turns with the arrow keys", 
   await expect(page.locator(".corner-bottom")).toContainText("02 / 07");
   // The page takes the middle project's colours.
   await expect(ring(page)).toHaveAttribute("data-theme", "aftermeet");
+  // And the frame stays white over the dark smoke, even for Aftermeet, the
+  // one light project.
+  await expect(page.locator("html")).toHaveAttribute("data-tone", "dark");
+  await expect(page.locator(".corner-name").first()).toHaveCSS(
+    "color",
+    "rgb(244, 242, 238)",
+  );
   // And Enter opens it: focus followed the ring.
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/work\/aftermeet$/);

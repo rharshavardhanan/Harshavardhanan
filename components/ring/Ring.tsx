@@ -102,7 +102,7 @@ export function Ring({
       ring = createRing(canvas.current!, items, dims.vertical);
       // The smoke behind is a nicety: if it cannot start, the ring still runs
       // over the plain dark background.
-      smoke = createSmoke(backdrop.current!);
+      smoke = createSmoke(backdrop.current!, dims.vertical);
       if (!ring) {
         delete html.dataset.ring; // no WebGL2: the list stays as it is
         return;
@@ -185,9 +185,6 @@ export function Ring({
         s.centre = index;
         setCentre(index);
         html.dataset.active = items[index].slug;
-        // The frame is paper over the dark smoke; on phones, where the next
-        // and previous films slide under its corners, on a dark band too.
-        el.dataset.tone = dims.vertical ? "media" : "dark";
         window.dispatchEvent(new Event("tone"));
         // The very first films wait until the panels have landed (posters
         // show until then), so they never slow down the first screen.
@@ -283,7 +280,8 @@ export function Ring({
         smoke?.draw({
           time: (now - s.born) / 1000,
           speed: s.speed,
-          mouse: s.drift,
+          lean: s.drift,
+          trail: { mouse: s.mouse, move: s.move },
         });
         s.move = [0, 0]; // painted into the trail; start counting again
       };
@@ -465,7 +463,10 @@ export function Ring({
       aria-label="Selected work: seven projects"
       className="ring bg-bg text-fg"
       data-theme={item.slug}
-      data-tone={item.tone}
+      // The frame's letters: white over the dark smoke, whichever project is
+      // in front (even the light one); on phones, where the next and
+      // previous films slide under the corners, white on a dark band too.
+      data-tone={on && size?.vertical ? "media" : "dark"}
       data-state={on ? "on" : "off"}
       data-lenis-prevent
     >

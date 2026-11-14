@@ -5,7 +5,7 @@
 // components/ring/smoke.ts.
 //
 // Two canvases, one behind the other:
-//   SMOKE (its own canvas, smoke.ts)  oily charcoal smoke over the whole window
+//   SMOKE (its own canvas, smoke.ts)  a dark glossy oil surface over the window
 //   the ring (gl.ts), drawn in two passes each frame:
 //     1. TRAIL             the cursor's fading trail, painted into a small picture
 //     2. VERTEX + FRAGMENT the seven film panels, on a circle around you
@@ -73,16 +73,22 @@ void main() {
 `;
 
 // ---------------------------------------------------------------------------
-// SMOKE: near-black with soft charcoal shapes that slowly flow and fold into
-// each other, a faint lighter halo behind the middle panel, and grain.
+// OIL: the background, drawn as a dark, glossy surface, like black satin or
+// oil, rather than as coloured cloud. A hilly surface is made from noise
+// (its "height" at every point); the shader works out which way the surface
+// faces at each pixel, and lights it with three lights. The cursor drags the
+// surface like a finger through oil.
 // ---------------------------------------------------------------------------
 export const SMOKE = /* glsl */ `#version 300 es
 precision highp float;
 
 uniform vec2  uRes;         // the canvas's size in pixels
 uniform float uTime;        // seconds
-uniform float uDistortion;  // how "oily" the folding is (2, plus the ring's speed × 1.5)
-uniform vec2  uMouse;       // the pointer, -0.5..0.5, eased: the smoke leans after it
+uniform float uDistortion;  // how much the surface folds (2, plus the ring's speed × 1.5)
+uniform vec2  uMouse;       // the pointer, -0.5..0.5, eased: the surface leans after it
+uniform sampler2D uTrail;   // this canvas's own cursor trail (trail.ts)
+uniform float uRelief;      // how deep the folds look: higher = steeper, glossier
+uniform int   uOctaves;     // layers of noise: 4 on a computer, 3 on a phone
 ${GRAIN}
 
 // Smooth random "value noise": random values on a grid, blended smoothly
@@ -97,12 +103,13 @@ float noise(vec2 p) {
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
-// fbm: five layers of noise, each twice as fine and half as strong, which
-// gives natural, cloudy detail.
+// fbm: layers of noise, each twice as fine and half as strong, which gives
+// natural, cloudy detail.
 float fbm(vec2 p) {
   float v = 0.0, amp = 0.5;
   mat2 rot = mat2(0.8, -0.6, 0.6, 0.8); // turn each layer, so no grid lines show
   for (int i = 0; i < 5; i++) {
+    if (i >= uOctaves) break;
     v += amp * noise(p);
     p = rot * p * 2.0 + vec2(13.7, 7.1);  // finer, turned and shifted
     amp *= 0.5;
@@ -113,30 +120,62 @@ float fbm(vec2 p) {
 out vec4 colour;
 
 void main() {
-  // This pixel's place, from the middle of the window, in square units:
-  // about -0.8..0.8 across and -0.5..0.5 up on a wide window.
+  // This pixel's place, from the middle of the window, in square units.
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-  vec2 p = uv * 1.6 + uMouse * 0.12;  // the smoke leans a little after the pointer
-  float t = uTime * 0.035;            // very slow
+  vec2 p = uv * 1.6 + uMouse * 0.12;
 
-  // Domain warping: the noise is read through two layers of itself. Each
-  // layer bends where the next one is read, so the shapes flow and fold into
-  // each other like oil, instead of just sliding.
+  // The cursor's trail pushes the surface along the way the pointer went,
+  // so the folds drag behind it and ease back as the trail fades.
+  vec4 trail = texture(uTrail, gl_FragCoord.xy / uRes);
+  vec2 flow = (trail.xy * 2.0 - 1.0) * trail.z;
+  p -= flow * uDistortion * 0.35;
+
+  // One big, lazy vortex behind the centre panel: turn p round the middle,
+  // most near the middle (exp falls off with distance), slowly to and fro.
+  float swirl = 0.25 * exp(-2.0 * dot(p, p)) * sin(uTime * 0.05);
+  p = mat2(cos(swirl), sin(swirl), -sin(swirl), cos(swirl)) * p;
+
+  // The surface's height: noise read through two layers of itself (domain
+  // warping), so the hills fold into each other. The warp w is worked out
+  // once here and kept for the neighbouring points below: it hardly changes
+  // across a pixel or two, and this saves most of the work.
+  float t = uTime * 0.035;
   vec2 q = vec2(fbm(p + vec2(0.0, t)),
                 fbm(p + vec2(5.2, 1.3) - t));
   vec2 r = vec2(fbm(p + uDistortion * q + vec2(1.7, 9.2) + 0.15 * t),
                 fbm(p + uDistortion * q + vec2(8.3, 2.8) - 0.12 * t));
-  float f = fbm(p + uDistortion * r);
+  vec2 w = uDistortion * r;
 
-  // Near-black, rising to soft charcoal where the smoke is thick.
-  vec3 c = mix(vec3(0.03, 0.03, 0.034), vec3(0.24, 0.24, 0.25),
-               smoothstep(0.25, 0.8, f));
-  // A faint sheen along the folds, where the warping is strongest.
-  c += vec3(0.035) * smoothstep(0.55, 1.1, length(r)) * f;
+  // Which way the surface faces (its "normal"). Compare the height a pixel
+  // and a half to the right with a pixel and a half to the left: hx is how
+  // much it rises going right; hy the same going up. A surface that rises to
+  // the right faces a little to the left, hence the minus signs; uRelief
+  // exaggerates the slopes, and 1.0 is "facing straight out of the screen".
+  float e = 1.5 * 1.6 / uRes.y;
+  float hx = fbm(p + w + vec2(e, 0.0)) - fbm(p + w - vec2(e, 0.0));
+  float hy = fbm(p + w + vec2(0.0, e)) - fbm(p + w - vec2(0.0, e));
+  vec3 n = normalize(vec3(-hx * uRelief, -hy * uRelief, 1.0));
 
-  // A faint lighter halo behind the middle panel.
-  c += vec3(0.07) * exp(-dot(uv, uv) * 3.5);
-  // And darker towards the window's corners.
+  // Lighting, all in grey.
+  // Diffuse: how squarely the surface faces the key light (from the top
+  // left): broad, soft light and shade that show the shape of the folds.
+  vec3 keyDir = normalize(vec3(-0.5, 0.6, 0.6));
+  float diffuse = max(dot(n, keyDir), 0.0);
+  // Specular: the shine. The "half-way" direction sits between the light
+  // and your eye; where the surface faces exactly that way, the light
+  // bounces straight at you. The power of 48 keeps only the closest
+  // matches: small, tight, glossy highlights.
+  vec3 viewDir = vec3(0.0, 0.0, 1.0);
+  vec3 halfV = normalize(keyDir + viewDir);
+  float spec = pow(max(dot(n, halfV), 0.0), 48.0);
+  // Rim: the steep sides of the folds (facing away from you, n.z small)
+  // catch a little light, like the edge of a silk fold.
+  float rim = pow(1.0 - max(n.z, 0.0), 2.0);
+  float v = 0.025 + 0.10 * diffuse + 0.35 * spec + 0.12 * rim;
+  vec3 c = vec3(v);
+
+  // A faint lighter halo behind the middle panel, and darker corners.
+  c *= 1.0 + 0.6 * exp(-dot(uv, uv) * 3.5);
   c *= 1.0 - 0.45 * dot(uv, uv);
 
   colour = vec4(addGrain(c, uGrainAmount), 1.0);
