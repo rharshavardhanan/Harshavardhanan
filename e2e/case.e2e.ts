@@ -104,6 +104,21 @@ test("each page opens like a film poster: title, credits, quote, laurels", async
   await expect(page.locator(".laurel").first()).toContainText("7.1");
 });
 
+// Kattral is a team project at Zerofence: it names the team and says which
+// parts were Harsha's, and never claims the whole of it (2026-11-15).
+test("Kattral credits its team and Harsha's part", async ({ page }) => {
+  await page.goto("/work/kattral");
+  const credits = page.locator(".credits");
+  await expect(credits).toContainText("Team");
+  for (const name of ["Hanish Vigneshwar", "Akileshguhan A", "Karthik J"]) {
+    await expect(credits).toContainText(name);
+  }
+  const article = page.locator("article");
+  await expect(article).toContainText("classroom feature");
+  await expect(article).toContainText("LiveKit web UI");
+  await expect(article).not.toContainText(/one developer|whole stack/i);
+});
+
 // (A project without a film would show its particle recording;
 // lib/media.test.ts covers that. Today all seven have films.)
 // No caption on the films (Harsha, 2026-11-14: the Gemini mark in each

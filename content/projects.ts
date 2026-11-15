@@ -283,14 +283,18 @@ export const projects: Project[] = [
     filmCrop: { zoom: 1.15, shift: [-0.06, 0.03] },
     title: "Kattral Academy",
     role: "Software Developer, Zerofence",
+    // A team project: it names the team, and says which parts were Harsha's
+    // (his words, 2026-11-15). Never claim the whole of it.
+    team: "With Hanish Vigneshwar, Akileshguhan A and Karthik J, at Zerofence",
     year: "2026",
-    tags: ["Real-time video", "WebRTC", "Full-stack"],
+    tags: ["Real-time video", "WebRTC", "Team of four"],
     pitch:
-      "A live-classroom platform. Teachers create classes; students join with a code for real-time video, screen sharing and chat.",
+      "A live-classroom platform, built by a team of four at Zerofence. Teachers create classes; students join with a code for real-time video, screen sharing and chat. I built the classroom feature and the LiveKit web UI.",
     stats: [
       {
-        text: "Full stack",
-        label: "front end, API, data and video, owned by one developer",
+        n: 4,
+        label:
+          "on the team; mine: the classroom feature and the LiveKit web UI",
       },
       { n: 3, label: "ways to be in class: video, screen share and chat" },
       { text: "May–Jul 2026", label: "at Zerofence, Chennai" },
@@ -308,9 +312,9 @@ export const projects: Project[] = [
     problem:
       "A class is more than a video call. It needs classrooms that persist, sessions inside them, and a simple way for students to get in.",
     built:
-      "Teachers create classrooms and sessions; students join by invite code for real-time video, screen sharing and chat. A Next.js 16 and React 19 front end, a REST API, a MongoDB data layer, LiveKit (WebRTC) for video, sign-in with NextAuth Google OAuth and backend-issued JWTs, and Docker for the services.",
+      "My part: the classroom feature, where teachers create classrooms and sessions and students join by invite code, and the LiveKit web UI, the browser side of a live class: video, screen sharing and chat. The rest of the platform was built with the team: a Next.js 16 and React 19 front end, a REST API, a MongoDB data layer, LiveKit (WebRTC) for video, sign-in with NextAuth Google OAuth and backend-issued JWTs, and Docker for the services.",
     result:
-      "A working live-classroom platform, built in three months at Zerofence, with the whole stack owned by one developer.",
+      "A working live-classroom platform, built by a team of four at Zerofence between May and July 2026, with the classrooms and the live video interface as my part.",
     hard: "Two systems have to agree on who someone is. NextAuth signs the user in with Google in the browser, while the API and the video rooms trust only tokens the backend issues. Getting from one to the other on every request and every room join is the part that needs the most care.",
     draft: true,
     flow: [

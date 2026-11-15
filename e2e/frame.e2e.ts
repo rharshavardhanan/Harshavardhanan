@@ -100,22 +100,35 @@ test("on a project page the bottom name steps aside while the big title is on sc
   await expect(name).toHaveCSS("opacity", "1");
 });
 
-test("on a small phone, a project's title block clears the frame's bottom row", async ({
-  page,
-}) => {
-  // Sequential Conformal Prediction has the tallest credits.
-  await page.setViewportSize({ width: 360, height: 740 });
-  await page.goto("/work/scp");
-  await page.evaluate(() => document.fonts.ready);
-  const gap = await page.evaluate(() => {
-    const cue = [...document.querySelectorAll(".poster-title p")].find((p) =>
-      /scroll/i.test(p.textContent ?? ""),
-    )!;
-    const row = document.querySelector(".corner-bottom")!;
-    return row.getBoundingClientRect().top - cue.getBoundingClientRect().bottom;
+// On a small phone, every project's title block (title, credits, the scroll
+// cue) ends above the frame's bottom row on the first screen.
+for (const slug of [
+  "odovox",
+  "aftermeet",
+  "scp",
+  "road",
+  "kattral",
+  "cache",
+  "hallucination",
+]) {
+  test(`on a small phone, ${slug}'s title block clears the frame's bottom row`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto(`/work/${slug}`);
+    await page.evaluate(() => document.fonts.ready);
+    const gap = await page.evaluate(() => {
+      const cue = [...document.querySelectorAll(".poster-title p")].find((p) =>
+        /scroll/i.test(p.textContent ?? ""),
+      )!;
+      const row = document.querySelector(".corner-bottom")!;
+      return (
+        row.getBoundingClientRect().top - cue.getBoundingClientRect().bottom
+      );
+    });
+    expect(gap).toBeGreaterThan(0);
   });
-  expect(gap).toBeGreaterThan(0);
-});
+}
 
 test("About is one click away: in the corner on wide screens, large in the menu", async ({
   page,
