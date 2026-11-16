@@ -39,7 +39,7 @@ Next.js 16 (App Router), React 19 (`ViewTransition`), TypeScript strict, Tailwin
 
 ## Where things are
 
-- `content/` — every word and number on the site (`projects.ts`, `about.ts`). Text marked `draft: true` shows a draft tag.
+- `content/` — every word and number on the site (`projects.ts`, `about.ts`). The About bio shows a draft tag while `bioIsDraft` is true.
 - `app/page.tsx` — the home page: the ring over a plain list of the seven projects (the fallback).
 - `components/ring/` — the ring: `Ring.tsx` (input, easing, transitions), `gl.ts` (WebGL), `shaders.ts` (the look; every uniform is commented).
 - `app/work/[slug]/page.tsx` — every project page; `components/proof/` holds each project's real material, `components/demos/` the seven demos.

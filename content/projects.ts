@@ -2,9 +2,7 @@
 // chapters on the home page and the case-study pages all read from this file.
 // To change a number or a sentence, change it here and it changes everywhere.
 //
-// Facts come from docs/brief.md and the résumé. Text marked `draft: true` was
-// written for Harsha from those facts and shows a "draft" tag on the site
-// until he confirms it; delete the line to remove the tag.
+// Facts come from docs/brief.md, the résumé, the repos and Harsha.
 
 export type Slug =
   | "odovox"
@@ -61,7 +59,6 @@ export type Project = {
   built: string;
   result: string;
   hard: string;
-  draft?: boolean;
   /** The steps of the architecture diagram, in order. */
   flow: string[];
 };
@@ -100,7 +97,6 @@ export const projects: Project[] = [
     result:
       "Eight modules working as one product. Patient data is encrypted with AES-256-GCM, sessions are signed with RS256 JWTs, access is role-based, each clinic’s data is isolated, and every change is written to an audit log. It is in active development.",
     hard: "In a chat app a transcription error is a typo. Here it would be the wrong tooth or the wrong dose in a medical record. So the model never writes to the record. Its output passes a safety layer, the doctor sees every field and confirms it, and only then is everything saved together, or not at all.",
-    draft: true,
     flow: [
       "Browser recording",
       "S3",
@@ -316,7 +312,6 @@ export const projects: Project[] = [
     result:
       "A working live-classroom platform, built by a team of four at Zerofence between May and July 2026, with the classrooms and the live video interface as my part.",
     hard: "Two systems have to agree on who someone is. NextAuth signs the user in with Google in the browser, while the API and the video rooms trust only tokens the backend issues. Getting from one to the other on every request and every room join is the part that needs the most care.",
-    draft: true,
     flow: [
       "Browser (Next.js)",
       "Google sign-in (NextAuth)",
@@ -352,7 +347,6 @@ export const projects: Project[] = [
     result:
       "The agents beat LRU and LFU baselines by 10–15% hit rate. The service is deployed and the dashboard is public.",
     hard: "A cache gives its feedback late: throwing an item away only turns out to be a mistake when that item is asked for again. Turning that delayed signal into a reward an agent can learn from is the centre of the problem.",
-    draft: true,
     flow: [
       "Request",
       "Cache lookup",
@@ -382,7 +376,6 @@ export const projects: Project[] = [
     result:
       "94% accuracy and 82.5% ROC-AUC, evaluated with per-class metrics, ROC and PR curves, and feature-group ablations.",
     hard: "The two headline numbers disagree, and the gap is the finding. With imbalanced classes, part of 94% accuracy is simply the majority class. 82.5% ROC-AUC is the more honest measure of how well the model separates supported answers from unsupported ones, which is why the evaluation reports per-class metrics and not accuracy alone.",
-    draft: true,
     flow: [
       "25,000+ samples",
       "Feature engineering",

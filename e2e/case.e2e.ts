@@ -46,9 +46,8 @@ for (const [index, item] of projects.entries()) {
     await expect(
       page.locator("section[aria-labelledby=demo] figure"),
     ).toHaveCount(1);
-    await expect(page.getByText("Draft · Harsha to confirm")).toHaveCount(
-      item.draft ? 1 : 0,
-    );
+    // No draft tags on the projects (Harsha, 2026-11-16).
+    await expect(page.getByText(/Harsha to confirm/)).toHaveCount(0);
 
     const next = projects[(index + 1) % projects.length];
     await expect(

@@ -250,11 +250,6 @@ export default async function CaseStudy({ params }: Props) {
           {item.slug === "road" ? "Where it broke" : "What was hard"}
         </h2>
         <div className="col-span-12 lg:col-span-7">
-          {item.draft && (
-            <p className="label border-fg mb-8 inline-block border px-2 py-1">
-              Draft · Harsha to confirm
-            </p>
-          )}
           <p data-lines className="text-h3 max-w-[34ch] font-serif">
             {item.hard}
           </p>
